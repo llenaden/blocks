@@ -1539,7 +1539,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;
 const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(38,1,0.1,600);
+const camera=new THREE.PerspectiveCamera(38,1,0.4,600); // ближняя граница не слишком близко — меньше мерцания граней
 function addLights(sc,shadow){
   sc.add(new THREE.HemisphereLight(0xffffff,0x5d6470,0.62));
   const d=new THREE.DirectionalLight(0xffffff,0.82); d.position.set(14,34,-20);
@@ -5493,14 +5493,14 @@ const r2=v=>Math.round(v*2)/2;
 // (положение — относительно уже собранного, по тому же совпадению, что и проверка шага)
 let insGhostG=null; const insHintMats={};
 // подсказка всегда белая и еле видная — только контур места, без цвета детали
-function insHintMat(c){ if(!insHintMats.w){ const m=ghostMat("white").clone(); m.opacity=0.12; m.emissiveIntensity=0; insHintMats.w=m; } return insHintMats.w; }
+function insHintMat(c){ if(!insHintMats.w){ const m=ghostMat("white").clone(); m.opacity=0.12; m.emissiveIntensity=0; m.depthWrite=false; m.polygonOffset=true; m.polygonOffsetFactor=-2; m.polygonOffsetUnits=-2; insHintMats.w=m; } return insHintMats.w; }
 function insShowGhosts(off){
   if(insGhostG){ scene.remove(insGhostG); insGhostG=null; }
   if(!IB||!off||!IB.check||!insHintsOn()) return; const {a,b}=IB.pages[IB.page], G=new THREE.Group();
   for(let i=a;i<b;i++){ if(IB.check.ok.has(i)) continue; const m=IB.items[i], s=specOf(m); if(!s) continue;
     // подсказка — еле заметная: светлее и прозрачнее призрака детали в руке
     const o=buildObject(s,m.c,m,m.f,true); o.traverse(q=>{ if(q.isMesh){ q.castShadow=false; q.raycast=()=>{}; q.material=insHintMat(m.c); } });
-    placeObject(o,s,m,m.x+off[0],m.y+off[1]*PH,m.z+off[2]); G.add(o); }
+    placeObject(o,s,m,m.x+off[0],m.y+off[1]*PH,m.z+off[2]); o.position.y+=0.006; o.renderOrder=2; G.add(o); }
   if(G.children.length){ insGhostG=G; scene.add(G); } }
 // в сборке по инструкции главное — положение детали в модели: если палец рядом с местом детали этого шага
 // (или пропущенной раньше), деталь из руки встаёт точно так, как в модели, — правила креплений не спорят с файлом
@@ -5616,7 +5616,7 @@ window.__mb={ev:s=>eval(s),cam:(th,ph,r,x,y,z)=>{cam.theta=th;cam.phi=ph;cam.r=c
    Модели хранятся на этом устройстве (IndexedDB) и показываются в «Готовых моделях». */
 const USER_MODELS_KEY="usermodels";
 async function loadUserModels(){ let list=null; try{ list=await IDB.get("kv",USER_MODELS_KEY); }catch(_){ try{ list=JSON.parse(ls.get("myblocks.usermodels")||"null"); }catch(_){} }
-  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); MODELS[M.id]=M; regModelParts(M);  } }); if(fix) saveUserModels(); }
+  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); if(!M.grid){ try{ if(snapModelGrid(M)){ delete M.split; } }catch(_){} M.grid=1; fix=true; } MODELS[M.id]=M; regModelParts(M);  } }); if(fix) saveUserModels(); }
 // цвета и формы деталей, которые модель принесла с собой из файла
 function regModelAssets(M){ Object.entries(M.cols||{}).forEach(([k,c])=>{ if(!COLORS[k]) COLORS[k]=c; }); Object.entries(M.dyn||{}).forEach(([id,D])=>regDynPart(id,D)); }
 // детали своей модели, которых нет ни в одном наборе, добавляются в каталог (как у встроенных моделей)
@@ -5658,11 +5658,15 @@ const LD_WORDS={dark:"тёмно-",light:"светло-",medium:"средне-",
 const LD_BASE={red:"красный",blue:"синий",green:"зелёный",yellow:"жёлтый",orange:"оранжевый",brown:"коричневый",tan:"бежевый",pink:"розовый",purple:"фиолетовый",violet:"фиолетовый",lime:"лаймовый",azure:"лазурный",turquoise:"бирюзовый",grey:"серый",gray:"серый",black:"чёрный",white:"белый",gold:"золотой",silver:"серебряный",copper:"медный",nougat:"нуга",lavender:"лавандовый",magenta:"пурпурный",aqua:"аква",olive:"оливковый",coral:"коралловый",salmon:"лососевый",clear:"бесцветный",lilac:"сиреневый",teal:"бирюзовый",ochre:"охристый",cyan:"голубой",flesh:"телесный",bronze:"бронзовый",lemon:"лимонный",mint:"мятный",rose:"розовый",cream:"кремовый",beige:"бежевый",umber:"умбра",caramel:"карамельный",sienna:"сиена",peach:"персиковый",sky:"небесный",ice:"ледяной"};
 function ldColName(nm){ const w=nm.toLowerCase().split(/[_\s-]+/); let pre="", base=[]; w.forEach(x=>{ if(LD_BASE[x]) base.push(LD_BASE[x]); else if(LD_WORDS[x]!==undefined) pre+=LD_WORDS[x]; else base.push(x); });
   const b=base.join(" ")||nm; return (pre+b).replace(/-\s/g,"-"); }
+// цвета, описанные прямо в файле модели (строки «0 !COLOUR …»): у Studio бывают свои номера
+let FILE_COLS={};
+function readFileColours(...texts){ FILE_COLS={}; texts.forEach(t=>{ if(!t) return; t.replace(/^\s*0\s+!COLOUR\s+(\S+)\s+CODE\s+(\d+)\s+VALUE\s+#([0-9A-Fa-f]{6})([^\n]*)/gm,(_,nm,code,hx,rest)=>{ FILE_COLS[code]=[nm,hx.toUpperCase(),/ALPHA/.test(rest)?1:0]; return ""; }); }); }
+const knownCol=code=>{ code=String(code); return !!(LDIMP.col[code]||LDIMP.ldc[code]||FILE_COLS[code]||/^0x2[0-9a-f]{6}$/i.test(code)); };
 function ldColKey(code,used){ code=String(code); if(LDIMP.col[code]) return LDIMP.col[code];
-  let key=null, c=null; const hx=code.match(/^0x2([0-9a-f]{6})$/i);
+  let key=null, c=null; const hx=code.match(/^0x2([0-9a-f]{6})$/i), def=LDIMP.ldc[code]||FILE_COLS[code];
   if(hx){ key="h"+hx[1].toUpperCase(); c={hex:parseInt(hx[1],16),name:"цвет #"+hx[1].toUpperCase()}; }
-  else if(LDIMP.ldc[code]){ const [nm,h,a]=LDIMP.ldc[code]; key="ld"+code; c={hex:parseInt(h,16),name:ldColName(nm)}; if(a) c.trans=true; }
-  else return "lbgray";
+  else if(def){ const [nm,h,a]=def; key="ld"+code; c={hex:parseInt(h,16),name:ldColName(nm)}; if(a) c.trans=true; }
+  else { if(used){ used.__unknown=used.__unknown||{}; used.__unknown[code]=1; } return "lbgray"; }
   if(!COLORS[key]) COLORS[key]=c; if(used) used[key]=COLORS[key]; return key; }
 /* форма детали прямо из файла: все треугольники (вложенные части, примитивы), в координатах приложения.
    Деталь занимает целые клетки, её форма стоит по центру своей клетки; b — сдвиг относительно начала координат LDraw */
@@ -5699,7 +5703,7 @@ function regDynPart(id,D){ if(DYNG[id]) return; const q=b64i16(D.pos), pos=new F
   DYNG[id]={pos,tc:D.tc?b64i16(D.tc):null,pal:D.pal||[],tex}; LDMETA[id]={w:D.w,d:D.d,h:D.h,dyn:1,mc:!!D.tc}; LDIMP.b[id]=D.b; EXTRA_NAMES[id]=D.name; }
 // точный перевод: мир приложения = S·(мир LDraw), S = diag(1,−1,−1)/20; центр детали C = S·t + Ra·(half − b)
 const IMP_ORI=(()=>{ const out=[], seen=new Set(), m=new THREE.Matrix4(); for(let rx=0;rx<4;rx++) for(let ry=0;ry<4;ry++) for(let rz=0;rz<4;rz++){ m.makeRotationFromEuler(eulerOf({rx,ry,rz})); const e=m.elements, k=[e[0],e[4],e[8],e[1],e[5],e[9],e[2],e[6],e[10]].map(v=>Math.round(v)); const key=k.join(","); if(seen.has(key)) continue; seen.add(key); out.push({k,o:{rx,ry,rz}}); } return out; })();
-function ldrToModel(text,geoText,name){
+function ldrToModel(text,geoText,name){ readFileColours(text,geoText);
   const A=parseMPD(text), G=geoText?(geoText===text?A:parseMPD(geoText)):null, files=A.files, order=A.order;
   const exact=r=>LDIMP.b[r]&&!LDMETA[r]?.dyn?r:(LDIMP.f2d[r]||null);
   const strip=r=>{ r=r.replace(/^bl_/,""); if(exact(r)) return exact(r); const m=r.match(/^(.*?\d+[a-z]?)(c?p[a-z]*\w*|pb\d+\w*|px\w*|pr\d+\w*)$/); if(m&&exact(m[1])) return exact(m[1]); const n=r.replace(/[a-z]$/,""); if(n!==r&&exact(n)) return exact(n); return null; };
@@ -5745,7 +5749,9 @@ function ldrToModel(text,geoText,name){
     let tq=null; if(Math.max(...rr.map((v,k)=>Math.abs(v-((k%4===0)?1:0))))>2e-3){ Rr.set(rr[0],rr[1],rr[2],0,rr[3],rr[4],rr[5],0,rr[6],rr[7],rr[8],0,0,0,0,1); q.setFromRotationMatrix(Rr); tq=q.toArray().map(v=>+v.toFixed(5)); }
     const e=[0,1,2].map(i=>Math.abs(qk[i*3])*m.w+Math.abs(qk[i*3+1])*m.h*PH+Math.abs(qk[i*3+2])*m.d), Wr=Math.max(1,Math.round(e[0])), Dr=Math.max(1,Math.round(e[2])), Hr=e[1];
     const x0=C[0]-Wr/2, z0=C[2]-Dr/2, y0=C[1]-Hr/2, rh=v=>{ const f=Math.floor(v), d=v-f; return Math.abs(d-0.5)<1e-9?(f%2===0?f:f+1):Math.round(v); }, x=rh(x0), z=rh(z0);
-    const st={p:d,c:ldColKey(code,used),ry:best.o.ry,x,y:+(y0/PH).toFixed(4),z}; if(best.o.rx) st.rx=best.o.rx; if(best.o.rz) st.rz=best.o.rz;
+    // номер цвета, которого нет в таблицах, — берём цвет той же детали из второго файла Studio (там номера BrickLink)
+    let cc=code; if(!knownCol(cc)&&inst2){ const b2=String(inst2[ii][1]); const via=LDIMP.bl[b2]!==undefined?String(LDIMP.bl[b2]):null; if(via&&knownCol(via)) cc=via; }
+    const st={p:d,c:ldColKey(cc,used),ry:best.o.ry,x,y:+(y0/PH).toFixed(4),z}; if(best.o.rx) st.rx=best.o.rx; if(best.o.rz) st.rz=best.o.rz;
     const ox=+(x0-x).toFixed(4), oz=+(z0-z).toFixed(4); if(Math.abs(ox)>0.005||Math.abs(oz)>0.005||tq){ st.ox=ox; st.oz=oz; st.side=1; } if(tq){ st.tq=tq; st.tp=[0,0,0]; }
     steps.push(st); srcI.push(ii); });
   if(!steps.length) throw new Error("В модели нет знакомых деталей");
@@ -5766,6 +5772,7 @@ function ldrToModel(text,geoText,name){
       const hi=[]; for(let k=a;k<b;k++) if(isHead(inst[k][0])) hi.push(k); const hk=si2.indexOf(hi[0]), skin=hk>=0?st2[hk].c:null;
       figs.push({name:nm.replace(/\.(ldr|dat)( copy)?$/i,"").replace(/_/g," ").trim(),parts,skin}); });
   const usedDyn={}; st2.forEach(s=>{ if(dyn[s.p]) usedDyn[s.p]=dyn[s.p]; });
+  const unknownCols=Object.keys(used.__unknown||{}); delete used.__unknown;
   const cols={}; Object.keys(used).forEach(k=>{ if(!LDIMP_APPCOLS.has(k)&&COLORS[k]) cols[k]=COLORS[k]; });
   return {model:{name,desc:"Ваша модель из файла: шаги, главы, детали и цвета — как у автора",steps:st2,breaks,chapters,src:"io",user:1,dyn:usedDyn,cols,figs},missing}; }
 const LDIMP_APPCOLS=new Set(Object.keys(COLORS));
@@ -5775,7 +5782,7 @@ $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.ta
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
     const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=5; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    snapModelGrid(model); model.grid=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=5; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
     loaderHide(); location.hash="model-"+id; }
   catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
@@ -6004,6 +6011,15 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   const pos=new Int32Array(n); out.forEach((i,k)=>pos[i]=k);
   if(ch.length){ M.chapters=ch.map((c,ci)=>{ let mn=Infinity; for(let i=0;i<n;i++) if(chOf[i]===ci) mn=Math.min(mn,pos[i]); return {name:c.name,from:mn}; }).filter(c=>isFinite(c.from)).sort((a,b)=>a.from-b.from); }
   M.steps=out.map(i=>S[i]); M.breaks=nb; M.split=0; delete insPagesCache[M.id]; return moved; }
+/* модель на сетке пластины: если почти все детали сдвинуты от шипов на одну и ту же долю шипа (автор поставил модель не по сетке
+   или развернул её), сдвигаем всю модель на эту долю — тогда детали садятся ровно на шипы основы */
+function snapModelGrid(M){ const S=M.steps; if(!S.length) return false; const fr=v=>{ let f=v-Math.floor(v); if(f>0.995) f=0; return f; };
+  const hist=new Map(); let cnt=0; S.forEach(s=>{ if(s.tq) return; cnt++; const k=Math.round(fr(s.x+(s.ox||0))*20)+","+Math.round(fr(s.z+(s.oz||0))*20); hist.set(k,(hist.get(k)||0)+1); });
+  let best="0,0", bn=0; hist.forEach((v,k)=>{ if(v>bn){ bn=v; best=k; } }); if(best==="0,0"||best==="20,0"||best==="0,20"||best==="20,20"||bn<cnt*0.4) return false;
+  const [bx,bz]=best.split(",").map(Number); let sx=0,sz=0,n=0; S.forEach(s=>{ if(s.tq) return; const a=fr(s.x+(s.ox||0)), b=fr(s.z+(s.oz||0)); if(Math.round(a*20)===bx&&Math.round(b*20)===bz){ sx+=a; sz+=b; n++; } });
+  const dx=sx/n, dz=sz/n; S.forEach(s=>{ const X=s.x+(s.ox||0)-dx, Z=s.z+(s.oz||0)-dz, x=Math.round(X), z=Math.round(Z), ox=+(X-x).toFixed(4), oz=+(Z-z).toFixed(4); s.x=x; s.z=z;
+    if(Math.abs(ox)>0.005||Math.abs(oz)>0.005||s.tq){ s.ox=ox; s.oz=oz; s.side=1; } else { delete s.ox; delete s.oz; delete s.side; } });
+  const mx=Math.min(...S.map(s=>s.x)), mz=Math.min(...S.map(s=>s.z)); S.forEach(s=>{ s.x-=mx; s.z-=mz; }); return true; }
 boot();
 })();
 
