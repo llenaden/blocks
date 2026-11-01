@@ -5587,7 +5587,7 @@ window.__mb={ev:s=>eval(s),cam:(th,ph,r,x,y,z)=>{cam.theta=th;cam.phi=ph;cam.r=c
    Модели хранятся на этом устройстве (IndexedDB) и показываются в «Готовых моделях». */
 const USER_MODELS_KEY="usermodels";
 async function loadUserModels(){ let list=null; try{ list=await IDB.get("kv",USER_MODELS_KEY); }catch(_){ try{ list=JSON.parse(ls.get("myblocks.usermodels")||"null"); }catch(_){} }
-  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); MODELS[M.id]=M; regModelParts(M); if(!M.grav){ try{ gravityOrder(M); splitBigSteps(M); }catch(_){} M.grav=1; fix=true; } } }); if(fix) saveUserModels(); }
+  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); MODELS[M.id]=M; regModelParts(M); if(M.grav!==3){ try{ gravityOrder(M); splitBigSteps(M); }catch(_){} M.grav=3; fix=true; } } }); if(fix) saveUserModels(); }
 // цвета и формы деталей, которые модель принесла с собой из файла
 function regModelAssets(M){ Object.entries(M.cols||{}).forEach(([k,c])=>{ if(!COLORS[k]) COLORS[k]=c; }); Object.entries(M.dyn||{}).forEach(([id,D])=>regDynPart(id,D)); }
 // детали своей модели, которых нет ни в одном наборе, добавляются в каталог (как у встроенных моделей)
@@ -5737,7 +5737,7 @@ $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.ta
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
     const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=1; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=3; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
     location.hash="model-"+id; }
   catch(err){ toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
@@ -5911,23 +5911,41 @@ document.addEventListener("wheel",e=>{ if(e.ctrlKey) e.preventDefault(); },{pass
    Идём по шагам автора; деталь, которой не на что опереться (не на основе и не касается уже поставленных), откладывается
    и встаёт сразу, как только появится то, к чему она крепится. Шаги автора сохраняются, отложенные детали — отдельными шагами */
 function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
+  /* Порядок «от основания наружу»: сначала то, что стоит на пластине, затем то, что крепится к этому, затем то, что крепится к тому…
+     Глубина детали — сколько креплений от основания (касание гранью). Шаги идут по глубине; внутри одной глубины — в порядке автора.
+     Главы автора (подмодели) остаются по порядку; всё собранное в прошлых главах считается основанием */
   const br=[0,...(M.breaks||[]).filter(k=>k>0&&k<n),n], stepOf=new Int32Array(n); for(let k=0;k+1<br.length;k++) for(let i=br[k];i<br[k+1];i++) stepOf[i]=k;
+  const ch=(M.chapters||[]).slice().sort((a,b)=>a.from-b.from), chOf=new Int32Array(n); ch.forEach((c,ci)=>{ const end=ci+1<ch.length?ch[ci+1].from:n; for(let i=c.from;i<end;i++) chOf[i]=ci; });
   const B=S.map(s=>{ const d=dims(designSpec(s.p),s), x=s.x+(s.ox||0), z=s.z+(s.oz||0), y=s.y*PH; return [x,y,z,x+d.W,y+d.H,z+d.D]; });
-  const e=0.06, touch=(a,b)=>a[0]<=b[3]+e&&b[0]<=a[3]+e&&a[1]<=b[4]+e&&b[1]<=a[4]+e&&a[2]<=b[5]+e&&b[2]<=a[5]+e;
-  const cells=(b,f)=>{ for(let gx=Math.floor((b[0]-e)/2);gx<=Math.floor((b[3]+e)/2);gx++) for(let gy=Math.floor((b[1]-e)/1.2);gy<=Math.floor((b[4]+e)/1.2);gy++) for(let gz=Math.floor((b[2]-e)/2);gz<=Math.floor((b[5]+e)/2);gz++) f(gx+","+gy+","+gz); };
-  const placedG=new Map(), pendG=new Map(), placed=new Uint8Array(n), pending=new Uint8Array(n), out=[], deferredFlag=new Uint8Array(n);
-  const add=(G,i)=>cells(B[i],c=>{ let L=G.get(c); if(!L) G.set(c,L=[]); L.push(i); });
-  const supported=i=>{ if(B[i][1]<0.05) return true; let ok=false; cells(B[i],c=>{ if(ok) return; const L=placedG.get(c); if(L) for(const j of L) if(touch(B[i],B[j])){ ok=true; break; } }); return ok; };
-  const place=i=>{ placed[i]=1; out.push(i); add(placedG,i);
-    const q=[i]; while(q.length){ const j=q.shift(); const cand=new Set(); cells(B[j],c=>{ const L=pendG.get(c); if(L) L.forEach(k=>{ if(pending[k]&&!placed[k]&&touch(B[k],B[j])) cand.add(k); }); });
-      [...cand].sort((a,b)=>a-b).forEach(k=>{ if(placed[k]) return; pending[k]=0; placed[k]=1; deferredFlag[k]=1; out.push(k); add(placedG,k); q.push(k); }); } };
-  let moved=0; for(let i=0;i<n;i++){ if(placed[i]) continue; if(supported(i)) place(i); else { pending[i]=1; add(pendG,i); moved++; } }
-  for(let i=0;i<n;i++) if(!placed[i]){ placed[i]=1; out.push(i); deferredFlag[i]=1; } // совсем ни к чему не крепится (например, вещь в руке) — в конце своего шага не найти, ставим в конец
-  if(!moved) return 0;
-  const nb=[]; for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k]; if(stepOf[a]!==stepOf[b]||deferredFlag[a]!==deferredFlag[b]) nb.push(k); }
+  const e=0.08, ov=0.15, face=(a,b)=>{ let thin=0; for(let k=0;k<3;k++){ const o=Math.min(a[k+3],b[k+3])-Math.max(a[k],b[k]); if(o<-e) return false; if(o<ov) thin++; } return thin<=1; };
+  const G=new Map(), cells=(b,f)=>{ for(let gx=Math.floor((b[0]-e)/2);gx<=Math.floor((b[3]+e)/2);gx++) for(let gy=Math.floor((b[1]-e)/1.2);gy<=Math.floor((b[4]+e)/1.2);gy++) for(let gz=Math.floor((b[2]-e)/2);gz<=Math.floor((b[5]+e)/2);gz++) f(gx+","+gy+","+gz); };
+  S.forEach((_,i)=>cells(B[i],c=>{ let L=G.get(c); if(!L) G.set(c,L=[]); L.push(i); }));
+  const nbr=i=>{ const out=new Set(); cells(B[i],c=>{ const L=G.get(c); if(L) L.forEach(j=>{ if(j!==i&&!out.has(j)&&face(B[i],B[j])) out.add(j); }); }); return out; };
+  const N=S.map((_,i)=>nbr(i)), placed=new Uint8Array(n), out=[], depth=new Int32Array(n).fill(-1);
+  const nCh=Math.max(1,ch.length);
+  for(let c=0;c<nCh;c++){ const I=[]; for(let i=0;i<n;i++) if((ch.length?chOf[i]:0)===c) I.push(i); if(!I.length) continue;
+    const q=[]; I.forEach(i=>{ if(B[i][1]<0.05||[...N[i]].some(j=>placed[j])){ depth[i]=0; q.push(i); } });
+    for(let h=0;h<q.length;h++){ const i=q[h]; N[i].forEach(j=>{ if(depth[j]<0&&(ch.length?chOf[j]:0)===c){ depth[j]=depth[i]+1; q.push(j); } }); }
+    let mx=0; I.forEach(i=>{ if(depth[i]>mx) mx=depth[i]; }); I.forEach(i=>{ if(depth[i]<0) depth[i]=mx+1; }); // ни к чему не крепится — в конце главы
+    /* ставим по одной: деталь доступна, когда стоит всё, на чём она лежит (касание снизу), и она крепится к уже поставленному.
+       Так ничего не приходится просовывать под уже поставленное или между двумя деталями. Из доступных — меньшая глубина, затем порядок автора */
+    const inI=new Uint8Array(n); I.forEach(i=>inI[i]=1);
+    const lower=i=>[...N[i]].filter(j=>inI[j]&&B[j][4]<=B[i][1]+e&&B[j][1]<B[i][1]-e);
+    const need=new Int32Array(n); I.forEach(i=>{ need[i]=lower(i).length; });
+    const upOf=new Map(); I.forEach(i=>lower(i).forEach(j=>{ let L=upOf.get(j); if(!L) upOf.set(j,L=[]); L.push(i); }));
+    const key=i=>[depth[i],stepOf[i],B[i][1],i], less=(a,b)=>{ const A=key(a), Bk=key(b); for(let k=0;k<4;k++){ if(A[k]!==Bk[k]) return A[k]<Bk[k]; } return false; };
+    const conn=i=>B[i][1]<0.05||[...N[i]].some(j=>placed[j]);
+    let left=I.length;
+    const put=i=>{ out.push(i); placed[i]=1; left--; (upOf.get(i)||[]).forEach(u=>need[u]--); };
+    while(left>0){ let best=-1;
+      for(const i of I){ if(placed[i]||need[i]>0||!conn(i)) continue; if(best<0||less(i,best)) best=i; }
+      if(best<0) for(const i of I){ if(placed[i]||!conn(i)) continue; if(best<0||less(i,best)) best=i; } // висит снизу на детали — ставим, как только есть к чему
+      if(best<0) for(const i of I){ if(placed[i]) continue; if(best<0||less(i,best)) best=i; }
+      put(best); } }
+  let moved=0; out.forEach((i,k)=>{ if(i!==k) moved++; });
+  const nb=[]; for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k]; if(chOf[a]!==chOf[b]||depth[a]!==depth[b]||stepOf[a]!==stepOf[b]) nb.push(k); }
   const pos=new Int32Array(n); out.forEach((i,k)=>pos[i]=k);
-  if(M.chapters&&M.chapters.length){ const ch=M.chapters.slice().sort((a,b)=>a.from-b.from); const nc=ch.map((c,ci)=>{ const end=ci+1<ch.length?ch[ci+1].from:n; let mn=Infinity; for(let i=c.from;i<end;i++) mn=Math.min(mn,pos[i]); return {name:c.name,from:mn}; }).filter(c=>isFinite(c.from)).sort((a,b)=>a.from-b.from);
-    M.chapters=nc.filter((c,i)=>!i||c.from!==nc[i-1].from); }
+  if(ch.length){ M.chapters=ch.map((c,ci)=>{ let mn=Infinity; for(let i=0;i<n;i++) if(chOf[i]===ci) mn=Math.min(mn,pos[i]); return {name:c.name,from:mn}; }).filter(c=>isFinite(c.from)).sort((a,b)=>a.from-b.from); }
   M.steps=out.map(i=>S[i]); M.breaks=nb; M.split=0; delete insPagesCache[M.id]; return moved; }
 boot();
 })();
