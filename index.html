@@ -899,6 +899,20 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 
 .ac-note{font-size:13px;line-height:1.5;color:var(--muted);margin:0}
 #acRestore.danger{color:var(--danger);border-color:var(--danger)}
+
+/* экран загрузки: при запуске и пока приложение готовит большую модель */
+.loader{position:fixed;inset:0;z-index:200;background:var(--bg);display:grid;place-items:center;transition:opacity .25s ease}
+.loader.off{opacity:0;pointer-events:none}
+.loader.dim{background:rgba(14,14,17,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.ld-in{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px;max-width:340px}
+.ld-logo{position:relative;width:56px;height:40px;margin-bottom:6px;animation:ldHop 1.1s ease-in-out infinite}
+.ld-logo::before{content:"";position:absolute;left:0;right:0;bottom:0;height:28px;border-radius:8px;background:var(--accent)}
+.ld-logo b{position:absolute;top:2px;width:14px;height:12px;border-radius:4px;background:var(--accent)}.ld-logo b:first-child{left:9px}.ld-logo b:last-child{right:9px}
+@keyframes ldHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ld-t{font-size:16px;font-weight:700}.ld-s{font-size:13px;line-height:1.45;color:var(--muted)}
+.ld-bar{width:160px;height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden;margin-top:4px}.ld-bar i{display:block;height:100%;width:40%;border-radius:2px;background:var(--accent);animation:ldRun 1.2s ease-in-out infinite}
+@keyframes ldRun{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@media (prefers-reduced-motion:reduce){ .ld-logo,.ld-bar i{animation:none} }
 </style>
 </head>
 <body>
@@ -945,6 +959,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 </svg>
 
 <!-- ГЛАВНАЯ -->
+<div class="loader" id="loader" role="status" aria-live="polite"><div class="ld-in"><i class="ld-logo" aria-hidden="true"><b></b><b></b></i><b class="ld-t" id="ldTitle">MyBlocks</b><span class="ld-s" id="ldText">Загружаю приложение…</span><span class="ld-bar"><i></i></span><button class="btn" id="ldReload" hidden>Перезапустить</button></div></div>
 <section class="scr" id="scrHome" hidden>
   <header class="topbar"><span class="wordmark"><i class="logo" aria-hidden="true"></i>MyBlocks</span><span class="grow"></span>
     <div class="hnav"><div class="hseg" role="tablist" aria-label="Раздел"><button role="tab" id="hsModels" aria-selected="true"><span class="lg">Готовые модели</span><span class="sh">Модели</span></button><button role="tab" id="hsOwn" aria-selected="false"><span class="lg">Самостоятельная сборка</span><span class="sh">Сборка</span></button></div><button class="hprof acct-open" id="hProfile" aria-label="Персонализация и память" title="Персонализация и память"><svg class="ic"><use href="#i-user"/></svg></button></div>
@@ -2672,7 +2687,6 @@ function landing(spec,o,cx,cy,ignore){
   let h=pickAt(cx,cy,ignore); if(!h) return null;
   // сборка по инструкции: рядом с местом детали в модели — встаёт ровно как в модели (вдали — по обычным правилам, можно отступить от книги)
   if(typeof insSnap==="function"&&o&&!o.f){ const si=insSnap(spec,o,h)||(o.p&&(/^x_/.test(o.p)||!CONN[o.p])?insSnap(spec,o,h,true):null); if(si) return si; }
-  if(typeof insSnap==="function"&&IB&&o&&!o.f){ const r=landingRules(spec,o,h,cx,cy,ignore); return r||insSnap(spec,o,h,true); }
   return landingRules(spec,o,h,cx,cy,ignore); }
 function landingRules(spec,o,h,cx,cy,ignore){
   if(o&&!o.f&&spec.k==="ld"){ const r=connLand(spec,o,h,ignore); if(r) return r;
@@ -5104,8 +5118,11 @@ $("gHint").addEventListener("click",showHint);
 $("gWhole").addEventListener("click",()=>{ if(!gm) return; gm.showAll=!gm.showAll; ls.set(GKEY(gm.id)+".peek",gm.showAll?"1":"0"); $("gWhole").classList.toggle("on",gm.showAll); $("gWhole").setAttribute("aria-pressed",String(gm.showAll)); gm.preview.children.forEach(o=>o.visible=gm.showAll&&o.userData.i>gm.step); });
 
 /* ---------- Маршруты ---------- */
-function route(){
+async function route(){
   const h=location.hash.replace(/^#/,"");
+  // модель, которой нужно перестроить порядок шагов, — сначала экран загрузки, потом страница
+  const mid=h.indexOf("model-")===0?h.slice(6):h.indexOf("instr-")===0?h.slice(6):h.indexOf("build-")===0?instrModelOf((PROJ.get(h.slice(6))||{}).set):null;
+  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==5){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
   if(h==="sets") enterSets();
   else if(h==="free") location.replace("#set-"+CUR_SET);
   else if(h==="guided") location.replace("#catalog");
@@ -5120,7 +5137,7 @@ function route(){
   else enterHome();
 }
 function refreshScreen(){ if(mode==="shelf") enterShelf(); else if(mode==="home") enterHome(); else if(mode==="sets") enterSets(); else if(mode==="set") enterSet(CUR_SET); else if(mode==="catalog") enterCatalog(); }
-window.addEventListener("hashchange",route);
+window.addEventListener("hashchange",()=>{ route(); });
 
 function enterShelf(){
   leaveAll(); mode="shelf"; show("scrShelf");
@@ -5174,6 +5191,8 @@ function splitBigSteps(M){
 function insPages(id){
   if(insPagesCache[id]) return insPagesCache[id];
   const M=MODELS[id];
+  // модель, загруженная до нового порядка сборки, перестраивается при первом открытии (не при запуске — чтобы приложение открывалось сразу)
+  if(M&&M.user&&M.grav!==5){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=5; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
   // модель из файла (BrickLink Studio, LDraw): шаги автора, крупные разбиты на страницы до 5 деталей
   splitBigSteps(M);
   if(M.breaks&&M.breaks.length){ const br=[0,...M.breaks.filter(k=>k>0&&k<M.steps.length),M.steps.length], out=[];
@@ -5490,7 +5509,7 @@ function insSnap(spec,o,h,wide){
      Деталь шага, поставленная на своё место (палец на месте детали или рядом, ±¼ шипа), садится ровно как в модели —
      с тем же поворотом и наклоном, даже если обычные правила её туда бы не пустили. Подсказки на это не влияют.
      wide — когда обычные правила вообще не нашли, куда поставить: тогда место ищется в радиусе 1 шипа */
-  if(!IB||!IB.check||!IB.check.off||!o||o.f||!h) return null; const R=wide?1.0:0.25; const off=IB.check.off, {b}=IB.pages[IB.page], P=h.point; let best=null;
+  if(!IB||!IB.check||!IB.check.off||!o||o.f||!h) return null; const R=wide?0.4:0.25; /* только когда деталь уже у своего места: мягко досаживается, а не летит к нему */ const off=IB.check.off, {b}=IB.pages[IB.page], P=h.point; let best=null;
   for(let i=0;i<b;i++){ if(IB.check.ok.has(i)) continue; const m=IB.items[i]; if(m.p!==o.p) continue; const s=specOf(m); if(!s) continue;
     const d=dims(s,m), x=m.x+off[0], y=m.y+off[1]*PH, z=m.z+off[2], x0=x+(m.ox||0), z0=z+(m.oz||0);
     // расстояние от пальца до места детали (её рамки), по горизонтали и по высоте
@@ -5571,11 +5590,21 @@ function frame(now){
   } else if(mode==="home") renderSpins();
   if(MV.host) mvRender();
 }
+/* ---------- Экран загрузки и защита от «чёрного экрана» ---------- */
+function loaderShow(text,dim){ const L=$("loader"); if(!L) return; $("ldText").textContent=text||"Загружаю…"; L.classList.toggle("dim",!!dim); L.classList.remove("off"); L.hidden=false; $("ldReload").hidden=true; }
+function loaderHide(){ const L=$("loader"); if(!L) return; L.classList.add("off"); setTimeout(()=>{ if(L.classList.contains("off")) L.hidden=true; },300); }
+const nextFrame=()=>new Promise(r=>requestAnimationFrame(()=>setTimeout(r,30)));
+// если что-то сломалось при запуске — вместо чёрного экрана понятное сообщение и кнопка перезапуска (данные не трогаются)
+let bootDone=false;
+function bootFail(e){ console.error(e); const L=$("loader"); if(!L||bootDone) return; L.hidden=false; L.classList.remove("off","dim"); $("ldTitle").textContent="Не получилось открыть приложение"; $("ldText").textContent="Ваши постройки и модели сохранены на этом устройстве. Попробуйте перезапустить. "+(e&&e.message?"("+e.message+")":""); $("ldReload").hidden=false; }
+$("ldReload").addEventListener("click",()=>location.reload());
+window.addEventListener("error",e=>{ if(!bootDone) bootFail(e.error||e); });
+window.addEventListener("unhandledrejection",e=>{ if(!bootDone) bootFail(e.reason); });
 async function boot(){
   setSize(bookUI.size||"m");
   try{ await IDB.open(); }catch(_){}
   await loadProjects(); await migrateOld(); await loadResidents(); await loadUserModels(); await loadUserSets(); applyModelNames(); adoptOrphanInstr(); buildAllSet();
-  route();
+  await route(); bootDone=true; loaderHide();
   requestAnimationFrame(pumpThumbs);
   requestAnimationFrame(frame);
   try{ if(navigator.storage&&navigator.storage.persisted&&!(await navigator.storage.persisted())) navigator.storage.persist().catch(()=>{}); }catch(_){}
@@ -5587,7 +5616,7 @@ window.__mb={ev:s=>eval(s),cam:(th,ph,r,x,y,z)=>{cam.theta=th;cam.phi=ph;cam.r=c
    Модели хранятся на этом устройстве (IndexedDB) и показываются в «Готовых моделях». */
 const USER_MODELS_KEY="usermodels";
 async function loadUserModels(){ let list=null; try{ list=await IDB.get("kv",USER_MODELS_KEY); }catch(_){ try{ list=JSON.parse(ls.get("myblocks.usermodels")||"null"); }catch(_){} }
-  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); MODELS[M.id]=M; regModelParts(M); if(M.grav!==5){ try{ gravityOrder(M); splitBigSteps(M); }catch(_){} M.grav=5; fix=true; } } }); if(fix) saveUserModels(); }
+  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); MODELS[M.id]=M; regModelParts(M);  } }); if(fix) saveUserModels(); }
 // цвета и формы деталей, которые модель принесла с собой из файла
 function regModelAssets(M){ Object.entries(M.cols||{}).forEach(([k,c])=>{ if(!COLORS[k]) COLORS[k]=c; }); Object.entries(M.dyn||{}).forEach(([id,D])=>regDynPart(id,D)); }
 // детали своей модели, которых нет ни в одном наборе, добавляются в каталог (как у встроенных моделей)
@@ -5687,6 +5716,15 @@ function ldrToModel(text,geoText,name){
   const {inst,brk,chap,subs}=walkAll(files,order[0]);
   // те же детали в model2.ldr — официальные номера и формы; пары по порядку (позиции совпадают)
   let inst2=null; if(G&&G!==A){ const r=walkAll(G.files,G.order[0],"-1").inst; if(r.length===inst.length&&r.every((x,k)=>Math.abs(x[2][3]-inst[k][2][3])<0.05&&Math.abs(x[2][7]-inst[k][2][7])<0.05)) inst2=r; }
+  // вся модель повёрнута в файле на неровный угол (например, на 45° к сетке) — разворачиваем её целиком обратно к сетке,
+  // иначе каждая деталь стоит наискосок к шипам пластины и поставить её нельзя
+  { const hist=new Map(); let vert=0; const ang=W=>{ let a=Math.atan2(W[8],W[0])*180/Math.PI; return ((a%90)+90)%90; };
+    inst.forEach(([,,W])=>{ if(Math.abs(Math.abs(W[5])-1)>0.02) return; vert++; const k=Math.round(ang(W))%90; hist.set(k,(hist.get(k)||0)+1); });
+    let best=0, bn=0; hist.forEach((v,k)=>{ if(v>bn){ bn=v; best=k; } });
+    if(Math.min(best,90-best)>=2&&bn>=vert*0.5&&vert>=3){ let sum=0, cnt=0;
+      inst.forEach(([,,W])=>{ if(Math.abs(Math.abs(W[5])-1)>0.02) return; let a=ang(W); if(Math.abs(a-best)>45) a+=a<best?90:-90; if(Math.abs(a-best)<1){ sum+=a; cnt++; } });
+      const r=(sum/cnt)*Math.PI/180, c=Math.cos(r), sn=Math.sin(r), Ry=[c,0,sn,0, 0,1,0,0, -sn,0,c,0];
+      inst.forEach(t=>{ t[2]=mul34(Ry,t[2]); }); } }
   const lib=G?G.files:files, dyn={}, used={}, dynOf={};
   // Studio пишет цвета внутри model2.ldr номерами BrickLink: соответствие берётся из самого файла (пары деталей), остальное — из таблицы
   const blLearn={}; if(inst2) inst2.forEach((x,k)=>{ const a=inst[k][1], b=x[1]; if(!/^-|^16$|^24$/.test(b)&&!/^-|^16$|^24$/.test(a)&&blLearn[b]===undefined) blLearn[b]=a; });
@@ -5733,14 +5771,14 @@ function ldrToModel(text,geoText,name){
 const LDIMP_APPCOLS=new Set(Object.keys(COLORS));
 $("hModelLoad").addEventListener("click",()=>$("modelFile").click());
 $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return;
-  toast("Читаю модель «"+f.name+"»…");
+  loaderShow("Читаю модель «"+f.name+"» и готовлю инструкцию…",true); await nextFrame();
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
     const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
     MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=5; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
-    location.hash="model-"+id; }
-  catch(err){ toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
+    loaderHide(); location.hash="model-"+id; }
+  catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
 /* ---------- Персонажи: готовые фигурки из загруженных моделей. Меняются только цвета кожи и волос ---------- */
 const SKIN_COLS=["yellow","lnougat","nougat","mnougat","dnougat","rbrown"], HAIR_COLS=["black","dbrown","rbrown","mnougat","tan","dtan","dred","orange","white","lbgray","dbgray"];
 const isHairPart=p=>/hair|headgear|hat|helmet|hood|beard|волос|шляп/i.test(designName(p.p)||"");
@@ -5947,14 +5985,19 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
     const lower=i=>[...N[i]].filter(j=>inI[j]&&B[j][4]<=B[i][1]+e&&B[j][1]<B[i][1]-e);
     const need=new Int32Array(n); I.forEach(i=>{ need[i]=lower(i).length; });
     const upOf=new Map(); I.forEach(i=>lower(i).forEach(j=>{ let L=upOf.get(j); if(!L) upOf.set(j,L=[]); L.push(i); }));
-    const key=i=>[depth[i],stepOf[i],B[i][1],i], less=(a,b)=>{ const A=key(a), Bk=key(b); for(let k=0;k<4;k++){ if(A[k]!==Bk[k]) return A[k]<Bk[k]; } return false; };
-    const conn=i=>B[i][1]<0.05||[...N[i]].some(j=>placed[j]);
-    let left=I.length;
-    const put=i=>{ out.push(i); placed[i]=1; left--; (upOf.get(i)||[]).forEach(u=>need[u]--); };
+    const less=(a,b)=>(depth[a]-depth[b])||(stepOf[a]-stepOf[b])||(B[a][1]-B[b][1])||(a-b);
+    // кучи: готовые к постановке; просто прикреплённые (на случай, когда ждать опору снизу нельзя)
+    const mkHeap=()=>{ const h=[]; return { h, push(x){ h.push(x); let i=h.length-1; while(i>0){ const p=(i-1)>>1; if(less(h[i],h[p])<0){ [h[i],h[p]]=[h[p],h[i]]; i=p; } else break; } },
+      pop(){ const top=h[0], last=h.pop(); if(h.length){ h[0]=last; let i=0; for(;;){ const l=2*i+1, r=l+1; let m=i; if(l<h.length&&less(h[l],h[m])<0) m=l; if(r<h.length&&less(h[r],h[m])<0) m=r; if(m===i) break; [h[i],h[m]]=[h[m],h[i]]; i=m; } } return top; } }; };
+    const ready=mkHeap(), linked=mkHeap(), con=new Uint8Array(n), inR=new Uint8Array(n), inL=new Uint8Array(n);
+    const offer=i=>{ if(placed[i]||!inI[i]) return; if(con[i]&&!inL[i]){ inL[i]=1; linked.push(i); } if(con[i]&&need[i]<=0&&!inR[i]){ inR[i]=1; ready.push(i); } };
+    I.forEach(i=>{ if(B[i][1]<0.05||[...N[i]].some(j=>placed[j])) con[i]=1; offer(i); });
+    let left=I.length, rest=I.slice().sort(less), rp=0;
+    const put=i=>{ out.push(i); placed[i]=1; left--; (upOf.get(i)||[]).forEach(u=>{ need[u]--; offer(u); }); N[i].forEach(j=>{ if(!con[j]){ con[j]=1; offer(j); } }); };
     while(left>0){ let best=-1;
-      for(const i of I){ if(placed[i]||need[i]>0||!conn(i)) continue; if(best<0||less(i,best)) best=i; }
-      if(best<0) for(const i of I){ if(placed[i]||!conn(i)) continue; if(best<0||less(i,best)) best=i; } // висит снизу на детали — ставим, как только есть к чему
-      if(best<0) for(const i of I){ if(placed[i]) continue; if(best<0||less(i,best)) best=i; }
+      while(ready.h.length){ const x=ready.pop(); if(!placed[x]){ best=x; break; } }
+      if(best<0) while(linked.h.length){ const x=linked.pop(); if(!placed[x]){ best=x; break; } } // висит снизу на детали — ставим, как только есть к чему
+      if(best<0){ while(rp<rest.length&&placed[rest[rp]]) rp++; best=rest[rp]; }
       put(best); } }
   let moved=0; out.forEach((i,k)=>{ if(i!==k) moved++; });
   const nb=[]; for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k]; if(chOf[a]!==chOf[b]||depth[a]!==depth[b]||stepOf[a]!==stepOf[b]) nb.push(k); }
