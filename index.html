@@ -878,6 +878,27 @@ html,body{touch-action:manipulation}
 #scrHome #paneModels,#scrHome #paneOwn{margin-bottom:var(--gap)}
 
 .scr .grid.is-empty{display:block}
+
+/* меню разделов и значок персонализации — вместе по центру шапки */
+#scrHome .topbar .hseg{position:static;transform:none}
+.hnav{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px}
+.hprof{appearance:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}
+.hprof:hover{background:var(--surface-2)}.hprof .ic{width:18px;height:18px}
+@media (max-width:700px){ .hnav{position:static;transform:none;margin:0 auto} }
+/* большое окно персонализации */
+.sheet.big{width:min(720px,100%);max-height:88vh;padding:24px;gap:16px}
+.sh-top{display:flex;align-items:center;justify-content:space-between}.sh-top h2{margin:0;font-size:18px}
+.sh-top .ib{width:40px;height:40px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.st-list{display:flex;flex-direction:column}
+.st-row{appearance:none;border:0;background:none;color:inherit;font:inherit;text-align:left;display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:default}
+button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
+.st-row:last-child{border-bottom:0}
+.st-tx{display:flex;flex-direction:column;gap:2px;min-width:0}.st-tx b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-tx span{font-size:12px;color:var(--muted)}
+.st-b{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;align-self:center}
+.st-bar{grid-column:1/-1;height:3px;border-radius:2px;background:var(--surface-3);overflow:hidden;margin-top:6px}.st-bar i{display:block;height:100%;background:var(--accent)}
+
+.ac-note{font-size:13px;line-height:1.5;color:var(--muted);margin:0}
+#acRestore.danger{color:var(--danger);border-color:var(--danger)}
 </style>
 </head>
 <body>
@@ -926,10 +947,9 @@ html,body{touch-action:manipulation}
 <!-- ГЛАВНАЯ -->
 <section class="scr" id="scrHome" hidden>
   <header class="topbar"><span class="wordmark"><i class="logo" aria-hidden="true"></i>MyBlocks</span><span class="grow"></span>
-    <div class="hseg" role="tablist" aria-label="Раздел"><button role="tab" id="hsModels" aria-selected="true"><span class="lg">Готовые модели</span><span class="sh">Модели</span></button><button role="tab" id="hsOwn" aria-selected="false"><span class="lg">Самостоятельная сборка</span><span class="sh">Сборка</span></button></div>
+    <div class="hnav"><div class="hseg" role="tablist" aria-label="Раздел"><button role="tab" id="hsModels" aria-selected="true"><span class="lg">Готовые модели</span><span class="sh">Модели</span></button><button role="tab" id="hsOwn" aria-selected="false"><span class="lg">Самостоятельная сборка</span><span class="sh">Сборка</span></button></div><button class="hprof acct-open" id="hProfile" aria-label="Персонализация и память" title="Персонализация и память"><svg class="ic"><use href="#i-user"/></svg></button></div>
     <span class="grow"></span>
-    <button class="pill tb-load" id="tbLoad" tabindex="-1"><svg class="ic"><use href="#i-import"/></svg><span>Загрузить модель</span></button>
-    <button class="pill acct-btn"><svg class="ic"><use href="#i-user"/></svg><span>Кабинет</span><i class="sync-dot"></i></button></header>
+    <button class="pill tb-load" id="tbLoad" tabindex="-1"><svg class="ic"><use href="#i-import"/></svg><span>Загрузить модель</span></button></header>
   <main class="scr-in">
     <div id="paneModels" role="tabpanel" aria-labelledby="hsModels">
       <div class="sec-top"><div><h1>Готовые модели</h1>
@@ -1138,7 +1158,7 @@ html,body{touch-action:manipulation}
   <section class="book glass m ins free-only" id="insBook" hidden aria-label="Инструкция по шагам">
     <div class="book-head ins-drag" id="insHead">
       <span class="grip" aria-hidden="true"></span>
-      <div class="ins-title"><b>Инструкция</b><span class="ins-test">тест</span></div>
+      <div class="ins-title"><b>Инструкция</b></div>
       <div class="seg2" aria-label="Размер окна"><button data-isz="xs" aria-label="Самое маленькое окно">XS</button><button data-isz="sm" aria-label="Маленькое окно">S</button><button data-isz="s" aria-label="Среднее окно">M</button><button data-isz="m" aria-label="Большое окно">L</button><button data-isz="l" aria-label="Самое большое окно">XL</button></div>
       <button class="ib" id="insHide" aria-label="Свернуть инструкцию"><svg class="ic"><use href="#i-x"/></svg></button>
     </div>
@@ -1219,9 +1239,9 @@ html,body{touch-action:manipulation}
 
 <!-- КАБИНЕТ -->
 <div class="sheet-bg" id="acctSheet" hidden>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
-    <h2 id="acctTitle">Кабинет</h2>
-    <div class="box">
+  <div class="sheet big" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <div class="sh-top"><h2 id="acctTitle">Персонализация</h2><button class="ib" id="acX" aria-label="Закрыть"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="box" id="acSyncBox">
       <div class="h"><svg class="ic"><use href="#i-cloud"/></svg><span id="acName">Синхронизация</span></div>
       <p id="acSync"></p>
     </div>
@@ -1232,11 +1252,17 @@ html,body{touch-action:manipulation}
       <button class="btn" id="acPersist" hidden>Закрепить хранилище</button>
     </div>
     <div class="box">
-      <div class="h">Файлы</div>
-      <p>Выгрузите все постройки в файл, чтобы перенести их вручную или сохранить копию. Загрузка добавит постройки из файла к уже существующим.</p>
-      <div class="row"><button class="btn" id="acExport"><svg class="ic"><use href="#i-export"/></svg>Выгрузить все</button><button class="btn" id="acImport"><svg class="ic"><use href="#i-import"/></svg>Загрузить файл</button></div>
+      <div class="h">Что занимает место</div>
+      <p id="acTotal"></p>
+      <div class="st-list" id="acList"></div>
     </div>
-    <p>Книги-инструкции в PDF хранятся только на этом устройстве: на другом их нужно открыть заново.</p>
+    <div class="box">
+      <div class="h">Резервная копия</div>
+      <p>Один файл со всем, что есть в приложении: загруженные модели и наборы, постройки, прогресс и сессии сборок, персонажи, закреплённые ракурсы, настройки и книги PDF. Подходит, чтобы перенести всё на другое устройство или сохранить копию.</p>
+      <div class="row"><button class="btn" id="acBackup"><svg class="ic"><use href="#i-export"/></svg>Сохранить всё в файл</button><button class="btn" id="acRestore"><svg class="ic"><use href="#i-import"/></svg>Восстановить из файла</button></div>
+      <p class="ac-note" id="acBkNote" hidden></p>
+      <input type="file" id="backupFile" accept=".json,application/json" hidden>
+    </div>
     <button class="btn" id="acClose">Готово</button>
   </div>
 </div>
@@ -2163,6 +2189,10 @@ function dynColGeo(spec,c,pm){ const key=spec.id+"|"+c+(pm?"|"+JSON.stringify(pm
   for(let t=0;t<n/3;t++){ const k=D.tc[t], C=k<0?cm:pc[k]; for(let v=0;v<3;v++){ col[(t*3+v)*3]=C.r; col[(t*3+v)*3+1]=C.g; col[(t*3+v)*3+2]=C.b; } }
   const g=new THREE.BufferGeometry(); g.setAttribute("position",base.attributes.position); g.setAttribute("normal",base.attributes.normal); g.setAttribute("color",new THREE.BufferAttribute(col,3));
   g.boundingBox=base.boundingBox; g.boundingSphere=base.boundingSphere; return dynColCache[key]=g; }
+const GLOW_COLS=new Set(["tyellow","torange","tred"]), FLAME_IDS=new Set(["37775","6126b","6126a","6126","85959","64647","x_64647"]);
+const isFlame=s=>!!(s&&s.id&&(FLAME_IDS.has(s.id)||/пламя|огон|flame|fire|torch|факел/i.test((typeof designName==="function"&&designName(s.id))||"")));
+const glassCache={};
+function matGlass(c){ if(!glassCache[c]){ const C=colorOf(c); glassCache[c]=new THREE.MeshPhysicalMaterial({side:THREE.DoubleSide,color:C.hex,roughness:.04,metalness:0,clearcoat:1,clearcoatRoughness:.05,reflectivity:.6,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}); glassCache[c].color.convertSRGBToLinear(); } return glassCache[c]; }
 function mat(c){ if(!matCache[c]){ const C=colorOf(c);
   matCache[c]=C.trans
     ? new THREE.MeshPhysicalMaterial({side:THREE.DoubleSide,color:C.hex,roughness:.04,metalness:0,clearcoat:1,clearcoatRoughness:.05,reflectivity:.6,transparent:true,opacity:c==="tclear"?0.28:0.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1})
@@ -2195,6 +2225,8 @@ function buildObject(spec,color,o,f,ghost){
   if(spec.k==="fig") inner.add(figGroup(f,ghost?ghostMat:mat,edges));
   else {
     let mt=ghost?ghostMat(color):mat(color);
+    // свечение — только у огня (пламя, свеча); остальные прозрачные детали этих цветов — обычное прозрачное стекло
+    if(!ghost&&GLOW_COLS.has(color)&&!isFlame(spec)) mt=matGlass(color);
     if(!ghost && spec.k==="glass" && !(COLORS[color]||{}).trans) mt=mat("tclear");
     if(spec.k==="foil"&&FOIL_IMG[spec.id]){ const pm=new THREE.Mesh(new THREE.PlaneGeometry(spec.w,spec.d),ghost?ghostMat(color):new THREE.MeshStandardMaterial({map:stickerTexture(FOIL_IMG[spec.id]),transparent:true,alphaTest:0.4,side:THREE.DoubleSide,roughness:.55}));
       pm.rotation.x=-Math.PI/2; pm.position.set(spec.w/2,Math.max(0.02,spec.h*PH/2),spec.d/2); inner.add(pm); }
@@ -2639,7 +2671,10 @@ function landing(spec,o,cx,cy,ignore){
   if(!spec) return null;
   let h=pickAt(cx,cy,ignore); if(!h) return null;
   // сборка по инструкции: рядом с местом детали в модели — встаёт ровно как в модели (вдали — по обычным правилам, можно отступить от книги)
-  if(typeof insSnap==="function"&&o&&!o.f){ const si=insSnap(spec,o,h); if(si) return si; }
+  if(typeof insSnap==="function"&&o&&!o.f){ const si=insSnap(spec,o,h)||(o.p&&(/^x_/.test(o.p)||!CONN[o.p])?insSnap(spec,o,h,true):null); if(si) return si; }
+  if(typeof insSnap==="function"&&IB&&o&&!o.f){ const r=landingRules(spec,o,h,cx,cy,ignore); return r||insSnap(spec,o,h,true); }
+  return landingRules(spec,o,h,cx,cy,ignore); }
+function landingRules(spec,o,h,cx,cy,ignore){
   if(o&&!o.f&&spec.k==="ld"){ const r=connLand(spec,o,h,ignore); if(r) return r;
     // палец попал в стекло, к которому деталь не цепляется, а сквозь него видна деталь с подходящим соединением
     // (боковые шипы за окном) — касание проходит сквозь стекло; иначе остаётся касанием стекла, как раньше
@@ -4467,7 +4502,8 @@ function openSheet(id){ $(id).hidden=false; }
 function closeSheet(id){ $(id).hidden=true; }
 function closeSheets(){ ["acctSheet","projSheet","dumpSheet","groupSheet","stkSheet"].forEach(closeSheet); if(!$("resSheet").hidden) rsClose(); }
 ["acctSheet","projSheet","dumpSheet"].forEach(id=>$(id).addEventListener("click",e=>{ if(e.target.id===id){ closeSheet(id); if(id==="projSheet") refreshScreen(); } }));
-document.querySelectorAll(".acct-btn").forEach(b=>b.addEventListener("click",openAccount));
+document.querySelectorAll(".acct-btn,.acct-open").forEach(b=>b.addEventListener("click",openAccount));
+$("acX").addEventListener("click",()=>closeSheet("acctSheet"));
 function openAccount(){ renderAccount(); openSheet("acctSheet"); }
 async function renderAccount(){
   const st=Cloud.state;
@@ -4487,10 +4523,53 @@ async function renderAccount(){
   if(est&&est.quota){ $("acMeter").style.width=Math.max(1,Math.min(100,est.usage/est.quota*100))+"%"; }
   $("acStore").textContent=n+" "+plural(n,"постройка","постройки","построек")+" и книги-инструкции хранятся в IndexedDB этого браузера"+(est&&est.quota?": занято "+mb(est.usage||0)+" из "+gb(est.quota)+" доступных":"")+". "+(persisted?"Хранилище закреплено: браузер не будет стирать его при нехватке места.":"Закрепите хранилище, чтобы браузер не стёр его при нехватке места.");
   $("acPersist").hidden=persisted||!(navigator.storage&&navigator.storage.persist);
+  $("acSyncBox").hidden=!document.body.classList.contains("cloud");
+  renderStorageList(mb);
 }
+// что сколько места занимает: каждая загруженная модель, свои наборы, постройки, сессии сборки
+async function renderStorageList(mb){ const box=$("acList"); box.innerHTML=""; const sz=o=>{ try{ return new Blob([JSON.stringify(o)]).size; }catch(_){ return 0; } };
+  const rows=[]; Object.values(MODELS).filter(M=>M.user).forEach(M=>rows.push({n:M.name,k:"Модель · "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей"),b:sz(M),go:"model-"+M.id}));
+  let sets=[]; try{ sets=(await IDB.get("kv","usersets"))||[]; }catch(_){}
+  sets.forEach(U=>rows.push({n:U.name,k:"Набор",b:sz(U),go:"set-"+U.id}));
+  const builds=[...PROJ.values()], bb=builds.reduce((a,r)=>a+sz({p:r.parts,l:r.layers,t:r.thumb}),0); if(builds.length) rows.push({n:"Постройки",k:builds.length+" "+plural(builds.length,"постройка","постройки","построек")+" с прогрессом сборок",b:bb});
+  let sb=0, sn=0; for(const id of Object.keys(MODELS)){ const L=await getSessions(id); sn+=L.length; sb+=sz(L); } if(sn) rows.push({n:"Сессии сборки",k:sn+" "+plural(sn,"сессия","сессии","сессий"),b:sb});
+  rows.sort((a,b)=>b.b-a.b); const tot=rows.reduce((a,r)=>a+r.b,0);
+  $("acTotal").textContent=rows.length?"Ваши данные — примерно "+mb(tot):"Пока ничего не загружено";
+  rows.forEach(r=>{ const el=document.createElement(r.go?"button":"div"); el.className="st-row";
+    el.innerHTML='<div class="st-tx"><b></b><span></span></div><span class="st-b"></span><i class="st-bar"><i></i></i>';
+    el.querySelector("b").textContent=r.n; el.querySelector(".st-tx span").textContent=r.k; el.querySelector(".st-b").textContent=mb(r.b); el.querySelector(".st-bar i").style.width=(tot?Math.max(1,r.b/tot*100):0)+"%";
+    if(r.go) el.addEventListener("click",()=>{ closeSheet("acctSheet"); location.hash=r.go; }); box.appendChild(el); }); }
 $("acPersist").addEventListener("click",async()=>{ let ok=false; try{ ok=await navigator.storage.persist(); }catch(_){} toast(ok?"Хранилище закреплено":"Браузер пока не разрешил закрепить хранилище. Обычно он разрешает это сайтам, которыми часто пользуются"); renderAccount(); });
-$("acExport").addEventListener("click",exportAll);
-$("acImport").addEventListener("click",()=>startImport(CUR_SET));
+/* ---------- Полная резервная копия: все хранилища приложения (IndexedDB) и его настройки (localStorage) ---------- */
+const BK_FORMAT="myblocks-backup";
+async function idbDump(store){ const db=await IDB.open(); return new Promise((res,rej)=>{ const t=db.transaction(store,"readonly"), st=t.objectStore(store), out=[]; const rq=st.openCursor();
+  rq.onsuccess=()=>{ const c=rq.result; if(c){ out.push([c.key,c.value]); c.continue(); } }; t.oncomplete=()=>res(out); t.onerror=()=>rej(t.error); }); }
+const ab2b64=buf=>{ const u=new Uint8Array(buf); let s=""; for(let i=0;i<u.length;i+=0x8000) s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(s); };
+const b642ab=s=>{ const bin=atob(s), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; };
+const packVal=v=>v instanceof ArrayBuffer?{__ab:ab2b64(v)}:ArrayBuffer.isView(v)?{__ab:ab2b64(v.buffer.slice(v.byteOffset,v.byteOffset+v.byteLength))}:v;
+const unpackVal=v=>v&&typeof v==="object"&&typeof v.__ab==="string"?b642ab(v.__ab):v;
+async function makeBackup(){ const data={format:BK_FORMAT,version:1,app:"MyBlocks",exported:new Date().toISOString(),stores:{},local:{}};
+  for(const st of ["projects","kv","pdf"]){ try{ data.stores[st]=(await idbDump(st)).map(([k,v])=>[k,packVal(v)]); }catch(_){ data.stores[st]=[]; } }
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&/^(myblocks|tisovaya)\./.test(k)) data.local[k]=localStorage.getItem(k); } }catch(_){}
+  return data; }
+$("acBackup").addEventListener("click",async()=>{ const bt=$("acBackup"); bt.disabled=true; try{ await saveNow&&saveNow(); }catch(_){}
+  try{ const d=await makeBackup(), n=d.stores.projects.length; const txt=JSON.stringify(d); const day=new Date().toISOString().slice(0,10);
+    await offerFile("MyBlocks — резервная копия "+day+".json",txt); $("acBkNote").hidden=false; $("acBkNote").textContent="В копии: "+n+" "+plural(n,"постройка","постройки","построек")+", "+(m=>m+" "+plural(m,"модель","модели","моделей"))(Object.values(MODELS).filter(M=>M.user).length)+", размер "+(new Blob([txt]).size/1048576).toLocaleString("ru-RU",{maximumFractionDigits:1})+" МБ."; }
+  catch(e){ toast("Не получилось собрать копию: "+(e&&e.message||e)); } bt.disabled=false; });
+let bkPending=null;
+$("acRestore").addEventListener("click",()=>{ if(bkPending){ doRestore(bkPending); return; } $("backupFile").click(); });
+$("backupFile").addEventListener("change",async e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return; let d=null; try{ d=JSON.parse(await f.text()); }catch(_){}
+  if(!d||d.format!==BK_FORMAT||!d.stores){ if(d&&(Array.isArray(d.projects)||Array.isArray(d.parts))){ toast("Это файл построек — загрузите его в «Сохранённых сборках»"); } else toast("Это не резервная копия MyBlocks"); return; }
+  bkPending=d; const n=(d.stores.projects||[]).length, nm=((d.stores.kv||[]).find(([k])=>k==="usermodels")||[0,[]])[1].length;
+  $("acBkNote").hidden=false; $("acBkNote").textContent="Копия от "+new Date(d.exported).toLocaleString("ru-RU",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})+": "+n+" "+plural(n,"постройка","постройки","построек")+", "+nm+" "+plural(nm,"модель","модели","моделей")+". Восстановление заменит всё, что сейчас в приложении. Нажмите «Восстановить» ещё раз, чтобы подтвердить.";
+  $("acRestore").lastChild.textContent="Восстановить"; $("acRestore").classList.add("danger"); });
+async function doRestore(d){ const bt=$("acRestore"); bt.disabled=true; $("acBkNote").textContent="Восстанавливаю…";
+  try{ const db=await IDB.open();
+    for(const st of ["projects","kv","pdf"]){ if(!db.objectStoreNames.contains(st)) continue; await new Promise((res,rej)=>{ const t=db.transaction(st,"readwrite"), o=t.objectStore(st); o.clear();
+        (d.stores[st]||[]).forEach(([k,v])=>{ const val=unpackVal(v); if(o.keyPath) o.put(val); else o.put(val,k); }); t.oncomplete=res; t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); }); }
+    try{ const del=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&/^(myblocks|tisovaya)\./.test(k)) del.push(k); } del.forEach(k=>localStorage.removeItem(k)); Object.entries(d.local||{}).forEach(([k,v])=>localStorage.setItem(k,v)); }catch(_){}
+    toast("Всё восстановлено, перезапускаю приложение"); setTimeout(()=>{ location.hash=""; location.reload(); },700); }
+  catch(e){ bt.disabled=false; bkPending=null; $("acBkNote").textContent="Не получилось восстановить: "+(e&&e.message||e); } }
 $("acClose").addEventListener("click",()=>closeSheet("acctSheet"));
 
 /* лист постройки: имя, файл, удаление */
@@ -4545,24 +4624,29 @@ MV.canvas=document.createElement("canvas"); MV.canvas.setAttribute("aria-label",
 MV.r=new THREE.WebGLRenderer({canvas:MV.canvas,antialias:true,alpha:true}); MV.r.outputEncoding=THREE.sRGBEncoding; MV.r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 MV.scene=new THREE.Scene(); addLights(MV.scene,false);
 MV.cam=new THREE.PerspectiveCamera(30,1,0.1,500);
-Object.assign(MV,{host:null,obj:null,spec:null,theta:0.7,phi:1.05,dist:20,idle:0,ptrs:new Map(),pinch:0,w:0,h:0});
-function mvShow(host,obj,spec){ mvHide(); MV.obj=obj; MV.spec=spec; MV.scene.add(obj); MV.dist=Math.max(spec.w,spec.d,spec.h*PH)*2.5+5; MV.theta=0.7; MV.phi=1.05; MV.idle=0; host.prepend(MV.canvas); MV.host=host; }
+Object.assign(MV,{host:null,obj:null,spec:null,theta:0.7,phi:1.05,dist:20,idle:0,ptrs:new Map(),pinch:0,w:0,h:0,tgt:new THREE.Vector3(),mid:null});
+function mvShow(host,obj,spec){ mvHide(); MV.obj=obj; MV.spec=spec; MV.scene.add(obj); MV.dist=Math.max(spec.w,spec.d,spec.h*PH)*2.5+5; MV.theta=0.7; MV.phi=1.05; MV.tgt.set(0,0,0); MV.idle=0; host.prepend(MV.canvas); MV.host=host; }
 function mvHide(){ if(MV.canvas.parentNode) MV.canvas.remove(); MV.host=null; if(MV.obj){ MV.scene.remove(MV.obj); MV.obj=null; } }
 function mvSize(w,h){ if(w!==MV.w||h!==MV.h){ MV.w=w; MV.h=h; MV.r.setSize(w,h,false); } MV.cam.aspect=w/h; MV.cam.updateProjectionMatrix(); }
-function mvCam(theta,phi,dist){ const s=Math.sin(phi); MV.cam.position.set(dist*s*Math.sin(theta),dist*Math.cos(phi),dist*s*Math.cos(theta)); MV.cam.lookAt(0,0,0); }
+function mvCam(theta,phi,dist){ const s=Math.sin(phi), t=MV.tgt; MV.cam.position.set(t.x+dist*s*Math.sin(theta),t.y+dist*Math.cos(phi),t.z+dist*s*Math.cos(theta)); MV.cam.lookAt(t); }
+// сдвиг модели в окне (двумя пальцами, правой кнопкой мыши или с Shift): точка, на которую смотрит камера, едет в плоскости экрана
+function mvPan(dx,dy){ const h=MV.h||400, k=2*MV.dist*Math.tan(MV.cam.fov*Math.PI/360)/h; MV.cam.updateMatrixWorld(); const r=new THREE.Vector3().setFromMatrixColumn(MV.cam.matrixWorld,0), u=new THREE.Vector3().setFromMatrixColumn(MV.cam.matrixWorld,1);
+  MV.tgt.addScaledVector(r,-dx*k).addScaledVector(u,dy*k); const L=MV.spec?Math.max(MV.spec.w,MV.spec.d,MV.spec.h*PH):20; MV.tgt.clampLength(0,L); }
 function mvRender(){
   if(!MV.host||!MV.obj) return;
   const w=MV.host.clientWidth, h=MV.host.clientHeight; if(!w||!h) return;
   mvSize(w,h);
   mvCam(MV.theta,MV.phi,MV.dist*(h>w?1.25:1)); MV.r.render(MV.scene,MV.cam);
 }
-MV.canvas.addEventListener("pointerdown",e=>{ MV.canvas.setPointerCapture(e.pointerId); MV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(MV.ptrs.size===2){ const [a,b]=[...MV.ptrs.values()]; MV.pinch=Math.hypot(a.x-b.x,a.y-b.y); } });
+MV.canvas.addEventListener("pointerdown",e=>{ MV.canvas.setPointerCapture(e.pointerId); MV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey}); if(MV.ptrs.size===2){ const [a,b]=[...MV.ptrs.values()]; MV.pinch=Math.hypot(a.x-b.x,a.y-b.y); MV.mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2}; } });
+MV.canvas.addEventListener("contextmenu",e=>e.preventDefault());
 MV.canvas.addEventListener("pointermove",e=>{ const p=MV.ptrs.get(e.pointerId); if(!p) return; const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY; MV.idle=performance.now()+4000;
-  if(MV.ptrs.size===1){ MV.theta-=dx*0.008; MV.phi=clamp(MV.phi-dy*0.006,0.25,1.5); }
-  else if(MV.ptrs.size===2){ const [a,b]=[...MV.ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y); if(MV.pinch>0&&MV.spec){ const base=Math.max(MV.spec.w,MV.spec.d,MV.spec.h*PH); MV.dist=clamp(MV.dist*MV.pinch/d,base*0.9+2,base*5+10); } MV.pinch=d; } });
-const mvUp=e=>{ MV.ptrs.delete(e.pointerId); if(MV.ptrs.size<2) MV.pinch=0; };
+  if(MV.ptrs.size===1){ if(p.pan) mvPan(dx,dy); else { MV.theta-=dx*0.008; MV.phi=clamp(MV.phi-dy*0.006,0.25,1.5); } }
+  else if(MV.ptrs.size===2){ const [a,b]=[...MV.ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y), m={x:(a.x+b.x)/2,y:(a.y+b.y)/2}; if(MV.pinch>0&&MV.spec){ const base=Math.max(MV.spec.w,MV.spec.d,MV.spec.h*PH); MV.dist=clamp(MV.dist*MV.pinch/d,base*0.25+1,base*5+10); } MV.pinch=d;
+    if(MV.mid) mvPan(m.x-MV.mid.x,m.y-MV.mid.y); MV.mid=m; } });
+const mvUp=e=>{ MV.ptrs.delete(e.pointerId); if(MV.ptrs.size<2){ MV.pinch=0; MV.mid=null; } };
 MV.canvas.addEventListener("pointerup",mvUp); MV.canvas.addEventListener("pointercancel",mvUp);
-MV.canvas.addEventListener("wheel",e=>{ if(!MV.spec) return; e.preventDefault(); const base=Math.max(MV.spec.w,MV.spec.d,MV.spec.h*PH); MV.dist=clamp(MV.dist*(1+e.deltaY*0.0012),base*0.9+2,base*5+10); MV.idle=performance.now()+4000; },{passive:false});
+MV.canvas.addEventListener("wheel",e=>{ if(!MV.spec) return; e.preventDefault(); const base=Math.max(MV.spec.w,MV.spec.d,MV.spec.h*PH); MV.dist=clamp(MV.dist*(1+e.deltaY*0.0012),base*0.25+1,base*5+10); MV.idle=performance.now()+4000; },{passive:false});
 
 let spins=null;
 function buildSpins(){
@@ -4634,7 +4718,14 @@ function frontThumb(obj,size,elev,yaw){ size=size||640; if(thumbCanvas.width!==s
   thumbCam.position.copy(c).addScaledVector(dir,hi); thumbCam.lookAt(c); thumbR.render(thumbScene,thumbCam); return thumbCanvas.toDataURL("image/png"); }
 // закреплённый ракурс модели (кнопка на странице модели): с него открывается просмотр и рисуется превью
 function modelView(id){ try{ const v=JSON.parse(ls.get("myblocks.view."+id)||"null"); if(v&&isFinite(v.t)&&isFinite(v.p)) return v; }catch(_){} const M=MODELS[id]; return M&&M.view?M.view:null; }
-function bentoImg(id){ if(!bentoImgs[id]){ const P=partsGroup(modelParts(MODELS[id])), v=modelView(id); bentoImgs[id]=v?frontThumb(P.g,640,90-v.p*180/Math.PI,v.t):frontThumb(P.g,640,16,(MODELS[id].front||0)*Math.PI/2); } return bentoImgs[id]; }
+// закреплённый вид: угол, масштаб и сдвиг — превью снимается той же камерой, что в окне просмотра
+const viewNow=()=>({t:+MV.theta.toFixed(4),p:+MV.phi.toFixed(4),d:+MV.dist.toFixed(3),c:MV.tgt.toArray().map(v=>+v.toFixed(3))});
+function viewApply(v){ MV.theta=v.t; MV.phi=v.p; if(v.d) MV.dist=v.d; if(v.c) MV.tgt.fromArray(v.c); }
+function pinThumb(obj,v,size){ if(!v.d) return frontThumb(obj,size,90-v.p*180/Math.PI,v.t); if(thumbCanvas.width!==size||thumbCanvas.height!==size) thumbR.setSize(size,size,false);
+  const fov=thumbCam.fov; thumbCam.fov=MV.cam.fov; thumbCam.aspect=1; thumbCam.updateProjectionMatrix(); while(thumbScene.children.length>3) thumbScene.remove(thumbScene.children[3]); thumbScene.add(obj);
+  const c=new THREE.Vector3().fromArray(v.c||[0,0,0]), s=Math.sin(v.p); thumbCam.position.set(c.x+v.d*s*Math.sin(v.t),c.y+v.d*Math.cos(v.p),c.z+v.d*s*Math.cos(v.t)); thumbCam.lookAt(c);
+  thumbR.render(thumbScene,thumbCam); const url=thumbCanvas.toDataURL("image/png"); thumbCam.fov=fov; thumbCam.updateProjectionMatrix(); return url; }
+function bentoImg(id){ if(!bentoImgs[id]){ const P=partsGroup(modelParts(MODELS[id])), v=modelView(id); bentoImgs[id]=v?pinThumb(P.g,v,640):frontThumb(P.g,640,16,(MODELS[id].front||0)*Math.PI/2); } return bentoImgs[id]; }
 // лёгкая плашка-подсказка для пустого раздела: значок, заголовок, пояснение и кнопка
 function hintCard(title,text,btn,onClick,primary){ const e=document.createElement("div"); e.className="first-hint";
   e.innerHTML='<span class="fh-ic"><svg class="ic"><use href="#i-import"/></svg></span><div class="fh-tx"><b></b><span></span></div><button class="btn" type="button"><svg class="ic"><use href="#i-import"/></svg><span></span></button>';
@@ -4841,11 +4932,11 @@ function enterModelPage(id){
     r.querySelector("img").src=partThumb(designSpec(g.p),g.c);
     pl.appendChild(r);
   });
-  const P=partsGroup(modelParts(M)); mvShow($("mdViewer"),P.g,P.spec); { const v=modelView(id); MV.theta=v?v.t:(M.front||0)*Math.PI/2; MV.phi=v?v.p:1.3; }
+  const P=partsGroup(modelParts(M)); mvShow($("mdViewer"),P.g,P.spec); { const v=modelView(id); if(v) viewApply(v); else { MV.theta=(M.front||0)*Math.PI/2; MV.phi=1.3; } }
   // булавка: закреплено — залита акцентным цветом; нажать ещё раз — открепить
   const pin=$("mdPin"), pinShow=()=>{ const on=!!modelView(id); pin.classList.toggle("on",on); pin.setAttribute("aria-pressed",String(on)); pin.title=on?"Ракурс закреплён — нажмите, чтобы открепить":"Закрепить ракурс"; };
   pin.onclick=()=>{ if(modelView(id)){ ls.del?ls.del("myblocks.view."+id):ls.set("myblocks.view."+id,"null"); if(M.user){ delete M.view; saveUserModels(); } delete bentoImgs[id]; pinShow(); toast("Ракурс откреплён"); return; }
-    const v={t:+MV.theta.toFixed(4),p:+MV.phi.toFixed(4)}; ls.set("myblocks.view."+id,JSON.stringify(v)); if(M.user){ M.view=v; saveUserModels(); } delete bentoImgs[id]; pinShow(); toast("Ракурс закреплён: модель будет открываться так"); };
+    const v=viewNow(); ls.set("myblocks.view."+id,JSON.stringify(v)); if(M.user){ M.view=v; saveUserModels(); } delete bentoImgs[id]; pinShow(); toast("Ракурс закреплён: модель будет открываться так"); };
   pinShow(); // так же, как модель видна при сборке
 }
 
@@ -5394,20 +5485,31 @@ function insShowGhosts(off){
   if(G.children.length){ insGhostG=G; scene.add(G); } }
 // в сборке по инструкции главное — положение детали в модели: если палец рядом с местом детали этого шага
 // (или пропущенной раньше), деталь из руки встаёт точно так, как в модели, — правила креплений не спорят с файлом
-function insSnap(spec,o,h){
-  // притяжение слабое: только когда подсказки видны и палец прямо на подсказке; подсказки выключены — деталь ставится по обычным правилам
-  if(!IB||!IB.check||!IB.check.off||!o||o.f||!h||!insHintsOn()) return null; const off=IB.check.off, {b}=IB.pages[IB.page], P=h.point; let best=null;
+function insSnap(spec,o,h,wide){
+  /* Главное правило сборки по инструкции: положение в модели важнее правил соединения.
+     Деталь шага, поставленная на своё место (палец на месте детали или рядом, ±¼ шипа), садится ровно как в модели —
+     с тем же поворотом и наклоном, даже если обычные правила её туда бы не пустили. Подсказки на это не влияют.
+     wide — когда обычные правила вообще не нашли, куда поставить: тогда место ищется в радиусе 1 шипа */
+  if(!IB||!IB.check||!IB.check.off||!o||o.f||!h) return null; const R=wide?1.0:0.25; const off=IB.check.off, {b}=IB.pages[IB.page], P=h.point; let best=null;
   for(let i=0;i<b;i++){ if(IB.check.ok.has(i)) continue; const m=IB.items[i]; if(m.p!==o.p) continue; const s=specOf(m); if(!s) continue;
     const d=dims(s,m), x=m.x+off[0], y=m.y+off[1]*PH, z=m.z+off[2], x0=x+(m.ox||0), z0=z+(m.oz||0);
     // расстояние от пальца до места детали (её рамки), по горизонтали и по высоте
     const dx=Math.max(0,x0-P.x,P.x-(x0+d.W)), dz=Math.max(0,z0-P.z,P.z-(z0+d.D)), dy=Math.max(0,y-P.y-0.2,P.y-(y+d.H)-0.4), dist=Math.hypot(dx,dz,dy*1.5)+(m.c===o.c?0:0.6)+(i<IB.pages[IB.page].a?0.3:0);
-    if(dist>0.25) continue; if(!best||dist<best.dist) best={dist,m,x,y,z}; }
+    if(dist>R) continue;
+    // место уже занято такой же деталью (проверка шага ещё не успела обновиться) — пропустить
+    if(parts.some(q=>q.p===m.p&&Math.abs(q.x+(q.ox||0)-x0)<0.05&&Math.abs(q.z+(q.oz||0)-z0)<0.05&&Math.abs(q.y-y)<0.05)) continue;
+    // при равенстве — то место, чей центр ближе к пальцу
+    const cd=Math.hypot(P.x-(x0+d.W/2),P.z-(z0+d.D/2),P.y-(y+d.H/2)), sc=dist+cd*0.02;
+    if(!best||sc<best.dist) best={dist:sc,m,x,y,z}; }
   if(!best) return null; const m=best.m, r={x:best.x,y:best.y,z:best.z,rx:m.rx||0,ry:m.ry||0,rz:m.rz||0,insSnap:1};
   ["ox","oz","side","tq","tp","ra","sw"].forEach(k=>{ if(m[k]!==undefined) r[k]=m[k]; }); return r; }
+function insDefaultOff(){ if(IB._doff) return IB._doff; let x0=Infinity,x1=-Infinity,z0=Infinity,z1=-Infinity; IB.items.forEach(m=>{ const d=dims(specOf(m),m); x0=Math.min(x0,m.x+(m.ox||0)); x1=Math.max(x1,m.x+(m.ox||0)+d.W); z0=Math.min(z0,m.z+(m.oz||0)); z1=Math.max(z1,m.z+(m.oz||0)+d.D); });
+  return IB._doff=r2(-Math.round((x0+x1)/2))+"|0|"+r2(-Math.round((z0+z1)/2)); }
 function insCheck(){
   if(!IB) return; const {a,b}=IB.pages[IB.page], mine=parts.filter(p=>p.p&&!p.f);
   const byType={}; mine.forEach(p=>{ (byType[insKey(p)]=byType[insKey(p)]||[]).push(p); });
-  const votes=new Map(); let best=null, bv=0, pairs=0;
+  // пока ничего не совпало — модель стоит по центру пластины: подсказки видны с первого шага
+  const dk=insDefaultOff(), votes=new Map([[dk,0.5]]); let best=dk, bv=0.5, pairs=0;
   for(let i=0;i<b&&pairs<250000;i++){ const m=IB.items[i], L=byType[insKey(m)]; if(!L) continue;
     for(const p of L){ pairs++; const k=r2(p.x+(p.ox||0)-m.x-(m.ox||0))+"|"+r2((p.y-m.y)/PH)+"|"+r2(p.z+(p.oz||0)-m.z-(m.oz||0)); const v=(votes.get(k)||0)+1; votes.set(k,v); if(v>bv){ bv=v; best=k; } } }
   const ok=new Set(); let off=null;
@@ -5485,7 +5587,7 @@ window.__mb={ev:s=>eval(s),cam:(th,ph,r,x,y,z)=>{cam.theta=th;cam.phi=ph;cam.r=c
    Модели хранятся на этом устройстве (IndexedDB) и показываются в «Готовых моделях». */
 const USER_MODELS_KEY="usermodels";
 async function loadUserModels(){ let list=null; try{ list=await IDB.get("kv",USER_MODELS_KEY); }catch(_){ try{ list=JSON.parse(ls.get("myblocks.usermodels")||"null"); }catch(_){} }
-  (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); MODELS[M.id]=M; regModelParts(M); } }); }
+  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); MODELS[M.id]=M; regModelParts(M); if(!M.grav){ try{ gravityOrder(M); splitBigSteps(M); }catch(_){} M.grav=1; fix=true; } } }); if(fix) saveUserModels(); }
 // цвета и формы деталей, которые модель принесла с собой из файла
 function regModelAssets(M){ Object.entries(M.cols||{}).forEach(([k,c])=>{ if(!COLORS[k]) COLORS[k]=c; }); Object.entries(M.dyn||{}).forEach(([id,D])=>regDynPart(id,D)); }
 // детали своей модели, которых нет ни в одном наборе, добавляются в каталог (как у встроенных моделей)
@@ -5635,7 +5737,7 @@ $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.ta
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
     const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    MODELS[id]=model; regModelParts(model); splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=1; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
     location.hash="model-"+id; }
   catch(err){ toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
@@ -5667,7 +5769,7 @@ const figImgs={};
 // персонаж всегда лицом к зрителю: куда смотрит его голова (лицо детали головы — вдоль её +z)
 function figYaw(F){ if(F._yaw!==undefined) return F._yaw; let yaw=0; try{ const parts=modelParts({steps:F.parts}), ti=F.parts.findIndex(p=>/^(x_)?973|torso/i.test(p.p+" "+designName(p.p))), i=ti>=0?ti:F.parts.findIndex(p=>/^(x_)?3626|^(x_)?28621/.test(p.p)); if(i>=0){ const it=parts[i], sp=specOf(it), ob=buildObject(sp,it.c,it,null,true); placeObject(ob,sp,it,it.x,it.y,it.z); ob.updateMatrixWorld(true);
     let mesh=null; ob.traverse(m=>{ if(!mesh&&m.isMesh) mesh=m; }); const q=new THREE.Quaternion(); (mesh||ob).getWorldQuaternion(q); const f=new THREE.Vector3(0,0,1).applyQuaternion(q); if(Math.hypot(f.x,f.z)>0.2) yaw=Math.atan2(f.x,f.z); } }catch(_){} return F._yaw=yaw; }
-function figImg(x){ const k=x.key+"|"+(x.F.skinTo||"")+"|"+(x.F.hairTo||""); if(!figImgs[k]){ const P=partsGroup(figParts(x.F)); const v=figView(x.key); figImgs[k]=v?frontThumb(P.g,480,90-v.p*180/Math.PI,v.t):frontThumb(P.g,480,8,figYaw(x.F)); } return figImgs[k]; }
+function figImg(x){ const k=x.key+"|"+(x.F.skinTo||"")+"|"+(x.F.hairTo||""); if(!figImgs[k]){ const P=partsGroup(figParts(x.F)); const v=figView(x.key); figImgs[k]=v?pinThumb(P.g,v,480):frontThumb(P.g,480,8,figYaw(x.F)); } return figImgs[k]; }
 function renderFigs(){ const g=$("figGrid"); g.innerHTML=""; const L=allFigs(); g.hidden=!L.length; g.previousElementSibling.hidden=!L.length; if(!L.length) return;
   const todo=[]; L.forEach(x=>{ const c=document.createElement("button"); c.className="card"; c.innerHTML='<img class="img" alt=""><div class="tx"><b></b><div class="meta"></div></div>';
     c.querySelector("b").textContent=figTitle(x.F); c.querySelector(".meta").textContent="Из модели «"+x.M.name+"»"; c.querySelector("img").alt="Персонаж "+x.F.name;
@@ -5676,9 +5778,9 @@ function renderFigs(){ const g=$("figGrid"); g.innerHTML=""; const L=allFigs(); 
 function enterFig(key){ const x=allFigs().find(y=>y.key===key); if(!x){ location.hash="home"; return; }
   leaveAll(); mode="fig"; show("scrFig"); const F=x.F;
   $("fgName").textContent=figTitle(F); $("fgDesc").textContent="Персонаж из модели «"+x.M.name+"». "+F.parts.length+" "+plural(F.parts.length,"деталь","детали","деталей")+".";
-  const draw=()=>{ const P=partsGroup(figParts(F)); mvShow($("fgViewer"),P.g,P.spec); const v=figView(key); MV.theta=v?v.t:figYaw(F); MV.phi=v?v.p:1.4; MV.dist*=0.8; };
+  const draw=()=>{ const P=partsGroup(figParts(F)); mvShow($("fgViewer"),P.g,P.spec); const v=figView(key); MV.dist*=0.8; if(v) viewApply(v); else { MV.theta=figYaw(F); MV.phi=1.4; } };
   const pin=$("fgPin"), pinShow=()=>{ const on=!!figView(key); pin.classList.toggle("on",on); pin.setAttribute("aria-pressed",String(on)); pin.title=on?"Ракурс закреплён — нажмите, чтобы открепить":"Закрепить ракурс"; };
-  pin.onclick=()=>{ if(figView(key)) ls.set("myblocks.figview."+key,"null"); else ls.set("myblocks.figview."+key,JSON.stringify({t:+MV.theta.toFixed(4),p:+MV.phi.toFixed(4)})); Object.keys(figImgs).forEach(k=>{ if(k.indexOf(key+"|")===0) delete figImgs[k]; }); pinShow(); toast(figView(key)?"Ракурс закреплён":"Ракурс откреплён"); };
+  pin.onclick=()=>{ if(figView(key)) ls.set("myblocks.figview."+key,"null"); else ls.set("myblocks.figview."+key,JSON.stringify(viewNow())); Object.keys(figImgs).forEach(k=>{ if(k.indexOf(key+"|")===0) delete figImgs[k]; }); pinShow(); toast(figView(key)?"Ракурс закреплён":"Ракурс откреплён"); };
   pinShow();
   const sw=(box,list,cur,base,on)=>{ box.innerHTML=""; list.forEach(c=>{ const b=document.createElement("button"); b.className="sw-btn"+((cur||base)===c?" on":""); b.style.background=hex(c); b.title=(COLORS[c]||{}).name||c; b.setAttribute("aria-label",b.title);
     b.addEventListener("click",()=>{ on(c===base?null:c); }); box.appendChild(b); }); };
@@ -5805,6 +5907,28 @@ use("db").then(d=>{ if(d) document.body.classList.add("cloud"); });
 document.addEventListener("gesturestart",e=>e.preventDefault()); document.addEventListener("gesturechange",e=>e.preventDefault());
 document.addEventListener("touchmove",e=>{ if(e.scale!==undefined&&e.scale!==1) e.preventDefault(); },{passive:false});
 document.addEventListener("wheel",e=>{ if(e.ctrlKey) e.preventDefault(); },{passive:false});
+/* ---------- Порядок сборки «снизу вверх»: деталь не ставится в воздух.
+   Идём по шагам автора; деталь, которой не на что опереться (не на основе и не касается уже поставленных), откладывается
+   и встаёт сразу, как только появится то, к чему она крепится. Шаги автора сохраняются, отложенные детали — отдельными шагами */
+function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
+  const br=[0,...(M.breaks||[]).filter(k=>k>0&&k<n),n], stepOf=new Int32Array(n); for(let k=0;k+1<br.length;k++) for(let i=br[k];i<br[k+1];i++) stepOf[i]=k;
+  const B=S.map(s=>{ const d=dims(designSpec(s.p),s), x=s.x+(s.ox||0), z=s.z+(s.oz||0), y=s.y*PH; return [x,y,z,x+d.W,y+d.H,z+d.D]; });
+  const e=0.06, touch=(a,b)=>a[0]<=b[3]+e&&b[0]<=a[3]+e&&a[1]<=b[4]+e&&b[1]<=a[4]+e&&a[2]<=b[5]+e&&b[2]<=a[5]+e;
+  const cells=(b,f)=>{ for(let gx=Math.floor((b[0]-e)/2);gx<=Math.floor((b[3]+e)/2);gx++) for(let gy=Math.floor((b[1]-e)/1.2);gy<=Math.floor((b[4]+e)/1.2);gy++) for(let gz=Math.floor((b[2]-e)/2);gz<=Math.floor((b[5]+e)/2);gz++) f(gx+","+gy+","+gz); };
+  const placedG=new Map(), pendG=new Map(), placed=new Uint8Array(n), pending=new Uint8Array(n), out=[], deferredFlag=new Uint8Array(n);
+  const add=(G,i)=>cells(B[i],c=>{ let L=G.get(c); if(!L) G.set(c,L=[]); L.push(i); });
+  const supported=i=>{ if(B[i][1]<0.05) return true; let ok=false; cells(B[i],c=>{ if(ok) return; const L=placedG.get(c); if(L) for(const j of L) if(touch(B[i],B[j])){ ok=true; break; } }); return ok; };
+  const place=i=>{ placed[i]=1; out.push(i); add(placedG,i);
+    const q=[i]; while(q.length){ const j=q.shift(); const cand=new Set(); cells(B[j],c=>{ const L=pendG.get(c); if(L) L.forEach(k=>{ if(pending[k]&&!placed[k]&&touch(B[k],B[j])) cand.add(k); }); });
+      [...cand].sort((a,b)=>a-b).forEach(k=>{ if(placed[k]) return; pending[k]=0; placed[k]=1; deferredFlag[k]=1; out.push(k); add(placedG,k); q.push(k); }); } };
+  let moved=0; for(let i=0;i<n;i++){ if(placed[i]) continue; if(supported(i)) place(i); else { pending[i]=1; add(pendG,i); moved++; } }
+  for(let i=0;i<n;i++) if(!placed[i]){ placed[i]=1; out.push(i); deferredFlag[i]=1; } // совсем ни к чему не крепится (например, вещь в руке) — в конце своего шага не найти, ставим в конец
+  if(!moved) return 0;
+  const nb=[]; for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k]; if(stepOf[a]!==stepOf[b]||deferredFlag[a]!==deferredFlag[b]) nb.push(k); }
+  const pos=new Int32Array(n); out.forEach((i,k)=>pos[i]=k);
+  if(M.chapters&&M.chapters.length){ const ch=M.chapters.slice().sort((a,b)=>a.from-b.from); const nc=ch.map((c,ci)=>{ const end=ci+1<ch.length?ch[ci+1].from:n; let mn=Infinity; for(let i=c.from;i<end;i++) mn=Math.min(mn,pos[i]); return {name:c.name,from:mn}; }).filter(c=>isFinite(c.from)).sort((a,b)=>a.from-b.from);
+    M.chapters=nc.filter((c,i)=>!i||c.from!==nc[i-1].from); }
+  M.steps=out.map(i=>S[i]); M.breaks=nb; M.split=0; delete insPagesCache[M.id]; return moved; }
 boot();
 })();
 
