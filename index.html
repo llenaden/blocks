@@ -2482,6 +2482,7 @@ function setHand(h){
     for(let i=a;i<b&&!m;i++){ const q=IB.items[i]; if(q.p===h.p&&q.c===h.c&&!IB.check.ok.has(i)) m=q; }
     for(let i=a;i<b&&!m;i++){ const q=IB.items[i]; if(q.p===h.p&&!IB.check.ok.has(i)) m=q; }
     if(m){ h.rx=m.rx||0; h.ry=m.ry||0; h.rz=m.rz||0; } }catch(_){} }
+  if(typeof IB!=="undefined"&&IB) IB._stick=null; // новая деталь в руке — прежнее место её не держит
   hand=h; if(h) h.base={rx:h.rx||0,ry:h.ry||0,rz:h.rz||0}; rebuildGhost();
   canvas.classList.toggle("holding",!!hand);
   if(!hand){ $("hand").hidden=true; hidePalette(); markActiveItem(); markBookChips(); updateTools(); return; }
@@ -3198,7 +3199,8 @@ function showGhostAt(c){
   const _g=new THREE.Object3D(); placeObject(_g,s,{...hand,ox:c.ox||0,oz:c.oz||0,tq:c.tq,tp:c.tp},c.x,c.y,c.z);
   if(keep){ ghost.position.copy(keep); ghost.quaternion.copy(_g.quaternion); }
   else if(!ghost.visible||typeof smoothTo!=="function"){ ghost.position.copy(_g.position); ghost.quaternion.copy(_g.quaternion); }
-  ghost.visible=true; if(typeof smoothTo==="function") smoothTo(ghost,_g.position,_g.quaternion,0.2);
+  /* плавно, но быстро: деталь не «плывёт» сквозь соседние, а коротко доезжает; на большой прыжок (другое место) — поднимается над постройкой */
+  ghost.visible=true; if(typeof smoothTo==="function"){ const far=ghost.position.distanceTo(_g.position)>1.2; smoothTo(ghost,_g.position,_g.quaternion,far?0.45:0.3); }
   ghostPos=c;
 }
 const drops=[];
@@ -3212,6 +3214,7 @@ function placeHand(c){
   if(c.insSnap){ if(c.ox) p.ox=c.ox; if(c.oz) p.oz=c.oz; if(c.ra) p.ra=c.ra; if(c.sw) p.sw=c.sw; } if(c.mt){ p.mt=c.mt; p.mflip=c.mflip; } if(c.fit) p.cs=1; if(c.tp) p.tp=c.tp;
   if(hand.f) p.f={...hand.f}; else p.p=hand.p;
   if(isHidden(p)){ const m=layerMeta[layerKey(p)]; if(m) m.h=false; applyHidden(); toast("Слой снова показан: в него добавлена деталь"); }
+  if(typeof IB!=="undefined"&&IB) IB._stick=null;
   parts.push(p); animateDrop(addMesh(p));
   try{ navigator.vibrate && navigator.vibrate(10); }catch(_){}
   commit(prev);
@@ -5132,7 +5135,7 @@ async function route(){
   const h=location.hash.replace(/^#/,"");
   // модель, которой нужно перестроить порядок шагов, — сначала экран загрузки, потом страница
   const mid=h.indexOf("model-")===0?h.slice(6):h.indexOf("instr-")===0?h.slice(6):h.indexOf("build-")===0?instrModelOf((PROJ.get(h.slice(6))||{}).set):null;
-  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==20){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
+  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==22){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
   if(h==="sets") enterSets();
   else if(h==="free") location.replace("#set-"+CUR_SET);
   else if(h==="guided") location.replace("#catalog");
@@ -5192,7 +5195,7 @@ function insPages(id){
   if(insPagesCache[id]) return insPagesCache[id];
   const M=MODELS[id];
   // модель, загруженная до нового порядка сборки, перестраивается при первом открытии (не при запуске — чтобы приложение открывалось сразу)
-  if(M&&M.user&&M.grav!==20){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=20; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
+  if(M&&M.user&&M.grav!==22){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=22; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
   // модель из файла (BrickLink Studio, LDraw): шаги автора, крупные разбиты на страницы до 5 деталей
   splitBigSteps(M);
   if(M.breaks&&M.breaks.length){ const br=[0,...M.breaks.filter(k=>k>0&&k<M.steps.length),M.steps.length], out=[];
@@ -5516,13 +5519,19 @@ function insSnap(spec,o,h,wide){
     // расстояние от пальца до места детали (её рамки), по горизонтали и по высоте
     const dx=Math.max(0,x0-P.x,P.x-(x0+d.W)), dz=Math.max(0,z0-P.z,P.z-(z0+d.D)), dy=Math.max(0,y-P.y-0.2,P.y-(y+d.H)-0.4); let dist=Math.hypot(dx,dz,dy*1.5)+(m.c===o.c?0:0.6)+(i<IB.pages[IB.page].a?0.3:0);
     /* место детали в воздухе или на боку (опоры под пальцем нет): палец наведён прямо на подсказку — тоже «у своего места» */
-    if(dist>R&&RY&&m.c===o.c){ _bx.min.set(x0-0.08,y-0.08,z0-0.08); _bx.max.set(x0+d.W+0.08,y+d.H+0.08,z0+d.D+0.08); const t=RY.intersectBox(_bx,_bv); if(t&&RY.origin.distanceTo(t)<=RY.origin.distanceTo(P)+0.3) dist=R*0.95+(i<IB.pages[IB.page].a?0.01:0); }
+    if(dist>R&&RY&&m.c===o.c){ _bx.min.set(x0-0.08,y-0.08,z0-0.08); _bx.max.set(x0+d.W+0.08,y+d.H+0.08,z0+d.D+0.08); const t=RY.intersectBox(_bx,_bv); if(t&&RY.origin.distanceTo(t)<=RY.origin.distanceTo(P)+0.05) dist=R*0.95+(i<IB.pages[IB.page].a?0.01:0); }
     if(dist>R) continue;
     // место уже занято такой же деталью (проверка шага ещё не успела обновиться) — пропустить
     if(parts.some(q=>q.p===m.p&&Math.abs(q.x+(q.ox||0)-x0)<0.05&&Math.abs(q.z+(q.oz||0)-z0)<0.05&&Math.abs(q.y-y)<0.05)) continue;
     // при равенстве — то место, чей центр ближе к пальцу
     const cd=Math.hypot(P.x-(x0+d.W/2),P.z-(z0+d.D/2),P.y-(y+d.H/2)), sc=dist+cd*0.02;
-    if(!best||sc<best.dist) best={dist:sc,m,x,y,z}; }
+    if(!best||sc<best.dist) best={dist:sc,m,x,y,z,i}; }
+  /* деталь, уже севшая на место, держится за него, пока палец рядом (до 1 шипа): не перескакивает туда-обратно и не дрожит */
+  const st=IB._stick; if(st&&st.p===o.p&&st.i<b&&!IB.check.ok.has(st.i)&&(!best||best.i!==st.i)){ const m=IB.items[st.i], s2=specOf(m); if(s2){ const d=dims(s2,m), x=m.x+off[0], y=m.y+off[1]*PH, z=m.z+off[2], x0=x+(m.ox||0), z0=z+(m.oz||0);
+      const dx=Math.max(0,x0-P.x,P.x-(x0+d.W)), dz=Math.max(0,z0-P.z,P.z-(z0+d.D)), dy=Math.max(0,y-P.y-0.2,P.y-(y+d.H)-0.4); let near=Math.hypot(dx,dz,dy)<=0.5;
+      if(!near&&RY){ _bx.min.set(x0-0.25,y-0.25,z0-0.25); _bx.max.set(x0+d.W+0.25,y+d.H+0.25,z0+d.D+0.25); const t=RY.intersectBox(_bx,_bv); near=!!t&&RY.origin.distanceTo(t)<=RY.origin.distanceTo(P)+0.05; }
+      if(near&&!parts.some(q=>q!==o&&q.p===m.p&&Math.abs(q.x+(q.ox||0)-x0)<0.05&&Math.abs(q.z+(q.oz||0)-z0)<0.05&&Math.abs(q.y-y)<0.05)) best={dist:0,m,x,y,z,i:st.i}; } }
+  if(best&&best.i!==undefined) IB._stick={i:best.i,p:o.p}; else if(!best) IB._stick=null;
   /* первая деталь модели ставится где угодно: пока ни одна деталь не на месте, место модели задаёт она сама —
      деталь садится под пальцем ровно в том положении, как в модели, а вся модель «переезжает» к ней */
   if(!best&&!IB.check.ok.size&&!parts.some(q=>q.p&&!q.f&&q!==o)){ const pg=IB.pages[IB.page]; let m=null;
@@ -5794,7 +5803,7 @@ $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.ta
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
     const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    snapModelGrid(model); model.grid=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=20; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    snapModelGrid(model); model.grid=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=22; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
     loaderHide(); location.hash="model-"+id; }
   catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
@@ -6000,7 +6009,7 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   let Y0=Infinity; B.forEach(b=>{ if(b[1]<Y0) Y0=b[1]; }); const G0=Y0+0.05; // «на основе» — на высоте самой нижней детали модели
   /* стоит на основе и то, что чуть выше неё, если под ним ничего нет: лапы дракона, наклонённые ноги, колёса —
      у наклонённой детали рамка выше её настоящей нижней точки */
-  const GR=new Uint8Array(n); for(let i=0;i<n;i++){ const b=B[i]; if(b[1]<G0){ GR[i]=1; continue; } if(b[1]>=Y0+0.65) continue;
+  const GR=new Uint8Array(n), GS=new Uint8Array(n); for(let i=0;i<n;i++){ const b=B[i]; if(b[1]<G0){ GR[i]=1; GS[i]=1; continue; } if(b[1]>=Y0+0.65) continue;
     let under=false; for(let j=0;j<n&&!under;j++){ if(j===i) continue; const c=B[j]; if(c[4]<=b[1]+0.08&&c[3]>b[0]+0.05&&c[0]<b[3]-0.05&&c[5]>b[2]+0.05&&c[2]<b[5]-0.05) under=true; } if(!under) GR[i]=1; }
   const e=0.08, ov=0.15, face=(a,b)=>{ let thin=0; for(let k=0;k<3;k++){ const o=Math.min(a[k+3],b[k+3])-Math.max(a[k],b[k]); if(o<-e) return false; if(o<ov) thin++; } return thin<=1; };
   const G=new Map(), cells=(b,f)=>{ for(let gx=Math.floor((b[0]-e)/2);gx<=Math.floor((b[3]+e)/2);gx++) for(let gy=Math.floor((b[1]-e)/1.2);gy<=Math.floor((b[4]+e)/1.2);gy++) for(let gz=Math.floor((b[2]-e)/2);gz<=Math.floor((b[5]+e)/2);gz++) f(gx+","+gy+","+gz); };
@@ -6033,7 +6042,11 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   { const U=new Int32Array(n).map((_,i)=>i), f=i=>{ while(U[i]!==i){ U[i]=U[U[i]]; i=U[i]; } return i; }, gnd=new Uint8Array(n);
     for(let i=0;i<n;i++) N[i].forEach(j=>{ const a=f(i), b=f(j); if(a!==b) U[a]=b; });
     for(let i=0;i<n;i++) if(GR[i]) gnd[f(i)]=1;
-    for(let k=0;k<REM.length;k+=2){ const i=REM[k], j=REM[k+1], a=f(i), b=f(j); if(a===b||(gnd[a]&&gnd[b])) continue; N[i].add(j); N[j].add(i); U[a]=b; if(gnd[a]) gnd[b]=1; } }
+    for(let k=0;k<REM.length;k+=2){ const i=REM[k], j=REM[k+1], a=f(i), b=f(j); if(a===b||(gnd[a]&&gnd[b])) continue; N[i].add(j); N[j].add(i); U[a]=b; if(gnd[a]) gnd[b]=1; }
+    /* «чуть выше основы» считается опорой только для куска, который больше ни к чему не крепится (дракон рядом с замком).
+       Колёса тележки тоже касаются поля, но крепятся к оси — их ставят после тележки, а не первыми в воздухе */
+    const gs=new Uint8Array(n); for(let i=0;i<n;i++) if(GS[i]) gs[f(i)]=1;
+    for(let i=0;i<n;i++) if(GR[i]&&!GS[i]&&gs[f(i)]) GR[i]=0; }
   PT.clear(); HS.clear();
   /* цепочки: одинаковые детали без правил крепления, сцепленные одна за другой (звенья цепи, верёвка, шланг).
      Цепь растёт от первого звена по порядку: звено держится только за соседнее звено, к остальному крепится лишь первое.
@@ -6043,12 +6056,13 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   const fam=i=>{ const w=String(designName(S[i].p)||S[i].p).toLowerCase().replace(/\(.*$/,"").split(/[\s,]+/).filter(Boolean); return w.length>=3?w.slice(0,3).join(" "):S[i].p; }; // звено и концевое звено одной цепи
   const hook=(a,b)=>{ for(let k=0;k<3;k++) if(Math.min(a[k+3],b[k+3])-Math.max(a[k],b[k])<ov) return false; return true; }; // звенья продеты друг в друга, а не просто лежат рядом
   for(let i=0;i<n;i++){ if(vis[i]||!rl(i)) continue; const comp=[i]; vis[i]=1;
-    for(let h=0;h<comp.length;h++) N[comp[h]].forEach(j=>{ if(!vis[j]&&rl(j)&&fam(j)===fam(i)&&chOf[j]===chOf[i]&&hook(B[comp[h]],B[j])){ vis[j]=1; comp.push(j); } });
-    if(comp.length<3) continue; const inC=new Set(comp), deg=k=>{ let c=0; N[k].forEach(j=>{ if(inC.has(j)) c++; }); return c; };
-    if(comp.some(k=>deg(k)>2)) continue; // разветвляется — это не цепь
+    const chainy=/chain|rope|string|цеп|верёв|канат/i.test(designName(S[i].p)||"");
+    for(let h=0;h<comp.length;h++) (chainy?N0:N)[comp[h]].forEach(j=>{ if(!vis[j]&&rl(j)&&fam(j)===fam(i)&&chOf[j]===chOf[i]&&(chainy||hook(B[comp[h]],B[j]))){ vis[j]=1; comp.push(j); } }); // звенья цепи — по рамкам: точки формы у тонких звеньев не находятся
+    if(comp.length<3) continue; const inC=new Set(comp), NN=chainy?N0:N, deg=k=>{ let c=0; NN[k].forEach(j=>{ if(inC.has(j)) c++; }); return c; };
+    if(!chainy&&comp.some(k=>deg(k)>2)) continue; // разветвляется — это не цепь
     const ends=comp.filter(k=>deg(k)<=1), outer=k=>GR[k]||[...N[k]].some(j=>!inC.has(j));
     const cand=(ends.length?ends:comp).filter(outer).sort((a,b)=>(stepOf[a]-stepOf[b])||(a-b)); if(!cand.length) continue; const root=cand[0];
-    comp.forEach(k=>{ if(k===root) return; N[k].forEach(j=>{ if(!inC.has(j)){ let b=blk.get(k); if(!b) blk.set(k,b=new Set()); b.add(j); } }); }); }
+    comp.forEach(k=>{ if(k===root) return; let b=blk.get(k); if(!b) blk.set(k,b=new Set()); [...N[k],...N0[k]].forEach(j=>{ if(!inC.has(j)) b.add(j); }); }); }
   const placed=new Uint8Array(n), out=[], depth=new Int32Array(n).fill(-1);
   const FP=new Map(); // что должно стоять раньше детали фигурки — в том же шаге их не смешиваем
   const nCh=Math.max(1,ch.length);
@@ -6085,6 +6099,18 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
     // то, что держит кисть (посох, оружие, факел), — после кисти: кисть охватывает предмет, их рамки входят друг в друга
     const hold=(a,b)=>{ for(let k=0;k<3;k++) if(Math.min(a[k+3],b[k+3])-Math.max(a[k],b[k])<ov) return false; return true; };
     F.forEach(h=>{ if(fr[h]!==3) return; N[h].forEach(j=>{ if(!inI[j]||fr[j]>=0||!hold(B[h],B[j])) return; let L=fpre.get(j); if(!L) fpre.set(j,L=[]); if(L.indexOf(h)<0){ L.push(h); hard[j]++; } }); });
+    /* детали без правил крепления (колёса, фонари, звенья, декор из файла) — «навесные»: ставятся после обычных деталей,
+       которых касаются (кроме тех, что лежат на них сверху). Колесо — после тележки, фонарь — после того, на чём висит */
+    I.forEach(i=>{ if(fr[i]>=0) return; const p=S[i].p; if(!(/^x_/.test(p)||!CONN[p])) return; const b=B[i]; if((b[3]-b[0])*(b[4]-b[1])*(b[5]-b[2])>40) return;
+      // на ней самой что-то держится (упряжь, ось) — это часть конструкции, а не навеска
+      if([...N[i]].some(j=>SUP[j]&&SUP[j].indexOf(i)>=0)) return;
+      N0[i].forEach(j=>{ if(!inI[j]||j===i) return; const q=S[j].p; if(/^x_/.test(q)||!CONN[q]) return; if(B[j][1]>=b[4]-e) return; // лежит сверху на ней — не ждём
+        let L=fpre.get(i); if(!L) fpre.set(i,L=[]); if(L.indexOf(j)<0){ L.push(j); hard[i]++; } }); });
+    // колесо — после держателя колеса / оси, на которую надевается
+    const nmOf=i=>String(designName(S[i].p)||"")+" "+String((typeof EXTRA_NAMES!=="undefined"&&EXTRA_NAMES[S[i].p])||"");
+    I.forEach(i=>{ const nm=nmOf(i); if(!/^\s*(wheel|tyre|tire)\b|^\s*колес|^\s*шина/i.test(nm)) return;
+      N0[i].forEach(j=>{ if(!inI[j]||j===i) return; const q=nmOf(j); if(/^\s*(wheel|tyre|tire)\b|^\s*колес|^\s*шина/i.test(q)) return; if(!/holder|axle|\bpin\b|держател|\bось/i.test(q)) return;
+        let L=fpre.get(i); if(!L) fpre.set(i,L=[]); if(L.indexOf(j)<0){ L.push(j); hard[i]++; } }); });
     fpre.forEach((L,i)=>FP.set(i,L));
     const pre=i=>{ const a=lower(i), f=fpre.get(i); if(f) f.forEach(j=>{ if(a.indexOf(j)<0) a.push(j); }); return a; };
     const need=new Int32Array(n); I.forEach(i=>{ need[i]=pre(i).length; });
@@ -6099,12 +6125,12 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
     I.forEach(i=>{ if(GR[i]||[...N[i]].some(j=>placed[j]&&carry(j,i))) con[i]=1; offer(i); });
     let left=I.length, rest=I.slice().sort(less), rp=0;
     const put=i=>{ out.push(i); placed[i]=1; left--; (hardUp.get(i)||[]).forEach(u=>{ if(--hard[u]<=0){ inL[u]=0; con[u]=1; } }); /* фигурка собрана до этой детали — деталь крепится к ней */ (upOf.get(i)||[]).forEach(u=>{ need[u]--; offer(u); }); N[i].forEach(j=>{ if(!con[j]&&carry(i,j)){ con[j]=1; offer(j); } });
-      N0[i].forEach(j=>{ if(!con[j]&&inI[j]&&B[i][4]<=B[j][1]+e&&B[i][4]>=B[j][1]-e&&hov(B[i],B[j])){ con[j]=1; offer(j); } }); }; // стоит прямо на поставленной — значит, крепится к ней
+      N0[i].forEach(j=>{ if(!con[j]&&inI[j]&&!blk.has(j)&&B[i][4]<=B[j][1]+e&&B[i][4]>=B[j][1]-e&&hov(B[i],B[j])){ con[j]=1; offer(j); } }); }; // стоит прямо на поставленной — значит, крепится к ней
     while(left>0){ let best=-1;
       while(ready.h.length){ const x=ready.pop(); if(!placed[x]){ best=x; break; } }
       /* готовых нет: сначала деталь, которой не на что ждать снизу и которая касается уже собранного (касание формой не нашлось,
          но рамки соприкасаются) — и только потом «висящие снизу». Иначе крышу кладут раньше пластины под ней */
-      if(best<0){ const U=I.filter(i=>!placed[i]&&need[i]<=0&&!(hard[i]>0)), P=out.filter(i=>inI[i]); if(U.length&&P.length&&U.length*P.length<=3e6){ let bg=Infinity, bi=-1;
+      if(best<0){ const U=I.filter(i=>!placed[i]&&need[i]<=0&&!(hard[i]>0)&&!(blk.has(i)&&!con[i])), P=out.filter(i=>inI[i]); if(U.length&&P.length&&U.length*P.length<=3e6){ let bg=Infinity, bi=-1;
           for(const i of U){ const a=B[i]; let g=Infinity; for(const j of P){ const b=B[j]; let q=0; for(let k=0;k<3;k++){ const d=Math.max(a[k],b[k])-Math.min(a[k+3],b[k+3]); if(d>q) q=d; } if(q<g){ g=q; if(g<=0) break; } }
             if(g<bg-1e-6||(Math.abs(g-bg)<=1e-6&&bi>=0&&less(i,bi)<0)){ bg=g; bi=i; } }
           if(bi>=0&&bg<=0.1) best=bi; } }
@@ -6113,7 +6139,7 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
         { let q=rp; while(q<rest.length&&(placed[rest[q]]||hard[rest[q]]>0)) q++; if(q<rest.length) best=rest[q]; } // деталь фигурки не раньше своих предшественниц
         /* ни к чему не крепится по форме (наклонённый кусок на клипсе): начинаем с той детали, что ближе всего к уже собранному,
            а не с первой по списку — тогда кусок растёт от места крепления, а не висит в воздухе */
-        let U=I.filter(i=>!placed[i]&&!(hard[i]>0)); if(!U.length) U=I.filter(i=>!placed[i]); const P=out.filter(i=>inI[i]); if(P.length&&U.length*P.length<=4e6){ let bg=Infinity;
+        let U=I.filter(i=>!placed[i]&&!(hard[i]>0)&&!(blk.has(i)&&!con[i])); if(!U.length) U=I.filter(i=>!placed[i]); const P=out.filter(i=>inI[i]); if(P.length&&U.length*P.length<=4e6){ let bg=Infinity;
           for(const i of U){ const a=B[i]; let g=Infinity; for(const j of P){ const b=B[j]; let q=0; for(let k=0;k<3;k++){ const d=Math.max(a[k],b[k])-Math.min(a[k+3],b[k+3]); if(d>q) q=d; } if(q<g){ g=q; if(g<=0) break; } }
             if(g<bg-1e-6||(Math.abs(g-bg)<=1e-6&&less(i,best)<0)){ bg=g; best=i; } } } }
       put(best); } }
