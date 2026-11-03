@@ -5282,11 +5282,15 @@ function leaveInstr(){
 /* порядок библиотеки: детали текущего шага → понадобятся дальше → уже израсходованы (бледно, в конце) */
 const catRank=c=>CAT_ORDER[c]!==undefined?CAT_ORDER[c]:9;
 function insOrder(items){
-  const pg=IB.pages[IB.page], now={}, nowC={}, first={}, used={};
-  for(let i=pg.a;i<pg.b;i++){ const s=IB.M.steps[i]; now[s.p]=(now[s.p]||0)+1; (nowC[s.p]=nowC[s.p]||[]).includes(s.c)||nowC[s.p].push(s.c); if(first[s.p]===undefined) first[s.p]=i; }
-  parts.forEach(p=>{ if(p.p) used[p.p]=(used[p.p]||0)+1; });
+  /* по группам деталей, а не по номеру: у детали бывает несколько номеров (варианты одной формы), и деталь шага
+     должна подсветиться в списке, даже если она не из основной библиотеки (добавлена из файла модели) */
+  const gid=p=>{ try{ const G=groupOf(p); return G?G.id:p; }catch(_){ return p; } };
+  const pg=IB.pages[IB.page], now={}, nowC={}, first={}, used={}, inModel=new Set();
+  IB.M.steps.forEach(s=>inModel.add(gid(s.p)));
+  for(let i=pg.a;i<pg.b;i++){ const s=IB.M.steps[i], g=gid(s.p); now[g]=(now[g]||0)+1; (nowC[g]=nowC[g]||[]).includes(s.c)||nowC[g].push(s.c); if(first[g]===undefined) first[g]=i; }
+  parts.forEach(p=>{ if(p.p){ const g=gid(p.p); used[g]=(used[g]||0)+1; } });
   const tier={}, need={};
-  const out=items.filter(([G])=>!G.extra).map(([G,i])=>{ const t=now[G.id]?0:(used[G.id]||0)<G.q?1:2; tier[i]=t; if(!t) need[i]={q:now[G.id],cs:nowC[G.id]}; return [G,i,t]; });
+  const out=items.filter(([G])=>!G.extra||inModel.has(G.id)).map(([G,i])=>{ const t=now[G.id]?0:(used[G.id]||0)<G.q?1:2; tier[i]=t; if(!t) need[i]={q:now[G.id],cs:nowC[G.id]}; return [G,i,t]; });
   out.sort((x,y)=>(x[2]-y[2])||(x[2]===0?first[x[0].id]-first[y[0].id]:0)||(catRank(x[0].cat)-catRank(y[0].cat))||(x[0].s.w*x[0].s.d-y[0].s.w*y[0].s.d)||(x[0].s.h-y[0].s.h)||x[0].n.localeCompare(y[0].n,"ru"));
   return {items:out.map(([G,i])=>[G,i]),tier,need,names:["Нужно на этом шаге","Понадобятся дальше","Уже всё поставлено"]};
 }
