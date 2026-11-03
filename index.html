@@ -571,7 +571,7 @@ textarea.text-in{height:160px;padding:10px;font-family:var(--f-mono);font-size:1
 .card.lnk{min-height:84px}
 @media (max-width:700px){ .hseg button{padding:0 10px;font-size:12px} .wordmark{display:none} .tile.xl,.tile.wide{grid-column:span 1} }
 #insHintsBtn[aria-pressed="false"]{opacity:.55}
-.md-user{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-top:12px}.md-miss{font-size:13px;opacity:.75;line-height:1.4}
+.md-user{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-top:12px}.md-old{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:14px 16px;border-radius:12px;background:rgba(255,184,0,.10);border:1px solid rgba(255,184,0,.35);font-size:14px;line-height:1.45;max-width:640px}.md-old p{margin:0}.md-miss{font-size:13px;opacity:.75;line-height:1.4}
 .sec-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}.sec-top .grow{flex:1}
 
 /* ===== Внешние экраны (главная, наборы, модель, полка) — в той же типографике, что и рабочее пространство:
@@ -4934,6 +4934,10 @@ function enterModelPage(id){
   const n=M.steps.length, st=gStepOf(id);
   $("mdName").textContent=M.name; $("mdDesc").textContent=M.desc||"";
   { let u=$("mdUser"); if(!u){ u=document.createElement("div"); u.id="mdUser"; u.className="md-user"; $("mdParts").after(u); } u.innerHTML="";
+    if(M.user&&(M.impv||0)<IMP_VER){ const w=document.createElement("div"); w.className="md-old";
+      w.innerHTML='<p>Эта модель загружена прошлой версией приложения — часть исправлений (порядок сборки, формы и названия деталей) к ней ещё не применена. Загрузите её файл ещё раз: модель обновится на месте.</p>';
+      const bb=document.createElement("button"); bb.className="btn primary"; bb.textContent="Обновить модель из файла"; bb.addEventListener("click",()=>{ reimportId=id; $("modelFile").click(); }); w.appendChild(bb); u.appendChild(w);
+      reimportIfOld(id); }
     if(M.user){ const miss=Object.entries(M.missing||{});
       if(miss.length){ const p=document.createElement("p"); p.className="md-miss"; p.textContent="Нет в библиотеке, пропущены ("+miss.reduce((a,[,q])=>a+q,0)+"): "+miss.map(([d,q])=>d+(q>1?" ×"+q:"")).join(", "); u.appendChild(p); }
       const b=document.createElement("button"); b.className="pill"; b.textContent="Удалить модель";
@@ -5648,7 +5652,7 @@ function regModelAssets(M){ Object.entries(M.cols||{}).forEach(([k,c])=>{ if(!CO
 function regModelParts(M){ M.steps.forEach(s=>{ if(gTmp[s.p]||!LDMETA[s.p]) return; const m=LDMETA[s.p], n=EXTRA_NAMES[s.p]||"Деталь "+s.p;
   const cat=/^(Кирпич|Техник-кирпич|Гранёный кирпич)/.test(n)?"bricks":/^Пластина/.test(n)?"plates":/^Плитка/.test(n)?"tiles":/(Скос|Конёк)/.test(n)?"slopes":"misc";
   GROUPS.push(gTmp[s.p]={id:s.p,s:{k:"ld",id:s.p,w:m.w,d:m.d,h:m.h},cat,n,designs:[s.p],cv:{},colors:[],elements:[],q:0,byset:{},inSet:false,model:true,search:(n+" "+s.p).toLowerCase()}); gIndex[s.p]=GROUPS.length-1; }); }
-async function deleteUserModel(id){ const M=MODELS[id]; if(!M||!M.user) return; delete MODELS[id]; delete insPagesCache[id]; await saveUserModels(); toast("Модель «"+M.name+"» удалена"); location.hash="home"; }
+async function deleteUserModel(id){ const M=MODELS[id]; if(!M||!M.user) return; try{ IDB.del&&IDB.del("kv","src:"+id); }catch(_){} delete MODELS[id]; delete insPagesCache[id]; await saveUserModels(); toast("Модель «"+M.name+"» удалена"); location.hash="home"; }
 async function saveUserModels(){ const list=Object.values(MODELS).filter(M=>M.user); try{ await IDB.put("kv",list,USER_MODELS_KEY); }catch(_){ ls.set("myblocks.usermodels",JSON.stringify(list)); } }
 // zip без библиотек: оглавление, распаковка (pako) и шифр ZipCrypto (у новых .io файл защищён известным паролем Studio)
 function zipEntries(u8){ const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength); let e=-1; for(let i=u8.length-22;i>=Math.max(0,u8.length-70000);i--) if(dv.getUint32(i,true)===0x06054b50){ e=i; break; }
@@ -5821,15 +5825,28 @@ function ldrToModel(text,geoText,name){ readFileColours(text,geoText);
   return {model:{name,desc:"Ваша модель из файла: шаги, главы, детали и цвета — как у автора",steps:st2,breaks,chapters,src:"io",user:1,dyn:usedDyn,cols,figs},missing}; }
 const LDIMP_APPCOLS=new Set(Object.keys(COLORS));
 $("hModelLoad").addEventListener("click",()=>$("modelFile").click());
-$("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return;
-  loaderShow("Читаю модель «"+f.name+"» и готовлю инструкцию…",true); await nextFrame();
+/* версия чтения файлов: когда чтение моделей улучшается, модели, загруженные раньше, перечитываются из своего файла
+   (файл модели хранится на устройстве вместе с ней), иначе исправления их не касаются */
+const IMP_VER=31;
+let reimportId=null;
+$("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return; const rid=reimportId; reimportId=null; await importModelFile(f,rid); });
+async function importModelFile(f,replaceId,quiet){
+  loaderShow((replaceId?"Обновляю модель «":"Читаю модель «")+f.name+"» и готовлю инструкцию…",true); await nextFrame();
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
-    const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
+    const {model,missing}=ldrToModel(main,geo,nm);
+    // та же модель, загруженная старой версией, — заменяется, а не дублируется
+    if(!replaceId){ const old=Object.values(MODELS).find(M=>M.user&&M.name===nm&&(M.impv||0)<IMP_VER); if(old) replaceId=old.id; }
+    const prev=replaceId&&MODELS[replaceId]; const id=prev?replaceId:"u"+Date.now().toString(36); model.id=id; model.added=prev&&prev.added||Date.now(); model.impv=IMP_VER; model.srcName=f.name;
+    if(prev){ ["pin","view","cover","desc"].forEach(k=>{ if(prev[k]!==undefined&&model[k]===undefined) model[k]=prev[k]; }); delete MODELS[id]; delete insPagesCache[id]; try{ delete prev._figs; }catch(_){} }
+    try{ await IDB.put("kv",f,"src:"+id); }catch(_){}
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
     snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=22; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
-    toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
-    loaderHide(); location.hash="model-"+id; }
-  catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
+    if(!quiet) toast(prev?"Модель обновлена: "+model.steps.length+" деталей":miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
+    loaderHide(); if(location.hash==="#model-"+id){ enterModelPage(id); } else location.hash="model-"+id; return id; }
+  catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); return null; } }
+/* модель загружена прошлой версией: если её файл хранится — перечитываем сами; если нет — просим загрузить файл ещё раз */
+async function reimportIfOld(id){ const M=MODELS[id]; if(!M||!M.user||(M.impv||0)>=IMP_VER) return false; let f=null; try{ f=await IDB.get("kv","src:"+id); }catch(_){}
+  if(f){ if(!(f instanceof Blob)) return false; const file=f.name?f:new File([f],M.srcName||(M.name+".io")); await importModelFile(file,id,false); return true; } return false; }
 /* ---------- Персонажи: готовые фигурки из загруженных моделей. Меняются только цвета кожи и волос ---------- */
 const SKIN_COLS=["yellow","lnougat","nougat","mnougat","dnougat","rbrown"], HAIR_COLS=["black","dbrown","rbrown","mnougat","tan","dtan","dred","orange","white","lbgray","dbgray"];
 const isHairPart=p=>/hair|headgear|hat|helmet|hood|beard|волос|шляп/i.test(designName(p.p)||"");
