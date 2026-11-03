@@ -5637,7 +5637,7 @@ window.__mb={ev:s=>eval(s),cam:(th,ph,r,x,y,z)=>{cam.theta=th;cam.phi=ph;cam.r=c
    Модели хранятся на этом устройстве (IndexedDB) и показываются в «Готовых моделях». */
 const USER_MODELS_KEY="usermodels";
 async function loadUserModels(){ let list=null; try{ list=await IDB.get("kv",USER_MODELS_KEY); }catch(_){ try{ list=JSON.parse(ls.get("myblocks.usermodels")||"null"); }catch(_){} }
-  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); if(!M.grid){ try{ if(snapModelGrid(M)){ delete M.split; } }catch(_){} M.grid=1; fix=true; } MODELS[M.id]=M; regModelParts(M);  } }); if(fix) saveUserModels(); }
+  let fix=false; (list||[]).forEach(M=>{ if(M&&M.id&&M.steps){ regModelAssets(M); if(!M.grid){ try{ if(snapModelGrid(M)){ delete M.split; } }catch(_){} M.grid=1; fix=true; } if(!M.gg){ try{ if(groundGrid(M)){ delete M.split; M.grav=0; } }catch(_){} M.gg=1; fix=true; } MODELS[M.id]=M; regModelParts(M);  } }); if(fix) saveUserModels(); }
 // цвета и формы деталей, которые модель принесла с собой из файла
 function regModelAssets(M){ Object.entries(M.cols||{}).forEach(([k,c])=>{ if(!COLORS[k]) COLORS[k]=c; }); Object.entries(M.dyn||{}).forEach(([id,D])=>regDynPart(id,D)); }
 // детали своей модели, которых нет ни в одном наборе, добавляются в каталог (как у встроенных моделей)
@@ -5822,7 +5822,7 @@ $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.ta
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
     const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    snapModelGrid(model); model.grid=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=22; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=22; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
     loaderHide(); location.hash="model-"+id; }
   catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
@@ -6171,6 +6171,24 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   M.steps=out.map(i=>S[i]); M.breaks=nb; M.split=0; delete insPagesCache[M.id]; return moved; }
 /* модель на сетке пластины: если почти все детали сдвинуты от шипов на одну и ту же долю шипа (автор поставил модель не по сетке
    или развернул её), сдвигаем всю модель на эту долю — тогда детали садятся ровно на шипы основы */
+/* высота по сетке пластин и детали прямо на основе — на шипах.
+   1) почти все детали подняты на одну и ту же долю пластины (автор поставил основу чуть выше нуля) — опускаем всю модель на эту долю;
+   2) деталь, лежащая на основе, но не на шипах (камешки дорожки, разбросанный декор: сдвиг на полшипа, лёгкий доворот),
+      и на которой ничего не стоит, — ставим на ближайшие шипы и ровно. Иначе её по инструкции надо ставить между шипами, «в текстуру» */
+function groundGrid(M){ const S=M.steps; if(!S.length) return false; let ch=false; const fr=v=>{ let f=v-Math.floor(v); if(f>0.995||f<0.005) f=0; return f; };
+  const hist=new Map(); let cnt=0; S.forEach(s=>{ if(s.tq||s.rx||s.rz) return; cnt++; const k=Math.round(fr(s.y)*20)%20; hist.set(k,(hist.get(k)||0)+1); });
+  let bk=0, bn=0; hist.forEach((v,k)=>{ if(v>bn){ bn=v; bk=k; } });
+  if(bk!==0&&bn>=cnt*0.4){ let sum=0, m=0; S.forEach(s=>{ if(s.tq||s.rx||s.rz) return; const f=fr(s.y); if(Math.round(f*20)%20===bk){ sum+=f; m++; } }); const dy=sum/m; S.forEach(s=>{ s.y=+(s.y-dy).toFixed(4); }); ch=true; }
+  // всё, что после сдвига чуть ниже основы (на долю пластины) и под чем ничего нет, — на основу
+  const box=s=>{ const d=dims(designSpec(s.p),s), x=s.x+(s.ox||0), z=s.z+(s.oz||0); return [x,s.y,z,x+d.W,s.y+d.H/PH,z+d.D]; };
+  let y0=Infinity; S.forEach(s=>{ if(!(s.tq||s.rx||s.rz)&&s.y>-0.5&&s.y<y0) y0=s.y; }); if(!isFinite(y0)) y0=0; const base=Math.abs(y0)<0.5?0:y0;
+  S.forEach(s=>{ if(s.y<base&&s.y>base-0.5&&!s.rx&&!s.rz){ s.y=base; ch=true; } });
+  const B=S.map(box);
+  S.forEach((s,i)=>{ if(Math.abs(s.y-base)>0.01||s.rx||s.rz) return; const yawOnly=!s.tq||(Math.abs(s.tq[0])<0.02&&Math.abs(s.tq[2])<0.02);
+    const ox=s.ox||0, oz=s.oz||0; if(!yawOnly||(Math.abs(ox)<0.05&&Math.abs(oz)<0.05&&!s.tq)) return;
+    const b=B[i]; if(S.some((q,j)=>j!==i&&Math.abs(B[j][1]-b[4])<0.05&&B[j][0]<b[3]-0.05&&B[j][3]>b[0]+0.05&&B[j][2]<b[5]-0.05&&B[j][5]>b[2]+0.05)) return; // на ней что-то стоит — не трогаем
+    const X=Math.round(s.x+ox), Z=Math.round(s.z+oz); s.x=X; s.z=Z; delete s.ox; delete s.oz; delete s.side; delete s.tq; delete s.tp; ch=true; });
+  return ch; }
 function snapModelGrid(M){ const S=M.steps; if(!S.length) return false; const fr=v=>{ let f=v-Math.floor(v); if(f>0.995) f=0; return f; };
   const hist=new Map(); let cnt=0; S.forEach(s=>{ if(s.tq) return; cnt++; const k=Math.round(fr(s.x+(s.ox||0))*20)+","+Math.round(fr(s.z+(s.oz||0))*20); hist.set(k,(hist.get(k)||0)+1); });
   let best="0,0", bn=0; hist.forEach((v,k)=>{ if(v>bn){ bn=v; best=k; } }); if(best==="0,0"||best==="20,0"||best==="0,20"||best==="20,20"||bn<cnt*0.4) return false;
