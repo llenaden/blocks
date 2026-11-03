@@ -5741,15 +5741,34 @@ function ldrToModel(text,geoText,name){ readFileColours(text,geoText);
   const {inst,brk,chap,subs}=walkAll(files,order[0]);
   // те же детали в model2.ldr — официальные номера и формы; пары по порядку (позиции совпадают)
   let inst2=null; if(G&&G!==A){ const r=walkAll(G.files,G.order[0],"-1").inst; if(r.length===inst.length&&r.every((x,k)=>Math.abs(x[2][3]-inst[k][2][3])<0.05&&Math.abs(x[2][7]-inst[k][2][7])<0.05)) inst2=r; }
+  /* вся модель наклонена в файле (автор сохранил её «на боку» или под углом вперёд) — ставим её ровно: находим, куда смотрит «верх»
+     у большинства деталей, и поворачиваем всю модель так, чтобы этот верх смотрел вверх. Иначе ни одна деталь не стоит на основе ровно,
+     первые шаги висят лесенкой в воздухе и уходят за край основы */
+  { const n=inst.length, vote=new Map(); let vert=0;
+    // у каждой детали одна из трёх осей смотрит вверх (стоит, лежит набок — неважно): голосуем за направления осей, близкие к вертикали
+    inst.forEach(([,,W])=>{ const seen=new Set(); for(let c=0;c<3;c++){ let ux=W[c], uy=W[4+c], uz=W[8+c]; const L=Math.hypot(ux,uy,uz)||1; ux/=L; uy/=L; uz/=L; if(uy<0){ ux=-ux; uy=-uy; uz=-uz; } if(uy<0.5) continue;
+      const k=Math.round(ux*60)+","+Math.round(uz*60); if(seen.has(k)) continue; seen.add(k); const v=vote.get(k)||{n:0,x:0,y:0,z:0}; v.n++; v.x+=ux; v.y+=uy; v.z+=uz; vote.set(k,v); } });
+    vote.forEach((v,k)=>{ if(k==="0,0") vert=v.n; });
+    let best=null; vote.forEach(v=>{ if(!best||v.n>best.n) best=v; });
+    if(best&&n>=3&&best.n>=n*0.6&&vert<n*0.3){ let ux=best.x/best.n, uy=best.y/best.n, uz=best.z/best.n; let L=Math.hypot(ux,uy,uz); ux/=L; uy/=L; uz/=L;
+      // уточняем: среднее только по осям, совпадающим почти точно (слегка наклонённые детали не сбивают)
+      for(const lim of [0.9998,0.99999]){ let sx=0,sy=0,sz=0,m=0; inst.forEach(([,,W])=>{ for(let c=0;c<3;c++){ let vx=W[c], vy=W[4+c], vz=W[8+c]; const l=Math.hypot(vx,vy,vz)||1; vx/=l; vy/=l; vz/=l; if(vy<0){ vx=-vx; vy=-vy; vz=-vz; } if(vx*ux+vy*uy+vz*uz>lim){ sx+=vx; sy+=vy; sz+=vz; m++; } } });
+        if(m){ L=Math.hypot(sx,sy,sz); ux=sx/L; uy=sy/L; uz=sz/L; } }
+      // поворот, который переводит (ux,uy,uz) в (0,1,0): ось — их векторное произведение
+      let kx=-uz, kz=ux; const ks=Math.hypot(kx,kz);
+      if(ks>1e-6){ kx/=ks; kz/=ks; const c=uy, sn=ks, C=1-c;
+        const R=[c+kx*kx*C, -kz*sn, kx*kz*C, 0,  kz*sn, c, -kx*sn, 0,  kz*kx*C, kx*sn, c+kz*kz*C, 0];
+        inst.forEach(t=>{ t[2]=mul34(R,t[2]); }); } } }
   // вся модель повёрнута в файле на неровный угол (например, на 45° к сетке) — разворачиваем её целиком обратно к сетке,
   // иначе каждая деталь стоит наискосок к шипам пластины и поставить её нельзя
   { const hist=new Map(); let vert=0; const ang=W=>{ let a=Math.atan2(W[8],W[0])*180/Math.PI; return ((a%90)+90)%90; };
     inst.forEach(([,,W])=>{ if(Math.abs(Math.abs(W[5])-1)>0.02) return; vert++; const k=Math.round(ang(W))%90; hist.set(k,(hist.get(k)||0)+1); });
     let best=0, bn=0; hist.forEach((v,k)=>{ if(v>bn){ bn=v; best=k; } });
-    if(Math.min(best,90-best)>=2&&bn>=vert*0.5&&vert>=3){ let sum=0, cnt=0;
+    if(bn>=vert*0.5&&vert>=3){ let sum=0, cnt=0;
       inst.forEach(([,,W])=>{ if(Math.abs(Math.abs(W[5])-1)>0.02) return; let a=ang(W); if(Math.abs(a-best)>45) a+=a<best?90:-90; if(Math.abs(a-best)<1){ sum+=a; cnt++; } });
-      const r=(sum/cnt)*Math.PI/180, c=Math.cos(r), sn=Math.sin(r), Ry=[c,0,sn,0, 0,1,0,0, -sn,0,c,0];
-      inst.forEach(t=>{ t[2]=mul34(Ry,t[2]); }); } }
+      let av=sum/cnt; if(av>45) av-=90; if(Math.abs(av)>0.05){ // и небольшой доворот (после выпрямления наклона) — тоже к сетке
+      const r=av*Math.PI/180, c=Math.cos(r), sn=Math.sin(r), Ry=[c,0,sn,0, 0,1,0,0, -sn,0,c,0];
+      inst.forEach(t=>{ t[2]=mul34(Ry,t[2]); }); } } }
   const lib=G?G.files:files, dyn={}, used={}, dynOf={};
   // Studio пишет цвета внутри model2.ldr номерами BrickLink: соответствие берётся из самого файла (пары деталей), остальное — из таблицы
   const blLearn={}; if(inst2) inst2.forEach((x,k)=>{ const a=inst[k][1], b=x[1]; if(!/^-|^16$|^24$/.test(b)&&!/^-|^16$|^24$/.test(a)&&blLearn[b]===undefined) blLearn[b]=a; });
