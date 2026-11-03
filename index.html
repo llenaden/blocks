@@ -2473,10 +2473,15 @@ function rebuildGhost(){
 }
 function partThumb(spec,c,f,size){ const o=buildObject(spec,c,spec.id&&CONN[spec.id]&&CONN[spec.id].ss?{ry:2}:{},f,false); return renderThumb(o,spec,size||112,size||112); }
 // где призрак стоял в прошлый раз — пока палец ведёт деталь, она не перепрыгивает между почти равными вариантами
-let landPrev=null;
+let landPrev=null, oriPend={k:"",t:0};
 function setHand(h){
   landPrev=null;
   if(!h||!hand||h.p!==hand.p) handMore=false;
+  // сборка по инструкции: деталь шага сразу берётся в том положении, в каком стоит в модели (стоя, набок, повёрнутой)
+  if(h&&h.p&&!h.f&&!h.keepOri&&typeof IB!=="undefined"&&IB&&IB.pages&&IB.check){ try{ const {a,b}=IB.pages[IB.page]; let m=null;
+    for(let i=a;i<b&&!m;i++){ const q=IB.items[i]; if(q.p===h.p&&q.c===h.c&&!IB.check.ok.has(i)) m=q; }
+    for(let i=a;i<b&&!m;i++){ const q=IB.items[i]; if(q.p===h.p&&!IB.check.ok.has(i)) m=q; }
+    if(m){ h.rx=m.rx||0; h.ry=m.ry||0; h.rz=m.rz||0; } }catch(_){} }
   hand=h; if(h) h.base={rx:h.rx||0,ry:h.ry||0,rz:h.rz||0}; rebuildGhost();
   canvas.classList.toggle("holding",!!hand);
   if(!hand){ $("hand").hidden=true; hidePalette(); markActiveItem(); markBookChips(); updateTools(); return; }
@@ -3180,19 +3185,24 @@ function showGhostAt(c){
   if(!ghost||!hand) return;
   const ol=ghost.userData.ol;
   if(!c){ ghost.visible=false; ghostPos=null; landPrev=null; return; }
-  landPrev=c;
   const B=hand.base||{rx:0,ry:0,rz:0};
   const nr={rx:c.rx!==undefined?c.rx:B.rx,ry:c.ry!==undefined?c.ry:B.ry,rz:c.rz!==undefined?c.rz:B.rz};
-  if(nr.rx!==(hand.rx||0)||nr.ry!==(hand.ry||0)||nr.rz!==(hand.rz||0)){ Object.assign(hand,nr); rebuildGhost(); }
+  /* деталь не «мельтешит»: новое положение (повернуться, лечь набок) принимается, только когда палец задержался на нём —
+     случайные варианты на долю секунды не показываются */
+  const now=performance.now(), nk=nr.rx+","+nr.ry+","+nr.rz, turn=nr.rx!==(hand.rx||0)||nr.ry!==(hand.ry||0)||nr.rz!==(hand.rz||0);
+  if(turn&&ghost.visible&&ghostPos){ if(oriPend.k!==nk){ oriPend={k:nk,t:now}; return; } if(now-oriPend.t<170) return; }
+  oriPend={k:"",t:0}; landPrev=c;
+  let keep=null; if(turn){ keep=ghost.visible?ghost.position.clone():null; Object.assign(hand,nr); rebuildGhost(); }
   const s=handSpec();
-  // призрак детали плавно доезжает до нового места, а не прыгает
+  // призрак детали плавно, с весом доезжает до нового места, а не прыгает
   const _g=new THREE.Object3D(); placeObject(_g,s,{...hand,ox:c.ox||0,oz:c.oz||0,tq:c.tq,tp:c.tp},c.x,c.y,c.z);
-  if(!ghost.visible||typeof smoothTo!=="function"){ ghost.position.copy(_g.position); ghost.quaternion.copy(_g.quaternion); }
-  ghost.visible=true; if(typeof smoothTo==="function") smoothTo(ghost,_g.position,_g.quaternion,0.35);
+  if(keep){ ghost.position.copy(keep); ghost.quaternion.copy(_g.quaternion); }
+  else if(!ghost.visible||typeof smoothTo!=="function"){ ghost.position.copy(_g.position); ghost.quaternion.copy(_g.quaternion); }
+  ghost.visible=true; if(typeof smoothTo==="function") smoothTo(ghost,_g.position,_g.quaternion,0.2);
   ghostPos=c;
 }
 const drops=[];
-function animateDrop(o){ if(reduceMotion) return; const to=o.position.y; o.position.y=to+0.7; drops.push({o,from:to+0.7,to,t0:performance.now()}); }
+function animateDrop(o){ if(reduceMotion) return; const to=o.position.y; o.position.y=to+0.45; drops.push({o,from:to+0.45,to,t0:performance.now()}); }
 function placeHand(c){
   if(!hand||!c) return;
   const prev=snap();
@@ -5067,7 +5077,7 @@ function gMove(e){
     const pl=new THREE.Plane(new THREE.Vector3(0,1,0),-(p.y+d.H/2)), hit=new THREE.Vector3(); if(!ray.ray.intersectPlane(pl,hit)){ o.visible=false; return; }
     P=poseOf(spec,p,0,p.y,0); P.pos.set(hit.x,P.pos.y,hit.z); }
   if(!o.visible||gdrag.first){ o.position.copy(P.pos); o.quaternion.copy(P.quat); gdrag.first=false; }
-  o.visible=true; smoothTo(o,P.pos,P.quat,0.3);
+  o.visible=true; smoothTo(o,P.pos,P.quat,0.2);
   gSnap(gNear(x,y,c));
 }
 // достаточно ли близко к месту: на шип рядом с целью или в паре сантиметров на экране
@@ -5081,7 +5091,7 @@ function endGDrag(commitIt){
   if(!gm){ scene.remove(d.o); return; }
   if(commitIt&&d.snapped&&d.o.visible){
     // отпустили рядом — деталь сама доезжает и садится на место
-    const P=poseOf(d.spec,d.p,d.p.x,d.p.y,d.p.z), s=smoothTo(d.o,P.pos,P.quat,0.24);
+    const P=poseOf(d.spec,d.p,d.p.x,d.p.y,d.p.z), s=smoothTo(d.o,P.pos,P.quat,0.17);
     const step=gm.step; s.done=()=>{ scene.remove(d.o); if(!gm||gm.step!==step) return; parts.push(d.p); addMesh(d.p); try{ navigator.vibrate&&navigator.vibrate(12); }catch(_){} setGStep(gm.step+1); if(gm.step>=gm.M.steps.length) toast("Готово! Модель «"+gm.M.name+"» собрана"); };
   } else if(commitIt&&d.o.visible){
     // далеко — деталь отъезжает назад и исчезает
@@ -5122,7 +5132,7 @@ async function route(){
   const h=location.hash.replace(/^#/,"");
   // модель, которой нужно перестроить порядок шагов, — сначала экран загрузки, потом страница
   const mid=h.indexOf("model-")===0?h.slice(6):h.indexOf("instr-")===0?h.slice(6):h.indexOf("build-")===0?instrModelOf((PROJ.get(h.slice(6))||{}).set):null;
-  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==7){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
+  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==12){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
   if(h==="sets") enterSets();
   else if(h==="free") location.replace("#set-"+CUR_SET);
   else if(h==="guided") location.replace("#catalog");
@@ -5192,7 +5202,7 @@ function insPages(id){
   if(insPagesCache[id]) return insPagesCache[id];
   const M=MODELS[id];
   // модель, загруженная до нового порядка сборки, перестраивается при первом открытии (не при запуске — чтобы приложение открывалось сразу)
-  if(M&&M.user&&M.grav!==7){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=7; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
+  if(M&&M.user&&M.grav!==12){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=12; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
   // модель из файла (BrickLink Studio, LDraw): шаги автора, крупные разбиты на страницы до 5 деталей
   splitBigSteps(M);
   if(M.breaks&&M.breaks.length){ const br=[0,...M.breaks.filter(k=>k>0&&k<M.steps.length),M.steps.length], out=[];
@@ -5504,22 +5514,31 @@ function insShowGhosts(off){
   if(G.children.length){ insGhostG=G; scene.add(G); } }
 // в сборке по инструкции главное — положение детали в модели: если палец рядом с местом детали этого шага
 // (или пропущенной раньше), деталь из руки встаёт точно так, как в модели, — правила креплений не спорят с файлом
+const _bx=new THREE.Box3(), _bv=new THREE.Vector3();
 function insSnap(spec,o,h,wide){
   /* Главное правило сборки по инструкции: положение в модели важнее правил соединения.
      Деталь шага, поставленная на своё место (палец на месте детали или рядом, ±¼ шипа), садится ровно как в модели —
      с тем же поворотом и наклоном, даже если обычные правила её туда бы не пустили. Подсказки на это не влияют.
      wide — когда обычные правила вообще не нашли, куда поставить: тогда место ищется в радиусе 1 шипа */
-  if(!IB||!IB.check||!IB.check.off||!o||o.f||!h) return null; const R=wide?0.4:0.25; /* только когда деталь уже у своего места: мягко досаживается, а не летит к нему */ const off=IB.check.off, {b}=IB.pages[IB.page], P=h.point; let best=null;
+  if(!IB||!IB.check||!IB.check.off||!o||o.f||!h) return null; const R=wide?0.4:0.25; /* только когда деталь уже у своего места: мягко досаживается, а не летит к нему */ const off=IB.check.off, {b}=IB.pages[IB.page], P=h.point; let best=null; const RY=typeof ray!=="undefined"&&ray&&ray.ray&&ray.ray.direction.lengthSq()>0.5?ray.ray:null;
   for(let i=0;i<b;i++){ if(IB.check.ok.has(i)) continue; const m=IB.items[i]; if(m.p!==o.p) continue; const s=specOf(m); if(!s) continue;
     const d=dims(s,m), x=m.x+off[0], y=m.y+off[1]*PH, z=m.z+off[2], x0=x+(m.ox||0), z0=z+(m.oz||0);
     // расстояние от пальца до места детали (её рамки), по горизонтали и по высоте
-    const dx=Math.max(0,x0-P.x,P.x-(x0+d.W)), dz=Math.max(0,z0-P.z,P.z-(z0+d.D)), dy=Math.max(0,y-P.y-0.2,P.y-(y+d.H)-0.4), dist=Math.hypot(dx,dz,dy*1.5)+(m.c===o.c?0:0.6)+(i<IB.pages[IB.page].a?0.3:0);
+    const dx=Math.max(0,x0-P.x,P.x-(x0+d.W)), dz=Math.max(0,z0-P.z,P.z-(z0+d.D)), dy=Math.max(0,y-P.y-0.2,P.y-(y+d.H)-0.4); let dist=Math.hypot(dx,dz,dy*1.5)+(m.c===o.c?0:0.6)+(i<IB.pages[IB.page].a?0.3:0);
+    /* место детали в воздухе или на боку (опоры под пальцем нет): палец наведён прямо на подсказку — тоже «у своего места» */
+    if(dist>R&&RY&&m.c===o.c){ _bx.min.set(x0-0.08,y-0.08,z0-0.08); _bx.max.set(x0+d.W+0.08,y+d.H+0.08,z0+d.D+0.08); const t=RY.intersectBox(_bx,_bv); if(t&&RY.origin.distanceTo(t)<=RY.origin.distanceTo(P)+0.3) dist=R*0.95+(i<IB.pages[IB.page].a?0.01:0); }
     if(dist>R) continue;
     // место уже занято такой же деталью (проверка шага ещё не успела обновиться) — пропустить
     if(parts.some(q=>q.p===m.p&&Math.abs(q.x+(q.ox||0)-x0)<0.05&&Math.abs(q.z+(q.oz||0)-z0)<0.05&&Math.abs(q.y-y)<0.05)) continue;
     // при равенстве — то место, чей центр ближе к пальцу
     const cd=Math.hypot(P.x-(x0+d.W/2),P.z-(z0+d.D/2),P.y-(y+d.H/2)), sc=dist+cd*0.02;
     if(!best||sc<best.dist) best={dist:sc,m,x,y,z}; }
+  /* первая деталь модели ставится где угодно: пока ни одна деталь не на месте, место модели задаёт она сама —
+     деталь садится под пальцем ровно в том положении, как в модели, а вся модель «переезжает» к ней */
+  if(!best&&!IB.check.ok.size&&!parts.some(q=>q.p&&!q.f&&q!==o)){ const pg=IB.pages[IB.page]; let m=null;
+    for(let i=pg.a;i<pg.b&&!m;i++){ const q=IB.items[i]; if(q.p===o.p&&q.c===o.c) m=q; } for(let i=pg.a;i<pg.b&&!m;i++){ const q=IB.items[i]; if(q.p===o.p) m=q; }
+    if(m){ const s=specOf(m); if(s){ const d=dims(s,m), x=Math.round(P.x-d.W/2-(m.ox||0)), z=Math.round(P.z-d.D/2-(m.oz||0)), y=Math.max(0,Math.round(P.y/PH*8)/8*PH);
+      best={m,x,y,z}; } } }
   if(!best) return null; const m=best.m, r={x:best.x,y:best.y,z:best.z,rx:m.rx||0,ry:m.ry||0,rz:m.rz||0,insSnap:1};
   ["ox","oz","side","tq","tp","ra","sw"].forEach(k=>{ if(m[k]!==undefined) r[k]=m[k]; }); return r; }
 function insDefaultOff(){ if(IB._doff) return IB._doff; let x0=Infinity,x1=-Infinity,z0=Infinity,z1=-Infinity; IB.items.forEach(m=>{ const d=dims(specOf(m),m); x0=Math.min(x0,m.x+(m.ox||0)); x1=Math.max(x1,m.x+(m.ox||0)+d.W); z0=Math.min(z0,m.z+(m.oz||0)); z1=Math.max(z1,m.z+(m.oz||0)+d.D); });
@@ -5529,8 +5548,11 @@ function insCheck(){
   const byType={}; mine.forEach(p=>{ (byType[insKey(p)]=byType[insKey(p)]||[]).push(p); });
   // пока ничего не совпало — модель стоит по центру пластины: подсказки видны с первого шага
   const dk=insDefaultOff(), votes=new Map([[dk,0.5]]); let best=dk, bv=0.5, pairs=0;
+  if(IB._ymin===undefined){ let y=Infinity; IB.items.forEach(m=>{ if(m.y/PH<y) y=m.y/PH; }); IB._ymin=isFinite(y)?y:0; } const ymin=IB._ymin;
   for(let i=0;i<b&&pairs<250000;i++){ const m=IB.items[i], L=byType[insKey(m)]; if(!L) continue;
-    for(const p of L){ pairs++; const k=r2(p.x+(p.ox||0)-m.x-(m.ox||0))+"|"+r2((p.y-m.y)/PH)+"|"+r2(p.z+(p.oz||0)-m.z-(m.oz||0)); const v=(votes.get(k)||0)+1; votes.set(k,v); if(v>bv){ bv=v; best=k; } } }
+    const dm=dims(specOf(m),m), w=1+dm.W*dm.D/8; // крупные детали (основа, пластины) весят больше: место модели задают они, а не мелочь
+    for(const p of L){ pairs++; const dyv=r2((p.y-m.y)/PH); if(dyv+ymin<-0.3) continue; // модель не может уйти под основу
+      const k=r2(p.x+(p.ox||0)-m.x-(m.ox||0))+"|"+dyv+"|"+r2(p.z+(p.oz||0)-m.z-(m.oz||0)); const v=(votes.get(k)||0)+w; votes.set(k,v); if(v>bv){ bv=v; best=k; } } }
   const ok=new Set(); let off=null;
   if(best){ const [dx,dy,dz]=best.split("|").map(Number), have=new Map(); off=[dx,dy,dz];
     mine.forEach(p=>{ const k=insKey(p)+"@"+r2(p.x+(p.ox||0))+"|"+r2(p.y/PH)+"|"+r2(p.z+(p.oz||0)); have.set(k,(have.get(k)||0)+1); });
@@ -5582,7 +5604,7 @@ function frame(now){
     if(gm&&gm.marker&&gm.marker.visible){ const b=gm.marker.userData.base; gm.marker.position.set(b.x,b.y+(reduceMotion?0:Math.sin(now/330)*0.22),b.z); if(gm.target&&gm.target.userData.mats) gm.target.userData.mats.forEach(m=>m.opacity=0.16+0.07*Math.sin(now/300)); }
     tickHint(now); tickSmooth(now);
     updateCamera();
-    for(let i=drops.length-1;i>=0;i--){ const d=drops[i], k=Math.min(1,(now-d.t0)/220); d.o.position.y=d.from+(d.to-d.from)*(1-Math.pow(1-k,3)); if(k>=1) drops.splice(i,1); }
+    for(let i=drops.length-1;i>=0;i--){ const d=drops[i], k=Math.min(1,(now-d.t0)/340); d.o.position.y=d.from+(d.to-d.from)*(1-Math.pow(1-k,3)); if(k>=1) drops.splice(i,1); }
     if(!reduceMotion) outlineMat.opacity=0.65+0.35*Math.sin(now/180);
     const ek=clamp((85-cam.r)/50,0.3,1); for(const k in edgeMats) edgeMats[k].opacity=edgeMats[k].userData.base*ek;
     // тестовый прогон без экрана: рисуем редко (программная графика съедает весь процессор), матрицы обновляем всегда
@@ -5693,14 +5715,14 @@ function buildDynPart(fn,lib,used,blMap){
   const toApp=P=>{ const q=new Int16Array(P.length); for(let i=0;i<P.length;i+=3){ q[i]=Math.round((P[i]/20-mn[0]/20+cx)*80); q[i+1]=Math.round((-P[i+1]/20+mx[1]/20)*80); q[i+2]=Math.round((-P[i+2]/20+mx[2]/20+cz)*80); } return q; }, q=toApp(pos);
   const texOut=tex.filter(T=>T.pos.length).map(T=>({png:T.png,pos:i16b64(toApp(T.pos)),uv:i16b64(Int16Array.from(T.uv,v=>Math.round(v*10000)))}));
   const b=[+(cx-mn[0]/20).toFixed(4),+(mx[1]/20).toFixed(4),+(cz+mx[2]/20).toFixed(4)];
-  const head=(lib[fn]||[]).find(x=>/^0 [^!~]/.test(x)&&!/^0 (Name|Author|FILE|BFC|LDraw_Org|!)/i.test(x)), name=head?head.slice(2).replace(/^[~=_]+/,"").trim():fn.replace(/\.dat$/,"");
+  const head=(lib[fn]||[]).find(x=>/^0 [^!~]/.test(x)&&!/^0 (Name|Author|FILE|BFC|LDraw_Org|!|IsSubModel|IsAssembly|BL_|Flexible|RenderAngle|CustomBrick|PE_|NOFILE|STEP|ROTSTEP|\/\/)/i.test(x)), name=head?head.slice(2).replace(/^[~=_]+/,"").trim():fn.replace(/\.dat$/,"");
   const mc=tc.some(v=>v>=0);
   return {w,d,h:+h.toFixed(4),b,name,pal,pos:i16b64(q),tc:mc?i16b64(Int16Array.from(tc)):null,tex:texOut.length?texOut:undefined}; }
 function i16b64(a){ const u=new Uint8Array(a.buffer,a.byteOffset,a.byteLength); let s=""; for(let i=0;i<u.length;i+=0x8000) s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(s); }
 function b64i16(s){ const bin=atob(s), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return new Int16Array(u.buffer); }
 function regDynPart(id,D){ if(DYNG[id]) return; const q=b64i16(D.pos), pos=new Float32Array(q.length); for(let i=0;i<q.length;i++) pos[i]=q[i]/80;
   const tex=(D.tex||[]).map(T=>{ const a=b64i16(T.pos), u=b64i16(T.uv), P=new Float32Array(a.length), U=new Float32Array(u.length); for(let i=0;i<a.length;i++) P[i]=a[i]/80; for(let i=0;i<u.length;i++) U[i]=u[i]/10000; return {pos:P,uv:U,png:T.png}; });
-  DYNG[id]={pos,tc:D.tc?b64i16(D.tc):null,pal:D.pal||[],tex}; LDMETA[id]={w:D.w,d:D.d,h:D.h,dyn:1,mc:!!D.tc}; LDIMP.b[id]=D.b; EXTRA_NAMES[id]=D.name; }
+  DYNG[id]={pos,tc:D.tc?b64i16(D.tc):null,pal:D.pal||[],tex}; LDMETA[id]={w:D.w,d:D.d,h:D.h,dyn:1,mc:!!D.tc}; LDIMP.b[id]=D.b; EXTRA_NAMES[id]=/^(IsSubModel|IsAssembly|BL_|Flexible|RenderAngle|CustomBrick|PE_)/i.test(D.name||"")?((PARTDB[id.replace(/^x_(rename_)?/,"")]||{}).n||"Деталь "+id.replace(/^x_(rename_)?/,"")):D.name; }
 // точный перевод: мир приложения = S·(мир LDraw), S = diag(1,−1,−1)/20; центр детали C = S·t + Ra·(half − b)
 const IMP_ORI=(()=>{ const out=[], seen=new Set(), m=new THREE.Matrix4(); for(let rx=0;rx<4;rx++) for(let ry=0;ry<4;ry++) for(let rz=0;rz<4;rz++){ m.makeRotationFromEuler(eulerOf({rx,ry,rz})); const e=m.elements, k=[e[0],e[4],e[8],e[1],e[5],e[9],e[2],e[6],e[10]].map(v=>Math.round(v)); const key=k.join(","); if(seen.has(key)) continue; seen.add(key); out.push({k,o:{rx,ry,rz}}); } return out; })();
 function ldrToModel(text,geoText,name){ readFileColours(text,geoText);
@@ -5782,7 +5804,7 @@ $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.ta
   try{ const {main,geo}=await readModelFiles(f), fm=(main.match(/^\s*0 FILE\s+(.+?)\s*$/m)||[])[1], nm=((fm&&!/^model/i.test(fm)?fm:f.name).replace(/\.(io|ldr|mpd)$/i,"").replace(/[_]+/g," ").trim())||"Моя модель";
     const {model,missing}=ldrToModel(main,geo,nm); const id="u"+Date.now().toString(36); model.id=id; model.added=Date.now();
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    snapModelGrid(model); model.grid=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=7; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    snapModelGrid(model); model.grid=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=12; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     toast(miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
     loaderHide(); location.hash="model-"+id; }
   catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); } });
@@ -5794,7 +5816,7 @@ const figTitle=F=>{ const n=String(F.name||"Персонаж"); return n.charAt(
    Так они есть и у моделей, загруженных раньше. Имена — из подмоделей файла, если они были */
 /* порядок сборки фигурки: ноги → туловище → руки → кисти → борода, плащ, воротник → голова → волосы, шлем → плюмаж.
    −1 — не деталь фигурки */
-function figRank(p){ const id=String(p).replace(/^x_/,""), nm=(designName(p)||"")+" "+((typeof EXTRA_NAMES!=="undefined"&&EXTRA_NAMES[p])||"");
+function figRank(p){ const id=String(p).replace(/^x_(rename_)?/,""), nm=(designName(p)||"")+" "+((typeof EXTRA_NAMES!=="undefined"&&EXTRA_NAMES[p])||"");
   const num=/^(970|971|972|973|976|981|982|983|3626|3814|3815|3816|3817|3818|3819|3820|28621|16709|24082|21019)/.test(id);
   if(!num&&!/minifig|фигурк/i.test(nm)&&!(/^x_/.test(p)&&/^(hand|arm|head|torso|legs?|hips)\b/i.test(nm.trim()))) return -1;
   if(/plume|feather|перо/i.test(nm)) return 7;
@@ -5975,7 +5997,15 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
      Главы автора (подмодели) остаются по порядку; всё собранное в прошлых главах считается основанием */
   const br=[0,...(M.breaks||[]).filter(k=>k>0&&k<n),n], stepOf=new Int32Array(n); for(let k=0;k+1<br.length;k++) for(let i=br[k];i<br[k+1];i++) stepOf[i]=k;
   const ch=(M.chapters||[]).slice().sort((a,b)=>a.from-b.from), chOf=new Int32Array(n); ch.forEach((c,ci)=>{ const end=ci+1<ch.length?ch[ci+1].from:n; for(let i=c.from;i<end;i++) chOf[i]=ci; });
+  /* порядок — свой, по опоре, а не по главам автора: автор мог собрать фигурку «в руках» первой, а пластину под ней добавить в конце.
+     Главы автора остаются только подсказкой порядка внутри равных вариантов и названиями, если их детали так и идут подряд */
+  const chOrig=Int32Array.from(chOf), chNames=ch.map(c=>c.name); chOf.fill(0); ch.length=0;
   const B=S.map(s=>{ const d=dims(designSpec(s.p),s), x=s.x+(s.ox||0), z=s.z+(s.oz||0), y=s.y*PH; return [x,y,z,x+d.W,y+d.H,z+d.D]; });
+  let Y0=Infinity; B.forEach(b=>{ if(b[1]<Y0) Y0=b[1]; }); const G0=Y0+0.05; // «на основе» — на высоте самой нижней детали модели
+  /* стоит на основе и то, что чуть выше неё, если под ним ничего нет: лапы дракона, наклонённые ноги, колёса —
+     у наклонённой детали рамка выше её настоящей нижней точки */
+  const GR=new Uint8Array(n); for(let i=0;i<n;i++){ const b=B[i]; if(b[1]<G0){ GR[i]=1; continue; } if(b[1]>=Y0+0.65) continue;
+    let under=false; for(let j=0;j<n&&!under;j++){ if(j===i) continue; const c=B[j]; if(c[4]<=b[1]+0.08&&c[3]>b[0]+0.05&&c[0]<b[3]-0.05&&c[5]>b[2]+0.05&&c[2]<b[5]-0.05) under=true; } if(!under) GR[i]=1; }
   const e=0.08, ov=0.15, face=(a,b)=>{ let thin=0; for(let k=0;k<3;k++){ const o=Math.min(a[k+3],b[k+3])-Math.max(a[k],b[k]); if(o<-e) return false; if(o<ov) thin++; } return thin<=1; };
   const G=new Map(), cells=(b,f)=>{ for(let gx=Math.floor((b[0]-e)/2);gx<=Math.floor((b[3]+e)/2);gx++) for(let gy=Math.floor((b[1]-e)/1.2);gy<=Math.floor((b[4]+e)/1.2);gy++) for(let gz=Math.floor((b[2]-e)/2);gz<=Math.floor((b[5]+e)/2);gz++) f(gx+","+gy+","+gz); };
   S.forEach((_,i)=>cells(B[i],c=>{ let L=G.get(c); if(!L) G.set(c,L=[]); L.push(i); }));
@@ -5991,33 +6021,62 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
       const cx=Math.floor(x/CS), cy=Math.floor(y/CS), cz=Math.floor(z/CS);
       for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++) for(let dz=-1;dz<=1;dz++){ const L=H.get((cx+dx)+","+(cy+dy)+","+(cz+dz)); if(L) for(const q of L){ const ex=b[q]-x, ey=b[q+1]-y, ez=b[q+2]-z; if(ex*ex+ey*ey+ez*ez<0.0169) return true; } } }
     return false; };
-  const N=S.map((_,i)=>nbr(i));
-  if(n<=6000) N.forEach((Ni,i)=>Ni.forEach(j=>{ if(j<i) return; let t=false; try{ t=real(i,j)||real(j,i); }catch(_){ t=true; } if(!t){ Ni.delete(j); N[j].delete(i); } }));
+  /* касание на высоте y (низ одной из деталей): 0 — не касаются, 1 — касаются, 3 — касаются на этой высоте */
+  const realAt=(i,j,yb)=>{ const a=pts(i), bj=B[j], b=pts(j), H=hash(j), m=0.15; let hit=0;
+    for(let k=0;k<a.length;k+=3){ const x=a[k], y=a[k+1], z=a[k+2]; if(x<bj[0]-m||x>bj[3]+m||y<bj[1]-m||y>bj[4]+0.3||z<bj[2]-m||z>bj[5]+m) continue;
+      if(hit&&!(y>yb-0.15&&y<yb+0.1)) continue;
+      const cx=Math.floor(x/CS), cy=Math.floor(y/CS), cz=Math.floor(z/CS);
+      for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++) for(let dz=-1;dz<=1;dz++){ const L=H.get((cx+dx)+","+(cy+dy)+","+(cz+dz)); if(L) for(const q of L){ const ex=b[q]-x, ey=b[q+1]-y, ez=b[q+2]-z; if(ex*ex+ey*ey+ez*ez<0.0169){ if(y>yb-0.15&&y<yb+0.1) return 3; hit=1; } } } }
+    return hit; };
+  const N=S.map((_,i)=>nbr(i)), SUP=S.map(()=>null), REM=[]; // SUP[i] — на чём деталь лежит по настоящей форме (даже если рамка соседа выше её низа: упряжь, скобы)
+  const sup=(i,j)=>{ let L=SUP[i]; if(!L) SUP[i]=L=[]; L.push(j); };
+  if(n<=6000) N.forEach((Ni,i)=>Ni.forEach(j=>{ if(j<i) return; let t=false;
+    try{ const lo=B[i][1]<B[j][1]?i:j, hi=lo===i?j:i, yb=B[hi][1]; let r=0;
+      if(B[lo][1]<yb-e){ r=realAt(hi,lo,yb)|realAt(lo,hi,yb); if(r===3) sup(hi,lo); } else r=realAt(i,j,-1e9)||realAt(j,i,-1e9);
+      t=r>0; }catch(_){ t=true; } if(!t){ Ni.delete(j); N[j].delete(i); REM.push(i,j); } }));
+  /* кусок модели, который по настоящей форме ни к чему не касается (дракон на клипсе, деталь на штанге — точек формы мало),
+     всё-таки к чему-то крепится: возвращаем ему касание по рамкам, иначе он «висит в воздухе» и уходит в конец без опоры */
+  { const U=new Int32Array(n).map((_,i)=>i), f=i=>{ while(U[i]!==i){ U[i]=U[U[i]]; i=U[i]; } return i; }, gnd=new Uint8Array(n);
+    for(let i=0;i<n;i++) N[i].forEach(j=>{ const a=f(i), b=f(j); if(a!==b) U[a]=b; });
+    for(let i=0;i<n;i++) if(GR[i]) gnd[f(i)]=1;
+    for(let k=0;k<REM.length;k+=2){ const i=REM[k], j=REM[k+1], a=f(i), b=f(j); if(a===b||(gnd[a]&&gnd[b])) continue; N[i].add(j); N[j].add(i); U[a]=b; if(gnd[a]) gnd[b]=1; } }
   PT.clear(); HS.clear();
   /* цепочки: одинаковые детали без правил крепления, сцепленные одна за другой (звенья цепи, верёвка, шланг).
      Цепь растёт от первого звена по порядку: звено держится только за соседнее звено, к остальному крепится лишь первое.
      Звено, которое просто лежит на чём-то или касается соседней детали, на неё не опирается — иначе куски цепи висят в воздухе */
   const blk=new Map(), carry=(j,i)=>{ const b=blk.get(i); return !b||!b.has(j); };
   const rl=i=>{ const p=S[i].p; return /^x_/.test(p)||!CONN[p]; }, vis=new Uint8Array(n);
+  const fam=i=>{ const w=String(designName(S[i].p)||S[i].p).toLowerCase().replace(/\(.*$/,"").split(/[\s,]+/).filter(Boolean); return w.length>=3?w.slice(0,3).join(" "):S[i].p; }; // звено и концевое звено одной цепи
   const hook=(a,b)=>{ for(let k=0;k<3;k++) if(Math.min(a[k+3],b[k+3])-Math.max(a[k],b[k])<ov) return false; return true; }; // звенья продеты друг в друга, а не просто лежат рядом
   for(let i=0;i<n;i++){ if(vis[i]||!rl(i)) continue; const comp=[i]; vis[i]=1;
-    for(let h=0;h<comp.length;h++) N[comp[h]].forEach(j=>{ if(!vis[j]&&S[j].p===S[i].p&&chOf[j]===chOf[i]&&hook(B[comp[h]],B[j])){ vis[j]=1; comp.push(j); } });
+    for(let h=0;h<comp.length;h++) N[comp[h]].forEach(j=>{ if(!vis[j]&&rl(j)&&fam(j)===fam(i)&&chOf[j]===chOf[i]&&hook(B[comp[h]],B[j])){ vis[j]=1; comp.push(j); } });
     if(comp.length<3) continue; const inC=new Set(comp), deg=k=>{ let c=0; N[k].forEach(j=>{ if(inC.has(j)) c++; }); return c; };
     if(comp.some(k=>deg(k)>2)) continue; // разветвляется — это не цепь
-    const ends=comp.filter(k=>deg(k)<=1), outer=k=>B[k][1]<0.05||[...N[k]].some(j=>!inC.has(j));
+    const ends=comp.filter(k=>deg(k)<=1), outer=k=>GR[k]||[...N[k]].some(j=>!inC.has(j));
     const cand=(ends.length?ends:comp).filter(outer).sort((a,b)=>(stepOf[a]-stepOf[b])||(a-b)); if(!cand.length) continue; const root=cand[0];
     comp.forEach(k=>{ if(k===root) return; N[k].forEach(j=>{ if(!inC.has(j)){ let b=blk.get(k); if(!b) blk.set(k,b=new Set()); b.add(j); } }); }); }
   const placed=new Uint8Array(n), out=[], depth=new Int32Array(n).fill(-1);
   const FP=new Map(); // что должно стоять раньше детали фигурки — в том же шаге их не смешиваем
   const nCh=Math.max(1,ch.length);
-  for(let c=0;c<nCh;c++){ const I=[]; for(let i=0;i<n;i++) if((ch.length?chOf[i]:0)===c) I.push(i); if(!I.length) continue;
-    const q=[]; I.forEach(i=>{ if(B[i][1]<0.05||[...N[i]].some(j=>placed[j]&&carry(j,i))){ depth[i]=0; q.push(i); } });
+  /* главы (подмодели автора) по порядку опоры: подмодель, которая стоит на деталях другой главы (фигурка на пластине,
+     крыша на стенах), идёт после неё — даже если автор собрал её раньше «в руках». Иначе её пришлось бы ставить в воздух,
+     а основу потом подсовывать под неё */
+  let chOrd=[...Array(nCh).keys()];
+  if(ch.length>1){ const dep=[...Array(nCh)].map(()=>new Set());
+    for(let i=0;i<n;i++){ const ci=chOf[i]; N[i].forEach(j=>{ const cj=chOf[j]; if(cj===ci) return; const below=(B[j][4]<=B[i][1]+e&&B[j][1]<B[i][1]-e)||(SUP[i]&&SUP[i].indexOf(j)>=0); if(below) dep[ci].add(cj); }); }
+    const indeg=dep.map(d=>d.size), out2=[], used=new Uint8Array(nCh);
+    for(let k=0;k<nCh;k++){ let pick=-1; for(let c=0;c<nCh;c++) if(!used[c]&&[...dep[c]].every(d=>used[d])){ pick=c; break; }
+      if(pick<0) for(let c=0;c<nCh;c++) if(!used[c]){ pick=c; break; } // взаимная опора — порядок автора
+      used[pick]=1; out2.push(pick); }
+    chOrd=out2; }
+  for(const c of chOrd){ const I=[]; for(let i=0;i<n;i++) if((ch.length?chOf[i]:0)===c) I.push(i); if(!I.length) continue;
+    const q=[]; I.forEach(i=>{ if(GR[i]||[...N[i]].some(j=>placed[j]&&carry(j,i))){ depth[i]=0; q.push(i); } });
     for(let h=0;h<q.length;h++){ const i=q[h]; N[i].forEach(j=>{ if(depth[j]<0&&carry(i,j)&&(ch.length?chOf[j]:0)===c){ depth[j]=depth[i]+1; q.push(j); } }); }
     let mx=0; I.forEach(i=>{ if(depth[i]>mx) mx=depth[i]; }); I.forEach(i=>{ if(depth[i]<0) depth[i]=mx+1; }); // ни к чему не крепится — в конце главы
     /* ставим по одной: деталь доступна, когда стоит всё, на чём она лежит (касание снизу), и она крепится к уже поставленному.
        Так ничего не приходится просовывать под уже поставленное или между двумя деталями. Из доступных — меньшая глубина, затем порядок автора */
     const inI=new Uint8Array(n); I.forEach(i=>inI[i]=1);
-    const lower=i=>[...N[i]].filter(j=>inI[j]&&B[j][4]<=B[i][1]+e&&B[j][1]<B[i][1]-e);
+    const lower=i=>{ const a=[...N[i]].filter(j=>inI[j]&&B[j][4]<=B[i][1]+e&&B[j][1]<B[i][1]-e); (SUP[i]||[]).forEach(j=>{ if(inI[j]&&N[i].has(j)&&a.indexOf(j)<0&&!(fr[i]>=0&&fr[j]>=0)) a.push(j); }); return a; };
     /* фигурки собираются по порядку: кисть — только после руки, голова — после туловища и бороды, волосы — после головы */
     const fr=new Int8Array(n).fill(-1), F=[]; I.forEach(i=>{ try{ fr[i]=figRank(S[i].p); }catch(_){} if(fr[i]>=0) F.push(i); });
     const cen=i=>[(B[i][0]+B[i][3])/2,(B[i][1]+B[i][4])/2,(B[i][2]+B[i][5])/2], hard=new Int32Array(n), fpre=new Map();
@@ -6036,7 +6095,7 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
       pop(){ const top=h[0], last=h.pop(); if(h.length){ h[0]=last; let i=0; for(;;){ const l=2*i+1, r=l+1; let m=i; if(l<h.length&&less(h[l],h[m])<0) m=l; if(r<h.length&&less(h[r],h[m])<0) m=r; if(m===i) break; [h[i],h[m]]=[h[m],h[i]]; i=m; } } return top; } }; };
     const ready=mkHeap(), linked=mkHeap(), con=new Uint8Array(n), inR=new Uint8Array(n), inL=new Uint8Array(n);
     const offer=i=>{ if(placed[i]||!inI[i]) return; if(con[i]&&!inL[i]){ inL[i]=1; linked.push(i); } if(con[i]&&need[i]<=0&&!inR[i]){ inR[i]=1; ready.push(i); } };
-    I.forEach(i=>{ if(B[i][1]<0.05||[...N[i]].some(j=>placed[j]&&carry(j,i))) con[i]=1; offer(i); });
+    I.forEach(i=>{ if(GR[i]||[...N[i]].some(j=>placed[j]&&carry(j,i))) con[i]=1; offer(i); });
     let left=I.length, rest=I.slice().sort(less), rp=0;
     const put=i=>{ out.push(i); placed[i]=1; left--; (hardUp.get(i)||[]).forEach(u=>{ if(--hard[u]<=0){ inL[u]=0; con[u]=1; } }); /* фигурка собрана до этой детали — деталь крепится к ней */ (upOf.get(i)||[]).forEach(u=>{ need[u]--; offer(u); }); N[i].forEach(j=>{ if(!con[j]&&carry(i,j)){ con[j]=1; offer(j); } }); };
     while(left>0){ let best=-1;
@@ -6047,7 +6106,9 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   let moved=0; out.forEach((i,k)=>{ if(i!==k) moved++; });
   const nb=[], cur=new Set(out.length?[out[0]]:[]); for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k], f=FP.get(b); if(chOf[a]!==chOf[b]||depth[a]!==depth[b]||stepOf[a]!==stepOf[b]||f&&f.some(j=>cur.has(j))){ nb.push(k); cur.clear(); } cur.add(b); }
   const pos=new Int32Array(n); out.forEach((i,k)=>pos[i]=k);
-  if(ch.length){ M.chapters=ch.map((c,ci)=>{ let mn=Infinity; for(let i=0;i<n;i++) if(chOf[i]===ci) mn=Math.min(mn,pos[i]); return {name:c.name,from:mn}; }).filter(c=>isFinite(c.from)).sort((a,b)=>a.from-b.from); }
+  if(chNames.length){ const runs=[]; let prev=-1; out.forEach((i,k)=>{ const c=chOrig[i]; if(c!==prev){ runs.push({c,from:k}); prev=c; } });
+    const seen=new Set(), whole=runs.every(r=>{ if(seen.has(r.c)) return false; seen.add(r.c); return true; }); // каждая глава одним куском — оставляем названия
+    M.chapters=whole?runs.map(r=>({name:chNames[r.c],from:r.from})):[]; }
   M.steps=out.map(i=>S[i]); M.breaks=nb; M.split=0; delete insPagesCache[M.id]; return moved; }
 /* модель на сетке пластины: если почти все детали сдвинуты от шипов на одну и ту же долю шипа (автор поставил модель не по сетке
    или развернул её), сдвигаем всю модель на эту долю — тогда детали садятся ровно на шипы основы */
