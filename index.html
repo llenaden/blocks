@@ -927,6 +927,8 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
   <symbol id="i-parts" viewBox="0 0 24 24"><rect x="3" y="10" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="5" rx="1"/><rect x="8" y="16" width="8" height="5" rx="1"/><path d="M5.5 10V8.5M8.5 10V8.5M15.5 10V8.5M18.5 10V8.5"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
+  <symbol id="i-follow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+  <symbol id="i-follow-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-rot" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
   <symbol id="i-tiltf" viewBox="0 0 24 24"><rect x="6" y="5" width="11" height="8" rx="1.5" transform="rotate(-24 11.5 9)"/><path d="M4 20h16"/><path d="M8 16l2 2"/></symbol>
@@ -1183,7 +1185,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <span class="ins-check" id="insCheck" role="status"></span><div class="ins-where"><div class="where" id="insWhere">Шаг 1</div><div class="track"><div class="fill" id="insFill"></div></div></div>
       <button class="navb" id="insNext" aria-label="Следующий шаг" hidden><svg class="ic"><use href="#i-next"/></svg></button>
       <button class="navb ins-go" id="insGo" aria-label="Дальше: следующий шаг"><span class="t">Дальше</span><svg class="ic"><use href="#i-next"/></svg></button>
-      <button class="navb" id="insHintsBtn" aria-pressed="true" aria-label="Подсказки на основе: показать или спрятать" title="Подсказки на основе"><svg class="ic"><use href="#i-eye"/></svg></button>
+      <button class="navb" id="insFollowBtn" aria-pressed="true" aria-label="Инструкция поворачивается вместе с моделью: включить или выключить" title="Поворачивать вместе с моделью"><svg class="ic"><use href="#i-follow"/></svg></button><button class="navb" id="insHintsBtn" aria-pressed="true" aria-label="Подсказки на основе: показать или спрятать" title="Подсказки на основе"><svg class="ic"><use href="#i-eye"/></svg></button>
       <button class="navb xs-only" id="insBig" aria-label="Окно побольше"><svg class="ic" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
     </div>
     <div class="ins-page" id="insPage">
@@ -5267,7 +5269,7 @@ function enterInstrBuild(id,rec){
   for(const k in insSavedColor) delete insSavedColor[k]; Object.assign(insSavedColor,pickedColor);
   insApplyLib(M); insGL();
   $("insAuto").checked=insAuto();
-  IV.follow=true; $("insCam").hidden=true; $("insHint").hidden=ls.get("myblocks.ins.hint")==="0"; $("insWhole").setAttribute("aria-pressed","false"); IV.whole=false; IV.zoom=1;
+  insSetFollow(ls.get("myblocks.ins.follow")!=="0",false); $("insHint").hidden=ls.get("myblocks.ins.hint")==="0"; $("insWhole").setAttribute("aria-pressed","false"); IV.whole=false; IV.zoom=1;
   insSize(ls.get("myblocks.ins.size")||"m",true);
   insSetPage(IB.page,true);
   if(!IV.loop){ IV.loop=true; requestAnimationFrame(insLoop); }
@@ -5391,7 +5393,12 @@ function insGL(){
 function insPan(dx,dy){ if(!IV.cam||!IV.h) return; const d=IV.cam.position.distanceTo(IV.t), k=2*d*Math.tan(IV.cam.fov*Math.PI/360)/IV.h;
   const R=new THREE.Vector3().setFromMatrixColumn(IV.cam.matrixWorld,0), U=new THREE.Vector3().setFromMatrixColumn(IV.cam.matrixWorld,1);
   IV.t.addScaledVector(R,-dx*k).addScaledVector(U,dy*k); IV.dirty=true; }
-function insUnfollow(){ if(IV.follow){ IV.follow=false; $("insCam").hidden=false; } if(!$("insHint").hidden){ $("insHint").hidden=true; ls.set("myblocks.ins.hint","0"); } }
+/* слежение: инструкция поворачивается вместе с моделью на основе. Кнопка с прицелом рядом с глазом включает и выключает;
+   если повернуть саму инструкцию пальцем — слежение выключается, кнопка это показывает */
+function insSetFollow(on,save){ IV.follow=!!on; if(save) ls.set("myblocks.ins.follow",on?"1":"0"); const b=$("insFollowBtn"); if(b){ b.setAttribute("aria-pressed",String(!!on)); b.querySelector("use").setAttribute("href",on?"#i-follow":"#i-follow-off"); }
+  $("insCam").hidden=true; if(on){ IV.zoom=1; try{ insFrame(); }catch(_){} } IV.dirty=true; }
+function insUnfollow(){ if(IV.follow) insSetFollow(false,false); if(!$("insHint").hidden){ $("insHint").hidden=true; ls.set("myblocks.ins.hint","0"); } }
+$("insFollowBtn").addEventListener("click",()=>insSetFollow(!IV.follow,true));
 // уже собранное — почти бесцветное и спокойное: светло-серое, низкий контраст, чуть прозрачное
 const insDimMats={};
 function insDimMat(c){ if(!insDimMats[c]){ const C=new THREE.Color(colorOf(c).hex), L=C.r*0.3+C.g*0.59+C.b*0.11, g=0.56+0.14*L;
