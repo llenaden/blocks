@@ -913,6 +913,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 .ld-bar{width:160px;height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden;margin-top:4px}.ld-bar i{display:block;height:100%;width:40%;border-radius:2px;background:var(--accent);animation:ldRun 1.2s ease-in-out infinite}
 @keyframes ldRun{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
 @media (prefers-reduced-motion:reduce){ .ld-logo,.ld-bar i{animation:none} }
+.drag-pop{position:fixed;z-index:60;width:300px;max-width:calc(100vw - 32px);padding:10px;border-radius:16px;display:flex;flex-direction:column;gap:6px}.drag-pop[hidden]{display:none}.dp-t{font-size:13px;color:var(--faint);padding:4px 8px 6px}.dp-o{appearance:none;border:1px solid transparent;background:transparent;color:var(--ink);text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;font:inherit}.dp-o b{font-size:14px;font-weight:600}.dp-o span{font-size:13px;color:var(--faint)}.dp-snd{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 12px 12px}.dp-snd[aria-pressed="true"]{background:transparent;border-color:transparent;border-top-color:var(--line)}.dp-o[data-m][aria-pressed="true"]{background:rgba(61,139,255,.16);border-color:rgba(61,139,255,.55)}
 </style>
 </head>
 <body>
@@ -929,6 +930,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
   <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
   <symbol id="i-follow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   <symbol id="i-follow-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13.5 7.5l3 3"/><path d="M18 3v3M16.5 4.5h3M20 9v2M19 10h2M10 3v2M9 4h2"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-rot" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
   <symbol id="i-tiltf" viewBox="0 0 24 24"><rect x="6" y="5" width="11" height="8" rx="1.5" transform="rotate(-24 11.5 9)"/><path d="M4 20h16"/><path d="M8 16l2 2"/></symbol>
@@ -1111,6 +1113,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <button class="ib free-only" id="tLight" title="Свет" aria-label="Откуда светит свет"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="10" r="5"/><path d="M9.5 18h5M10 21h4M12 1.5v1.5M4 10H2.5M21.5 10H20M5.6 3.6l1 1M18.4 3.6l-1 1"/></svg></button>
       <button class="ib free-only" id="tSide" title="Панель деталей слева или справа" aria-label="Перенести панель деталей на другую сторону"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/><path d="M7 12h5M9.5 9.5 12 12l-2.5 2.5"/></svg></button>
       <button class="ib free-only" id="tBase" title="Цвет основы" aria-label="Цвет основы"><span class="basedot" id="tBaseDot"></span></button>
+      <button class="ib" id="tDrag" title="Как деталь идёт за стилусом" aria-label="Как деталь идёт за стилусом" aria-expanded="false"><svg class="ic"><use href="#i-wand"/></svg></button>
       <button class="cdot" id="tColor" title="Цвет" aria-label="Цвет"></button>
     </div>
     <div class="wb-r glass play-only">
@@ -1373,6 +1376,13 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 <input type="file" id="stFile" accept="image/*" hidden>
 <input type="file" id="projFile" accept="application/json,.json" hidden>
 <div class="toast gtoast" id="gtoast" hidden></div>
+<div class="drag-pop glass" id="dragPop" hidden role="dialog" aria-label="Как деталь идёт за стилусом">
+  <div class="dp-t">Как деталь идёт за стилусом</div>
+  <button class="dp-o" data-m="0"><b>Магнит</b><span>деталь сама цепляется за ближайшее соединение</span></button>
+  <button class="dp-o" data-m="0.4"><b>Наполовину за стилусом</b><span>на 40% идёт за рукой, у соединения встаёт на него</span></button>
+  <button class="dp-o" data-m="0.8"><b>За стилусом</b><span>на 80% идёт за рукой, у соединения встаёт на него</span></button>
+  <button class="dp-o dp-snd" id="dpSound"><b>Звук щелчка: включён</b><span>тихий щелчок, когда деталь встаёт на соединение, и отчётливый — когда поставлена</span></button>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
@@ -2475,6 +2485,8 @@ function rebuildGhost(){
 }
 function partThumb(spec,c,f,size){ const o=buildObject(spec,c,spec.id&&CONN[spec.id]&&CONN[spec.id].ss?{ry:2}:{},f,false); return renderThumb(o,spec,size||112,size||112); }
 // где призрак стоял в прошлый раз — пока палец ведёт деталь, она не перепрыгивает между почти равными вариантами
+let dragFollow=(()=>{ try{ const r=localStorage.getItem("myblocks.dragf"); if(r===null) return 0.8; const v=parseFloat(r); return v===0||v===0.4||v===0.8?v:0.8; }catch(_){ return 0.8; } })(); // по умолчанию — деталь идёт за стилусом
+let ghostNear=false, landPrevSnap=null;
 let landPrev=null, oriPend={k:"",t:0}, ghostAcc=null, jumpPend=null, jumpT=0, jumpTimer=0; const _gp=new THREE.Vector2(), _gpl=new THREE.Plane(), _gup=new THREE.Vector3(0,1,0), _gh=new THREE.Vector3();
 function setHand(h){
   landPrev=null;
@@ -3187,7 +3199,7 @@ function insertFit(o,x,z,ignore,hy){
 function showGhostAt(c){
   if(!ghost||!hand) return;
   const ol=ghost.userData.ol;
-  if(!c){ ghost.visible=false; ghostPos=null; landPrev=null; ghostAcc=null; jumpPend=null; return; }
+  if(!c){ ghost.visible=false; ghostPos=null; landPrev=null; ghostAcc=null; jumpPend=null; ghostNear=false; landPrevSnap=null; return; }
   const B=hand.base||{rx:0,ry:0,rz:0};
   const nr={rx:c.rx!==undefined?c.rx:B.rx,ry:c.ry!==undefined?c.ry:B.ry,rz:c.rz!==undefined?c.rz:B.rz};
   /* деталь не «мельтешит»: новое положение (повернуться, лечь набок) принимается, только когда палец задержался на нём —
@@ -3204,12 +3216,17 @@ function showGhostAt(c){
   /* плавно, но быстро: деталь не «плывёт» сквозь соседние, а коротко доезжает; на большой прыжок (другое место) — поднимается над постройкой */
   /* деталь тянется за стилусом непрерывно: место, куда она сядет, притягивает её как магнит, но между шипами она не прыгает,
      а плавно скользит за рукой (смещение к пальцу — до полшипа). Отпустили — доезжает точно на место */
-  const tgt=_g.position.clone(); if(lastPointer&&!c.insSnap){ const rect=canvas.getBoundingClientRect(); _gp.set((lastPointer.x-rect.left)/rect.width*2-1,-((lastPointer.y-(c.lift||0)-rect.top)/rect.height)*2+1); ray.setFromCamera(_gp,camera);
-      _gpl.set(_gup,-tgt.y); if(ray.ray.intersectPlane(_gpl,_gh)){ const ox=Math.max(-0.45,Math.min(0.45,_gh.x-tgt.x)), oz=Math.max(-0.45,Math.min(0.45,_gh.z-tgt.z)); tgt.x+=ox*0.6; tgt.z+=oz*0.6; } }
+  /* три способа вести деталь (волшебная палочка справа вверху): «Магнит» — деталь сама цепляется за соединение;
+     40% и 80% — деталь идёт за стилусом на эту долю, а у соединения (рядом с шипом; у места по инструкции — ближе ~0,6 шипа) встаёт на него. Отпустили — садится на соединение */
+  const tgt=_g.position.clone(); if(lastPointer){ const rect=canvas.getBoundingClientRect(); _gp.set((lastPointer.x-rect.left)/rect.width*2-1,-((lastPointer.y-(c.lift||0)-rect.top)/rect.height)*2+1); ray.setFromCamera(_gp,camera);
+      _gpl.set(_gup,-tgt.y); if(ray.ray.intersectPlane(_gpl,_gh)){ const fx=_gh.x-tgt.x, fz=_gh.z-tgt.z, fd=Math.hypot(fx,fz);
+        if(dragFollow>0){ const R=c.insSnap?0.6:0.18; if(fd>R){ const k=dragFollow*Math.min(1,(fd-R)/0.25); tgt.x+=fx*k; tgt.z+=fz*k; tgt.y+=0.12*k; ghostNear=false; } else { if(!ghostNear) playClick("tick"); ghostNear=true; } } // у соединения (ближе R) — встаёт на него, с тихим щелчком
+        else if(c.insSnap&&(!landPrevSnap||landPrevSnap!==c.x+','+c.y+','+c.z)){ playClick("tick"); landPrevSnap=c.x+','+c.y+','+c.z; }
+        else if(!c.insSnap){ tgt.x+=Math.max(-0.45,Math.min(0.45,fx))*0.6; tgt.z+=Math.max(-0.45,Math.min(0.45,fz))*0.6; } } }
   /* стилус на мгновение прошёл над высокой деталью (колонна, стена) — деталь не взлетает туда и обратно:
      дальний перескок (больше полутора шипов) принимается, только если место держится ~0,12 с */
-  if(ghost.visible&&ghostAcc&&!turn){ const d=tgt.distanceTo(ghostAcc); if(d>1.6){ if(!jumpPend||jumpPend.distanceTo(tgt)>0.6){ jumpPend=tgt.clone(); jumpT=now; }
-      if(now-jumpT<120){ clearTimeout(jumpTimer); const cc=c; jumpTimer=setTimeout(()=>{ if(landPrev===cc&&hand) showGhostAt(cc); },130); return; } } }
+  if(ghost.visible&&ghostAcc&&!turn&&dragFollow===0){ const d=tgt.distanceTo(ghostAcc); if(d>1.6){ if(!jumpPend||jumpPend.distanceTo(tgt)>0.6){ jumpPend=tgt.clone(); jumpT=now; }
+      if(now-jumpT<90){ clearTimeout(jumpTimer); const cc=c; jumpTimer=setTimeout(()=>{ if(landPrev===cc&&hand) showGhostAt(cc); },130); return; } } }
   jumpPend=null; ghostAcc=tgt.clone();
   ghost.visible=true; if(typeof smoothTo==="function"){ smoothTo(ghost,tgt,_g.quaternion,0.34); }
   ghostPos=c;
@@ -3226,7 +3243,7 @@ function placeHand(c){
   if(hand.f) p.f={...hand.f}; else p.p=hand.p;
   if(isHidden(p)){ const m=layerMeta[layerKey(p)]; if(m) m.h=false; applyHidden(); toast("Слой снова показан: в него добавлена деталь"); }
   if(typeof IB!=="undefined"&&IB) IB._stick=null;
-  parts.push(p); { const m=addMesh(p);
+  parts.push(p); playClick("place"); { const m=addMesh(p);
     // деталь доезжает до места оттуда, где была в руке, — без прыжка; если в руке её не было видно — мягко опускается сверху
     if(ghost&&ghost.visible&&typeof smoothTo==="function"&&!reduceMotion){ const fp=m.position.clone(), fq=m.quaternion.clone(); m.position.copy(ghost.position); m.quaternion.copy(ghost.quaternion); smoothTo(m,fp,fq,0.28); }
     else animateDrop(m); }
@@ -3455,6 +3472,26 @@ setTimeout(applyLight,0);
 function applySide(){ let s="r"; try{ s=localStorage.getItem("mb_side")||"r"; }catch(_){} $("ws").classList.toggle("side-l",s==="l"); }
 $("tSide").addEventListener("click",()=>{ let s="r"; try{ s=localStorage.getItem("mb_side")||"r"; }catch(_){} s=s==="l"?"r":"l"; try{ localStorage.setItem("mb_side",s); }catch(_){} applySide(); toast(s==="l"?"Детали — слева":"Детали — справа"); });
 applySide();
+/* звук щелчка детали: короткий «пластиковый» щелчок, синтезируется на месте (без файлов). Тихий — когда деталь встаёт на соединение
+   в руке, отчётливый — когда деталь поставлена. Выключается в той же панели (волшебная палочка) */
+let clickOn=(()=>{ try{ return localStorage.getItem("myblocks.click")!=="0"; }catch(_){ return true; } })(), _ac=null, _nb=null;
+function playClick(kind){ if(!clickOn||reduceMotion&&kind==="tick") return; try{ if(!_ac){ const A=window.AudioContext||window.webkitAudioContext; if(!A) return; _ac=new A(); }
+    if(_ac.state==="suspended") _ac.resume(); const t=_ac.currentTime, loud=kind==="place"?0.22:0.08;
+    if(!_nb){ _nb=_ac.createBuffer(1,Math.floor(_ac.sampleRate*0.03),_ac.sampleRate); const d=_nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3); }
+    const n=_ac.createBufferSource(); n.buffer=_nb; const f=_ac.createBiquadFilter(); f.type="bandpass"; f.frequency.value=kind==="place"?2300:3200; f.Q.value=1.4;
+    const g=_ac.createGain(); g.gain.setValueAtTime(loud,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.05); n.connect(f); f.connect(g); g.connect(_ac.destination); n.start(t); n.stop(t+0.06);
+    if(kind==="place"){ const o=_ac.createOscillator(), g2=_ac.createGain(); o.type="triangle"; o.frequency.setValueAtTime(900,t+0.012); o.frequency.exponentialRampToValueAtTime(420,t+0.07); g2.gain.setValueAtTime(0.0001,t); g2.gain.exponentialRampToValueAtTime(0.09,t+0.015); g2.gain.exponentialRampToValueAtTime(0.0001,t+0.09); o.connect(g2); g2.connect(_ac.destination); o.start(t); o.stop(t+0.1); }
+  }catch(_){} }
+/* волшебная палочка: как деталь идёт за стилусом */
+function dragPopSync(){ document.querySelectorAll("#dragPop .dp-o[data-m]").forEach(b=>b.setAttribute("aria-pressed",String(parseFloat(b.dataset.m)===dragFollow))); }
+function dragPopShow(on){ const P=$("dragPop"), b=$("tDrag"); if(!P||!b) return; if(on){ const r=b.getBoundingClientRect(); P.style.top=(r.bottom+8)+"px"; P.style.right=Math.max(16,innerWidth-r.right)+"px"; dragPopSync(); }
+  P.hidden=!on; b.setAttribute("aria-expanded",String(!!on)); b.classList.toggle("on",!!on); }
+$("tDrag").addEventListener("click",e=>{ e.stopPropagation(); dragPopShow($("dragPop").hidden); });
+document.querySelectorAll("#dragPop .dp-o[data-m]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); dragFollow=parseFloat(b.dataset.m)||0; try{ localStorage.setItem("myblocks.dragf",String(dragFollow)); }catch(_){} dragPopSync();
+  toast(dragFollow===0?"Магнит: деталь сама цепляется за соединение":dragFollow===0.4?"Деталь идёт за стилусом на 40%":"Деталь идёт за стилусом на 80%"); setTimeout(()=>dragPopShow(false),250); }));
+{ const sb=$("dpSound"); if(sb){ const sync=()=>{ sb.setAttribute("aria-pressed",String(clickOn)); sb.querySelector("b").textContent=clickOn?"Звук щелчка: включён":"Звук щелчка: выключен"; }; sync();
+  sb.addEventListener("click",e=>{ e.stopPropagation(); clickOn=!clickOn; try{ localStorage.setItem("myblocks.click",clickOn?"1":"0"); }catch(_){} sync(); if(clickOn) playClick("place"); }); } }
+document.addEventListener("pointerdown",e=>{ const P=$("dragPop"); if(P&&!P.hidden&&!P.contains(e.target)&&e.target!==$("tDrag")&&!$("tDrag").contains(e.target)) dragPopShow(false); },true);
 $("tBase").addEventListener("click",()=>{ openPalette(layerMeta.__board||null,c=>{ layerMeta.__board=c; setBoardColor(c); changed(); toast("Основа: "+colorOf(c).name); }); $("palName").textContent="Цвет основы"; });
 /* наклейка: своя картинка на выбранную грань детали */
 // наклейки: сначала — готовые наклейки набора (подходящие к этой детали — первыми), можно и свою картинку
