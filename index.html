@@ -914,6 +914,20 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 @keyframes ldRun{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
 @media (prefers-reduced-motion:reduce){ .ld-logo,.ld-bar i{animation:none} }
 .drag-pop{position:fixed;z-index:60;width:300px;max-width:calc(100vw - 32px);padding:10px;border-radius:16px;display:flex;flex-direction:column;gap:6px}.drag-pop[hidden]{display:none}.dp-t{font-size:13px;color:var(--faint);padding:4px 8px 6px}.dp-o{appearance:none;border:1px solid transparent;background:transparent;color:var(--ink);text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;font:inherit}.dp-o b{font-size:14px;font-weight:600}.dp-o span{font-size:13px;color:var(--faint)}.dp-snd{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 12px 12px}.dp-snd[aria-pressed="true"]{background:transparent;border-color:transparent;border-top-color:var(--line)}.dp-o[data-m][aria-pressed="true"]{background:rgba(61,139,255,.16);border-color:rgba(61,139,255,.55)}
+.done-sheet{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(8,10,14,.45);opacity:0;transition:opacity .22s}.done-sheet.on{opacity:1}.done-sheet[hidden]{display:none}
+.dn-card{position:relative;width:420px;max-width:100%;padding:28px 24px 20px;border-radius:24px;text-align:center;transform:translateY(12px) scale(.97);transition:transform .32s cubic-bezier(.2,.9,.3,1.2)}.done-sheet.on .dn-card{transform:none}
+.dn-ic{width:60px;height:60px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:#22A55A;color:#fff;box-shadow:0 8px 24px rgba(34,165,90,.4)}
+.dn-card h2{font-size:20px;font-weight:700;margin:0 0 6px}.dn-card>p{font-size:14px;margin:0 0 18px;color:var(--faint)}.dn-act{display:flex;flex-direction:column;gap:8px}.dn-act .btn{justify-content:center;width:100%}.dn-card .dn-note{font-size:12px;margin:14px 0 0;color:var(--faint)}
+.dn-conf{position:absolute;inset:0;overflow:hidden;pointer-events:none}.dn-conf i{position:absolute;top:-30px;height:9px;border-radius:2px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18);animation:dnFall linear forwards}
+@keyframes dnFall{to{transform:translateY(110vh) rotate(var(--r))}}
+.bento-h{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;margin:12px 2px 2px}.bento-h b{font-size:16px;font-weight:700}.bento-h span{font-size:13px;color:var(--faint)}
+.tile.is-done{position:relative}.done-badge{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:4px;padding:4px 9px 4px 7px;border-radius:999px;background:#22A55A;color:#fff;font-size:12px;font-weight:600}
+.dp-t output{float:right;font-weight:700;color:var(--ink)}.dp-t2{margin-top:6px;border-top:1px solid var(--line);padding-top:10px}.dp-rng{padding:2px 8px}.dp-rng input,.snd-vol input{width:100%;accent-color:#3D8BFF;height:28px}
+.dp-qs{display:flex;gap:6px;padding:0 4px}.dp-q,.snd-o{appearance:none;flex:1;min-height:36px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:6px 4px}
+.dp-q[aria-pressed="true"],.snd-o[aria-checked="true"]{background:rgba(61,139,255,.16);border-color:rgba(61,139,255,.6)}.dp-desc{font-size:12.5px;color:var(--faint);margin:2px 8px 0;line-height:1.35;min-height:2.7em}
+.snd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;padding:0 4px}.snd-o b{font-weight:600}.snd-vol{display:flex;align-items:center;gap:10px;padding:6px 8px 0;font-size:13px;color:var(--faint)}.snd-vol.dim{opacity:.45}
+.snd-own{appearance:none;border:0;background:transparent;color:#3D8BFF;font:inherit;font-size:13px;font-weight:600;padding:6px 8px;text-align:left;cursor:pointer}
+.drag-pop{width:320px;max-height:calc(100vh - 90px);overflow:auto}
 </style>
 </head>
 <body>
@@ -930,7 +944,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
   <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
   <symbol id="i-follow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   <symbol id="i-follow-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
-  <symbol id="i-wand" viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13.5 7.5l3 3"/><path d="M18 3v3M16.5 4.5h3M20 9v2M19 10h2M10 3v2M9 4h2"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="M4 20L15.5 8.5"/><path d="M18.5 2.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/><path d="M9 3.5l.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z"/><path d="M19.5 13l.4.9.9.4-.9.4-.4.9-.4-.9-.9-.4.9-.4z"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-rot" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
   <symbol id="i-tiltf" viewBox="0 0 24 24"><rect x="6" y="5" width="11" height="8" rx="1.5" transform="rotate(-24 11.5 9)"/><path d="M4 20h16"/><path d="M8 16l2 2"/></symbol>
@@ -1266,6 +1280,12 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <p id="acSync"></p>
     </div>
     <div class="box">
+      <div class="h">Звук соединения</div>
+      <p>Звучит, когда деталь встаёт на соединение (тихо) и когда она поставлена (отчётливо). Можно загрузить свой короткий звук — он хранится только на этом устройстве.</p>
+      <div id="acSounds"></div>
+      <p class="snd-desc ac-note"></p>
+    </div>
+    <div class="box">
       <div class="h">Память браузера</div>
       <div class="meter"><i id="acMeter" style="width:0"></i></div>
       <p id="acStore"></p>
@@ -1377,11 +1397,23 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 <input type="file" id="projFile" accept="application/json,.json" hidden>
 <div class="toast gtoast" id="gtoast" hidden></div>
 <div class="drag-pop glass" id="dragPop" hidden role="dialog" aria-label="Как деталь идёт за стилусом">
-  <div class="dp-t">Как деталь идёт за стилусом</div>
-  <button class="dp-o" data-m="0"><b>Магнит</b><span>деталь сама цепляется за ближайшее соединение</span></button>
-  <button class="dp-o" data-m="0.4"><b>Наполовину за стилусом</b><span>на 40% идёт за рукой, у соединения встаёт на него</span></button>
-  <button class="dp-o" data-m="0.8"><b>За стилусом</b><span>на 80% идёт за рукой, у соединения встаёт на него</span></button>
-  <button class="dp-o dp-snd" id="dpSound"><b>Звук щелчка: включён</b><span>тихий щелчок, когда деталь встаёт на соединение, и отчётливый — когда поставлена</span></button>
+  <div class="dp-t">Как деталь идёт за стилусом <output id="dpVal">80%</output></div>
+  <div class="dp-rng"><input type="range" id="dpRange" min="0" max="100" step="10" aria-label="Насколько деталь идёт за стилусом"></div>
+  <div class="dp-qs"><button class="dp-q" data-m="0">Магнит</button><button class="dp-q" data-m="0.4">40%</button><button class="dp-q" data-m="0.8">80%</button><button class="dp-q" data-m="1">100%</button></div>
+  <p class="dp-desc" id="dpDesc"></p>
+  <div class="dp-t dp-t2">Звук соединения</div>
+  <div id="dpSounds"></div>
+  <p class="dp-desc snd-desc"></p>
+</div>
+<input type="file" id="sndFile" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden>
+<div class="done-sheet" id="doneSheet" hidden role="dialog" aria-label="Модель собрана">
+  <div class="dn-conf" id="dnConf" aria-hidden="true"></div>
+  <div class="dn-card glass">
+    <div class="dn-ic"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h2 id="dnTitle">Модель собрана!</h2><p id="dnSub"></p>
+    <div class="dn-act"><button class="btn primary" id="dnLook">Покрутить готовую модель</button><button class="btn" id="dnReuse">Взять в свою постройку</button><button class="btn" id="dnModel">К странице модели</button></div>
+    <p class="dn-note">Модель отмечена собранной — на главной она в разделе «Собранные». «Взять в свою постройку» делает копию, которую можно достраивать и переделывать.</p>
+  </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -2485,7 +2517,7 @@ function rebuildGhost(){
 }
 function partThumb(spec,c,f,size){ const o=buildObject(spec,c,spec.id&&CONN[spec.id]&&CONN[spec.id].ss?{ry:2}:{},f,false); return renderThumb(o,spec,size||112,size||112); }
 // где призрак стоял в прошлый раз — пока палец ведёт деталь, она не перепрыгивает между почти равными вариантами
-let dragFollow=(()=>{ try{ const r=localStorage.getItem("myblocks.dragf"); if(r===null) return 0.8; const v=parseFloat(r); return v===0||v===0.4||v===0.8?v:0.8; }catch(_){ return 0.8; } })(); // по умолчанию — деталь идёт за стилусом
+let dragFollow=(()=>{ try{ const r=localStorage.getItem("myblocks.dragf"); if(r===null) return 0.8; const v=parseFloat(r); return isFinite(v)?Math.max(0,Math.min(1,Math.round(v*10)/10)):0.8; }catch(_){ return 0.8; } })(); // по умолчанию — деталь идёт за стилусом
 let ghostNear=false, landPrevSnap=null;
 let landPrev=null, oriPend={k:"",t:0}, ghostAcc=null, jumpPend=null, jumpT=0, jumpTimer=0; const _gp=new THREE.Vector2(), _gpl=new THREE.Plane(), _gup=new THREE.Vector3(0,1,0), _gh=new THREE.Vector3();
 function setHand(h){
@@ -3212,7 +3244,7 @@ function showGhostAt(c){
   // призрак детали плавно, с весом доезжает до нового места, а не прыгает
   const _g=new THREE.Object3D(); placeObject(_g,s,{...hand,ox:c.ox||0,oz:c.oz||0,tq:c.tq,tp:c.tp},c.x,c.y,c.z);
   if(keep){ ghost.position.copy(keep); ghost.quaternion.copy(_g.quaternion); }
-  else if(!ghost.visible||typeof smoothTo!=="function"){ ghost.position.copy(_g.position); ghost.quaternion.copy(_g.quaternion); }
+  else if(!ghost.visible||typeof smoothTo!=="function"){ ghost.position.copy(_g.position); ghost.quaternion.copy(_g.quaternion); try{ const sm=SMOOTH.find(q=>q.o===ghost); if(sm) sm.cur=null; }catch(_){} }
   /* плавно, но быстро: деталь не «плывёт» сквозь соседние, а коротко доезжает; на большой прыжок (другое место) — поднимается над постройкой */
   /* деталь тянется за стилусом непрерывно: место, куда она сядет, притягивает её как магнит, но между шипами она не прыгает,
      а плавно скользит за рукой (смещение к пальцу — до полшипа). Отпустили — доезжает точно на место */
@@ -3220,7 +3252,9 @@ function showGhostAt(c){
      40% и 80% — деталь идёт за стилусом на эту долю, а у соединения (рядом с шипом; у места по инструкции — ближе ~0,6 шипа) встаёт на него. Отпустили — садится на соединение */
   const tgt=_g.position.clone(); if(lastPointer){ const rect=canvas.getBoundingClientRect(); _gp.set((lastPointer.x-rect.left)/rect.width*2-1,-((lastPointer.y-(c.lift||0)-rect.top)/rect.height)*2+1); ray.setFromCamera(_gp,camera);
       _gpl.set(_gup,-tgt.y); if(ray.ray.intersectPlane(_gpl,_gh)){ const fx=_gh.x-tgt.x, fz=_gh.z-tgt.z, fd=Math.hypot(fx,fz);
-        if(dragFollow>0){ const R=c.insSnap?0.6:0.18; if(fd>R){ const k=dragFollow*Math.min(1,(fd-R)/0.25); tgt.x+=fx*k; tgt.z+=fz*k; tgt.y+=0.12*k; ghostNear=false; } else { if(!ghostNear) playClick("tick"); ghostNear=true; } } // у соединения (ближе R) — встаёт на него, с тихим щелчком
+        if(dragFollow>0){ const R=c.insSnap?0.6:0.18; if(fd>R){ const k=dragFollow*Math.min(1,(fd-R)/0.25); tgt.x+=fx*k; tgt.z+=fz*k; tgt.y+=0.12*k; ghostNear=false;
+            // в полёте деталь идёт поверх постройки, а не сквозь неё: не ниже того, что под стилусом
+            try{ const h=pickAt(lastPointer.x,lastPointer.y); if(h){ const hh=dims(s,hand).H/2+0.06; if(tgt.y<h.point.y+hh) tgt.y=h.point.y+hh; } }catch(_){} } else { if(!ghostNear) playClick("tick"); ghostNear=true; } } // у соединения (ближе R) — встаёт на него, с тихим щелчком
         else if(c.insSnap&&(!landPrevSnap||landPrevSnap!==c.x+','+c.y+','+c.z)){ playClick("tick"); landPrevSnap=c.x+','+c.y+','+c.z; }
         else if(!c.insSnap){ tgt.x+=Math.max(-0.45,Math.min(0.45,fx))*0.6; tgt.z+=Math.max(-0.45,Math.min(0.45,fz))*0.6; } } }
   /* стилус на мгновение прошёл над высокой деталью (колонна, стена) — деталь не взлетает туда и обратно:
@@ -3228,7 +3262,7 @@ function showGhostAt(c){
   if(ghost.visible&&ghostAcc&&!turn&&dragFollow===0){ const d=tgt.distanceTo(ghostAcc); if(d>1.6){ if(!jumpPend||jumpPend.distanceTo(tgt)>0.6){ jumpPend=tgt.clone(); jumpT=now; }
       if(now-jumpT<90){ clearTimeout(jumpTimer); const cc=c; jumpTimer=setTimeout(()=>{ if(landPrev===cc&&hand) showGhostAt(cc); },130); return; } } }
   jumpPend=null; ghostAcc=tgt.clone();
-  ghost.visible=true; if(typeof smoothTo==="function"){ smoothTo(ghost,tgt,_g.quaternion,0.34); }
+  ghost.visible=true; if(typeof smoothTo==="function"){ smoothTo(ghost,tgt,_g.quaternion,0.34+Math.max(0,dragFollow-0.7)*0.7,dragFollow>0); } // за стилусом — перелетает дугой
   ghostPos=c;
 }
 const drops=[];
@@ -3306,16 +3340,26 @@ function tryChangeSet(mut, failMsg){
 }
 function moveSel(dir){
   const ax=screenAxes(); const v={f:ax.f,b:[-ax.f[0],-ax.f[1]],r:ax.r,l:[-ax.r[0],-ax.r[1]]}[dir];
-  tryChangeSet(ps=>ps.forEach(p=>{ p.x+=v[0]; p.z+=v[1]; }));
+  const ok=tryChangeSet(ps=>ps.forEach(p=>{ p.x+=v[0]; p.z+=v[1]; })); const one=selParts(); if(one.length===1) seatToModel(one[0],!ok);
 }
 const snapY=y=>Math.max(0,Math.round(y/0.2)*0.2);
+/* по инструкции: выделенная деталь рядом со своим местом в модели — стрелки «Выше/Ниже/Опустить» и сдвиги сажают её точно на место
+   (с поворотом и смещением как в модели), даже если по рамкам соседей кажется, что «мешает» (у арки под пролётом пусто) */
+function seatToModel(g,loose){ if(typeof IB==="undefined"||!IB||!IB.check||!IB.check.off||!g||g.f) return false; const off=IB.check.off, pg=IB.pages[IB.page]; if(!pg) return false;
+  const sg=specOf(g), dg=dims(sg,g), gx=g.x+(g.ox||0)+dg.W/2, gz=g.z+(g.oz||0)+dg.D/2, gy=g.y+dg.H/2; let best=null, bd=Infinity;
+  for(let i=0;i<pg.b;i++){ const m=IB.items[i]; if(m.p!==g.p||IB.check.ok.has(i)) continue; const s=specOf(m); if(!s) continue; const d=dims(s,m), x=m.x+off[0], y=m.y+off[1]*PH, z=m.z+off[2];
+    const cx=x+(m.ox||0)+d.W/2, cz=z+(m.oz||0)+d.D/2, cy=y+d.H/2, dh=Math.hypot(cx-gx,cz-gz), dv=Math.abs(cy-gy); if(dh>(loose?1.6:0.75)||dv>(loose?3.7:0.9)) continue;
+    if(parts.some(q=>q!==g&&q.p===m.p&&Math.abs(q.x+(q.ox||0)-x-(m.ox||0))<0.05&&Math.abs(q.z+(q.oz||0)-z-(m.oz||0))<0.05&&Math.abs(q.y-y)<0.05)) continue;
+    const sc=dh+dv*0.5+(m.c===g.c?0:0.5)+(i<pg.a?0.3:0); if(sc<bd){ bd=sc; best={m,x,y,z}; } }
+  if(!best) return false; const prev=snap(), m=best.m; Object.assign(g,{x:best.x,y:best.y,z:best.z,rx:m.rx||0,ry:m.ry||0,rz:m.rz||0}); ["ox","oz","tq","tp","ra","sw","side","mt","mflip","cs"].forEach(k=>delete g[k]);
+  ["ox","oz","tq","tp","ra","sw"].forEach(k=>{ if(m[k]!==undefined) g[k]=m[k]; }); if(m.side) g.side=1; refreshMesh(g); select(sel); commit(prev); try{ playClick&&playClick("place"); }catch(_){} return true; }
 // «Выше»/«Ниже» перескакивают через мешающие детали к ближайшему свободному месту, «Опустить» — к самому низкому свободному
 function freeShift(ps,ys){ const ig=new Set(sel); return ys.find(d=>ps.every(p=>p.y+d>=-EPS&&!collides(specOf(p),{...p,side:0},p.x,snapY(p.y+d),p.z,ig))); }
 function liftSel(dy){ const ps=selParts(); if(!ps.length) return; const ys=[]; for(let k=1;k<=80;k++) ys.push(dy*PH*k); const d=freeShift(ps,ys);
-  if(d===undefined){ toast(dy<0?(ps.some(p=>p.y<EPS)?"Ниже некуда: под деталью основа":"Ниже некуда: снизу мешает другая деталь"):"Выше не получается"); return; } tryChangeSet(q=>q.forEach(p=>p.y=snapY(p.y+d))); }
+  if(d===undefined){ if(ps.length===1&&seatToModel(ps[0],true)) return; toast(dy<0?(ps.some(p=>p.y<EPS)?"Ниже некуда: под деталью основа":"Ниже некуда: снизу мешает другая деталь"):"Выше не получается"); return; } tryChangeSet(q=>q.forEach(p=>p.y=snapY(p.y+d))); if(ps.length===1) seatToModel(ps[0],false); }
 function dropSel(){
   const ps=selParts(); if(!ps.length) return; const minY=Math.min(...ps.map(p=>p.y)), ys=[]; for(let y=0;y<minY-EPS;y+=PH) ys.push(y-minY);
-  const d=freeShift(ps,ys); if(d===undefined){ toast("Ниже некуда"); return; } tryChangeSet(q=>q.forEach(p=>p.y=snapY(p.y+d)));
+  const d=freeShift(ps,ys); if(d===undefined){ if(ps.length===1&&seatToModel(ps[0],true)) return; toast("Ниже некуда"); return; } tryChangeSet(q=>q.forEach(p=>p.y=snapY(p.y+d))); if(ps.length===1) seatToModel(ps[0],false);
 }
 function rotSel(axis){
   const ps=selParts(); if(!ps.length) return;
@@ -3474,23 +3518,77 @@ $("tSide").addEventListener("click",()=>{ let s="r"; try{ s=localStorage.getItem
 applySide();
 /* звук щелчка детали: короткий «пластиковый» щелчок, синтезируется на месте (без файлов). Тихий — когда деталь встаёт на соединение
    в руке, отчётливый — когда деталь поставлена. Выключается в той же панели (волшебная палочка) */
-let clickOn=(()=>{ try{ return localStorage.getItem("myblocks.click")!=="0"; }catch(_){ return true; } })(), _ac=null, _nb=null;
-function playClick(kind){ if(!clickOn||reduceMotion&&kind==="tick") return; try{ if(!_ac){ const A=window.AudioContext||window.webkitAudioContext; if(!A) return; _ac=new A(); }
-    if(_ac.state==="suspended") _ac.resume(); const t=_ac.currentTime, loud=kind==="place"?0.22:0.08;
-    if(!_nb){ _nb=_ac.createBuffer(1,Math.floor(_ac.sampleRate*0.03),_ac.sampleRate); const d=_nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3); }
-    const n=_ac.createBufferSource(); n.buffer=_nb; const f=_ac.createBiquadFilter(); f.type="bandpass"; f.frequency.value=kind==="place"?2300:3200; f.Q.value=1.4;
-    const g=_ac.createGain(); g.gain.setValueAtTime(loud,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.05); n.connect(f); f.connect(g); g.connect(_ac.destination); n.start(t); n.stop(t+0.06);
-    if(kind==="place"){ const o=_ac.createOscillator(), g2=_ac.createGain(); o.type="triangle"; o.frequency.setValueAtTime(900,t+0.012); o.frequency.exponentialRampToValueAtTime(420,t+0.07); g2.gain.setValueAtTime(0.0001,t); g2.gain.exponentialRampToValueAtTime(0.09,t+0.015); g2.gain.exponentialRampToValueAtTime(0.0001,t+0.09); o.connect(g2); g2.connect(_ac.destination); o.start(t); o.stop(t+0.1); }
-  }catch(_){} }
+/* звуки соединения: набор синтезированных звуков (выбор — в палочке и в «Персонализации»), плюс свой звук из файла.
+   tick — деталь встала на соединение (тихо), place — деталь поставлена (отчётливо) */
+const SOUNDS=[
+  {id:"brick",name:"Кирпичик",d:"сухой пластиковый «клац», как настоящий кирпичик"},
+  {id:"soft",name:"Мягкий",d:"негромкий округлый «пум»"},
+  {id:"wood",name:"Дерево",d:"тёплый деревянный стук"},
+  {id:"drop",name:"Капля",d:"короткая весёлая капелька"},
+  {id:"classic",name:"Щелчок",d:"прежний звонкий щелчок"},
+  {id:"own",name:"Свой звук",d:"короткий файл с вашего устройства"},
+  {id:"off",name:"Без звука",d:""}];
+let sndKind=(()=>{ try{ const v=localStorage.getItem("myblocks.snd"); if(v&&SOUNDS.some(s=>s.id===v)) return v; return localStorage.getItem("myblocks.click")==="0"?"off":"brick"; }catch(_){ return "brick"; } })();
+let sndVol=(()=>{ try{ const v=parseFloat(localStorage.getItem("myblocks.sndv")); return isFinite(v)?Math.max(0,Math.min(1,v)):0.7; }catch(_){ return 0.7; } })();
+let clickOn=sndKind!=="off", _ac=null, _nb=null, _ownBuf=null, _ownLoading=false;
+function sndCtx(){ if(!_ac){ const A=window.AudioContext||window.webkitAudioContext; if(!A) return null; _ac=new A(); } if(_ac.state==="suspended") _ac.resume(); return _ac; }
+function sndNoise(){ if(!_nb){ _nb=_ac.createBuffer(1,Math.floor(_ac.sampleRate*0.25),_ac.sampleRate); const d=_nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; } return _nb; }
+// короткий шумовой удар через фильтр: основа щелчков
+function sndHit(t,{f=3000,q=1,type="bandpass",gain=0.08,dec=0.03,hp=0}){ const a=_ac, n=a.createBufferSource(); n.buffer=sndNoise(); let node=n;
+  if(hp){ const h=a.createBiquadFilter(); h.type="highpass"; h.frequency.value=hp; node.connect(h); node=h; }
+  const fl=a.createBiquadFilter(); fl.type=type; fl.frequency.value=f; fl.Q.value=q; node.connect(fl);
+  const g=a.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain*sndVol*1.6+1e-4,t+0.0015); g.gain.exponentialRampToValueAtTime(0.0001,t+dec); fl.connect(g); g.connect(a.destination); n.start(t,Math.random()*0.15); n.stop(t+dec+0.02); }
+// тон с огибающей и скольжением высоты
+function sndTone(t,{f=440,f2=0,type="sine",gain=0.06,att=0.003,dec=0.08}){ const a=_ac, o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dec*0.8);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain*sndVol*1.6+1e-4,t+att); g.gain.exponentialRampToValueAtTime(0.0001,t+att+dec); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+att+dec+0.02); }
+const SND={
+  brick(t,place){ if(!place){ sndHit(t,{f:4200,q:0.9,hp:1800,gain:0.06,dec:0.018}); sndTone(t,{f:2400,gain:0.012,att:0.001,dec:0.012}); return; }
+    sndHit(t,{f:3600,q:0.9,hp:1500,gain:0.07,dec:0.016}); sndHit(t+0.019,{f:2600,q:1.1,hp:900,gain:0.1,dec:0.03}); sndTone(t+0.019,{f:240,f2:150,gain:0.07,att:0.003,dec:0.08}); },
+  soft(t,place){ if(!place){ sndTone(t,{f:760,f2:460,gain:0.05,att:0.002,dec:0.045}); return; }
+    sndTone(t,{f:520,f2:230,gain:0.09,att:0.003,dec:0.09}); sndTone(t,{f:1040,f2:460,type:"triangle",gain:0.015,att:0.002,dec:0.05}); sndHit(t,{f:900,q:0.7,type:"lowpass",gain:0.03,dec:0.03}); },
+  wood(t,place){ if(!place){ sndTone(t,{f:1320,gain:0.035,att:0.001,dec:0.04}); sndHit(t,{f:1500,q:5,gain:0.03,dec:0.02}); return; }
+    sndTone(t,{f:660,gain:0.07,att:0.001,dec:0.12}); sndTone(t,{f:1720,gain:0.015,att:0.001,dec:0.05}); sndHit(t,{f:1100,q:4,gain:0.05,dec:0.03}); },
+  drop(t,place){ if(!place){ sndTone(t,{f:900,f2:1500,gain:0.035,att:0.002,dec:0.04}); return; }
+    sndTone(t,{f:520,f2:1100,gain:0.07,att:0.002,dec:0.07}); sndTone(t+0.05,{f:180,f2:120,gain:0.04,att:0.003,dec:0.06}); },
+  classic(t,place){ sndHit(t,{f:3200,q:1.4,gain:place?0.1:0.08,dec:0.05}); if(place){ sndHit(t+0.012,{f:3200,q:1.4,gain:0.08,dec:0.04}); sndTone(t,{f:190,f2:110,gain:0.08,att:0.004,dec:0.07}); } },
+  own(t,place){ if(!_ownBuf){ loadOwnSound(); SND.brick(t,place); return; } const s=_ac.createBufferSource(), g=_ac.createGain(); s.buffer=_ownBuf; s.playbackRate.value=place?1:1.15; g.gain.value=(place?1:0.55)*sndVol; s.connect(g); g.connect(_ac.destination); s.start(t); s.stop(t+Math.min(1.2,_ownBuf.duration)); } };
+async function loadOwnSound(file){ if(_ownLoading&&!file) return false; _ownLoading=true; try{ const a=sndCtx(); if(!a) return false; let f=file||null;
+    if(!f&&typeof IDB!=="undefined") f=await IDB.get("kv","snd:own"); if(!f) return false;
+    const buf=await new Promise((res,rej)=>{ const p=a.decodeAudioData(f instanceof ArrayBuffer?f.slice(0):f,res,rej); if(p&&p.then) p.then(res,rej); });
+    _ownBuf=buf; return true; }catch(_){ return false; } finally{ _ownLoading=false; } }
+function playClick(kind){ if(!clickOn||reduceMotion&&kind==="tick") return; try{ const a=sndCtx(); if(!a) return; (SND[sndKind]||SND.brick)(a.currentTime+0.005,kind==="place"); }catch(_){} }
+function setSound(id,silent){ sndKind=id; clickOn=id!=="off"; try{ localStorage.setItem("myblocks.snd",id); localStorage.setItem("myblocks.click",clickOn?"1":"0"); }catch(_){} soundUISync(); if(!silent&&clickOn) playClick("place"); }
+// выбор звука — одинаковый в палочке и в «Персонализации»
+function renderSoundPicker(box){ if(!box) return; box.innerHTML="";
+  const g=document.createElement("div"); g.className="snd-grid"; g.setAttribute("role","radiogroup"); g.setAttribute("aria-label","Звук соединения");
+  SOUNDS.forEach(S=>{ const b=document.createElement("button"); b.type="button"; b.className="snd-o"; b.dataset.s=S.id; b.setAttribute("role","radio"); b.innerHTML="<b></b>"; b.querySelector("b").textContent=S.name; if(S.d) b.title=S.d;
+    b.addEventListener("click",async e=>{ e.stopPropagation(); if(S.id==="own"){ let has=!!_ownBuf; if(!has){ try{ has=!!(typeof IDB!=="undefined"&&await IDB.get("kv","snd:own")); }catch(_){} }
+        if(!has){ $("sndFile").click(); return; } await loadOwnSound(); } setSound(S.id); }); g.appendChild(b); });
+  box.appendChild(g);
+  const v=document.createElement("label"); v.className="snd-vol"; v.innerHTML='<span>Громкость</span><input type="range" min="0" max="100" step="5">'; const r=v.querySelector("input"); r.value=Math.round(sndVol*100);
+  r.addEventListener("input",()=>{ sndVol=r.value/100; try{ localStorage.setItem("myblocks.sndv",String(sndVol)); }catch(_){} document.querySelectorAll(".snd-vol input").forEach(x=>{ if(x!==r) x.value=r.value; }); });
+  r.addEventListener("change",()=>playClick("place")); r.addEventListener("click",e=>e.stopPropagation()); box.appendChild(v);
+  const own=document.createElement("button"); own.type="button"; own.className="snd-own"; own.textContent="Загрузить свой звук…"; own.addEventListener("click",e=>{ e.stopPropagation(); $("sndFile").click(); }); box.appendChild(own);
+  soundUISync(); }
+function soundUISync(){ document.querySelectorAll(".snd-o").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.s===sndKind))); document.querySelectorAll(".snd-vol").forEach(v=>v.classList.toggle("dim",!clickOn));
+  const d=(SOUNDS.find(s=>s.id===sndKind)||{}).d; document.querySelectorAll(".snd-desc").forEach(x=>x.textContent=clickOn?(d?"Сейчас: "+d:""):"Звук выключен"); }
+$("sndFile").addEventListener("change",async()=>{ const f=$("sndFile").files[0]; $("sndFile").value=""; if(!f) return;
+  if(f.size>1500000){ toast("Файл большой — возьмите короткий звук, до 1,5 МБ"); return; }
+  const ab=await f.arrayBuffer(); if(!await loadOwnSound(ab)){ toast("Не получилось прочитать этот звук — попробуйте mp3, m4a или wav"); return; }
+  try{ await IDB.put("kv",ab,"snd:own"); }catch(_){} setSound("own"); toast("Свой звук установлен — он останется на этом устройстве"); });
 /* волшебная палочка: как деталь идёт за стилусом */
-function dragPopSync(){ document.querySelectorAll("#dragPop .dp-o[data-m]").forEach(b=>b.setAttribute("aria-pressed",String(parseFloat(b.dataset.m)===dragFollow))); }
+function dragDesc(v){ return v===0?"Магнит: деталь сама цепляется за ближайшее соединение":v>=1?"100%: деталь точно под стилусом, у соединения встаёт на него":Math.round(v*100)+"% — деталь идёт за рукой на эту долю, у соединения встаёт на него"; }
+function dragPopSync(){ const r=$("dpRange"); if(r) r.value=Math.round(dragFollow*100); const o=$("dpVal"); if(o) o.textContent=dragFollow===0?"Магнит":Math.round(dragFollow*100)+"%"; const d=$("dpDesc"); if(d) d.textContent=dragDesc(dragFollow);
+  document.querySelectorAll("#dragPop .dp-q").forEach(b=>b.setAttribute("aria-pressed",String(Math.abs(parseFloat(b.dataset.m)-dragFollow)<0.01))); }
 function dragPopShow(on){ const P=$("dragPop"), b=$("tDrag"); if(!P||!b) return; if(on){ const r=b.getBoundingClientRect(); P.style.top=(r.bottom+8)+"px"; P.style.right=Math.max(16,innerWidth-r.right)+"px"; dragPopSync(); }
   P.hidden=!on; b.setAttribute("aria-expanded",String(!!on)); b.classList.toggle("on",!!on); }
 $("tDrag").addEventListener("click",e=>{ e.stopPropagation(); dragPopShow($("dragPop").hidden); });
-document.querySelectorAll("#dragPop .dp-o[data-m]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); dragFollow=parseFloat(b.dataset.m)||0; try{ localStorage.setItem("myblocks.dragf",String(dragFollow)); }catch(_){} dragPopSync();
-  toast(dragFollow===0?"Магнит: деталь сама цепляется за соединение":dragFollow===0.4?"Деталь идёт за стилусом на 40%":"Деталь идёт за стилусом на 80%"); setTimeout(()=>dragPopShow(false),250); }));
-{ const sb=$("dpSound"); if(sb){ const sync=()=>{ sb.setAttribute("aria-pressed",String(clickOn)); sb.querySelector("b").textContent=clickOn?"Звук щелчка: включён":"Звук щелчка: выключен"; }; sync();
-  sb.addEventListener("click",e=>{ e.stopPropagation(); clickOn=!clickOn; try{ localStorage.setItem("myblocks.click",clickOn?"1":"0"); }catch(_){} sync(); if(clickOn) playClick("place"); }); } }
+function setDragFollow(v){ dragFollow=Math.max(0,Math.min(1,Math.round(v*10)/10)); try{ localStorage.setItem("myblocks.dragf",String(dragFollow)); }catch(_){} dragPopSync(); }
+$("dpRange").addEventListener("input",e=>{ setDragFollow($("dpRange").value/100); });
+["pointerdown","click"].forEach(t=>$("dpRange").addEventListener(t,e=>e.stopPropagation()));
+document.querySelectorAll("#dragPop .dp-q").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); setDragFollow(parseFloat(b.dataset.m)||0); }));
+renderSoundPicker($("dpSounds")); renderSoundPicker($("acSounds")); dragPopSync();
+addEventListener("hashchange",()=>{ const P=$("dragPop"); if(P&&!P.hidden) dragPopShow(false); });
 document.addEventListener("pointerdown",e=>{ const P=$("dragPop"); if(P&&!P.hidden&&!P.contains(e.target)&&e.target!==$("tDrag")&&!$("tDrag").contains(e.target)) dragPopShow(false); },true);
 $("tBase").addEventListener("click",()=>{ openPalette(layerMeta.__board||null,c=>{ layerMeta.__board=c; setBoardColor(c); changed(); toast("Основа: "+colorOf(c).name); }); $("palName").textContent="Цвет основы"; });
 /* наклейка: своя картинка на выбранную грань детали */
@@ -3689,6 +3787,10 @@ canvas.addEventListener("pointermove",e=>{
     const og=moving.orig.find(o=>o.id===g.id);
     const lay=g.side&&!g.f&&(g.rx||g.rz)&&!g.tq&&!g.mt; // деталь, висевшая боком на боковом шипе, на ровном месте ложится плашмя
     const c=landing(specOf(g),{...g,keepRy:true,base:lay?{rx:0,ry:g.ry||0,rz:0}:undefined},e.clientX,e.clientY-moving.lift,ig); if(!c) return;
+    /* по инструкции: поставленную деталь подвели к её месту в модели — она садится туда целиком, как в модели (поворот, наклон,
+       смещение на полшипа), а не только сдвигается по шипам. Рамка соседей тут не мешает: место из модели свободно по определению */
+    if(c.insSnap&&moving.orig.length===1){ Object.assign(g,{x:c.x,y:c.y,z:c.z,rx:c.rx||0,ry:c.ry||0,rz:c.rz||0}); ["ox","oz","tq","tp","ra","sw","side","mt","mflip","cs"].forEach(k=>delete g[k]);
+      ["ox","oz","tq","tp","ra","sw"].forEach(k=>{ if(c[k]!==undefined) g[k]=c[k]; }); if(c.side) g.side=1; refreshMesh(g); moveSelBoxes(); return; }
     if(c.side&&moving.orig.length===1){ Object.assign(g,{x:c.x,y:c.y,z:c.z,ox:c.ox,oz:c.oz,rx:c.rx,ry:c.ry,rz:c.rz,side:1}); if(c.tq) g.tq=c.tq; else delete g.tq; if(c.tp) g.tp=c.tp; else delete g.tp; if(c.mt){ g.mt=c.mt; g.mflip=c.mflip; } else { delete g.mt; delete g.mflip; } refreshMesh(g); moveSelBoxes(); return; }
     if(c.fit&&moving.orig.length===1){ if(!inBoard(specOf(g),g,c.x,c.z)) return; g.x=c.x; g.y=c.y; g.z=c.z; g.ox=c.ox||0; g.oz=c.oz||0; g.side=1; g.cs=1; glidePlace(meshById.get(g.id),specOf(g),g); moveSelBoxes(); return; }
     if(lay&&moving.orig.length===1&&c.rx!==undefined&&!c.side){ Object.assign(g,{rx:c.rx,rz:c.rz}); delete g.side; g.ox=0; g.oz=0; g.x=c.x; g.y=c.y; g.z=c.z; refreshMesh(g); moveSelBoxes(); return; }
@@ -4819,11 +4921,16 @@ function renderBento(){
   if(empty){ box.appendChild(hintCard("Загрузите свою первую модель","Файл из BrickLink Studio (.io) или LDraw (.ldr, .mpd) — из него получится 3D-инструкция, по которой вы соберёте модель шаг за шагом","Загрузить модель",()=>$("modelFile").click(),true)); return; }
   const ids=Object.keys(MODELS).sort((a,b)=>((MODELS[b].added||0)-(MODELS[a].added||0))||(MODELS[b].steps.length-MODELS[a].steps.length));
   const todo=[];
-  ids.forEach((id,k)=>{ const M=MODELS[id], n=M.steps.length, rec=setProjects(INSTR_PREFIX+id)[0], done=rec?rec.count||0:0;
+  // собранные — отдельным разделом в конце
+  const isDone=id=>{ const M=MODELS[id], rec=setProjects(INSTR_PREFIX+id)[0]; return !!(M.done||rec&&rec.count>=M.steps.length); };
+  const open=ids.filter(id=>!isDone(id)), fin=ids.filter(isDone); ids.length=0; open.forEach(x=>ids.push(x)); let finHead=fin.length?fin[0]:null; fin.forEach(x=>ids.push(x));
+  ids.forEach((id,k)=>{ if(id===finHead){ const h=document.createElement("div"); h.className="bento-h"; h.innerHTML='<b>Собранные</b><span></span>'; h.querySelector("span").textContent=fin.length+" "+plural(fin.length,"модель","модели","моделей"); box.appendChild(h); }
+    const M=MODELS[id], n=M.steps.length, rec=setProjects(INSTR_PREFIX+id)[0], done=rec?rec.count||0:0;
     const cls="sq";
     const c=document.createElement("button"); c.className="tile "+cls;
     c.innerHTML='<img alt=""><span class="tt"><b></b><span></span></span>'+(done?'<span class="bar"><i></i></span>':'');
-    c.querySelector("b").textContent=M.name; c.querySelector(".tt span").textContent=n+" "+plural(n,"деталь","детали","деталей")+(done?" · собрано "+done:"");
+    c.querySelector("b").textContent=M.name; c.querySelector(".tt span").textContent=n+" "+plural(n,"деталь","детали","деталей")+(isDone(id)?" · собрана":done?" · собрано "+done:"");
+    if(isDone(id)){ c.classList.add("is-done"); const bd=document.createElement("span"); bd.className="done-badge"; bd.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Собрана'; c.appendChild(bd); }
     if(done) c.querySelector(".bar i").style.width=Math.min(100,done/n*100)+"%";
     c.querySelector("img").alt="Модель «"+M.name+"»";
     c.addEventListener("click",()=>{ location.hash="model-"+id; }); box.appendChild(c); todo.push([c.querySelector("img"),id,cls]); });
@@ -5116,11 +5223,13 @@ $("gWrap").addEventListener("pointerdown",e=>{
 const _v=new THREE.Vector3();
 /* плавное перетаскивание: деталь едет за пальцем (с небольшой инерцией), «прилипает» только после того, как её отпустили */
 const SMOOTH=[]; // {o, pos, quat, k, done}
-function smoothTo(o,pos,quat,k){ let s=SMOOTH.find(q=>q.o===o); if(!s){ s={o}; SMOOTH.push(s); } s.pos=pos.clone(); s.quat=quat.clone(); s.k=k||0.32; s.done=null; return s; }
+function smoothTo(o,pos,quat,k,hop){ let s=SMOOTH.find(q=>q.o===o); if(!s){ s={o}; SMOOTH.push(s); } s.pos=pos.clone(); s.quat=quat.clone(); s.k=k||0.32; s.done=null; if(hop){ if(!s.cur) s.cur=o.position.clone(); s.hop=true; } else { s.hop=false; s.cur=null; } return s; }
 let smT=0;
 function tickSmooth(now){ const dt=smT?Math.min(100,now-smT):16.7; smT=now;
   for(let i=SMOOTH.length-1;i>=0;i--){ const s=SMOOTH[i], o=s.o; if(!o.parent){ SMOOTH.splice(i,1); continue; }
-    const k=reduceMotion?1:1-Math.pow(1-s.k,dt/16.7); o.position.lerp(s.pos,k); o.quaternion.slerp(s.quat,k);
+    const k=reduceMotion?1:1-Math.pow(1-s.k,dt/16.7);
+    if(s.hop&&s.cur){ s.cur.lerp(s.pos,k); const dh=Math.hypot(s.cur.x-s.pos.x,s.cur.z-s.pos.z); o.position.copy(s.cur); o.position.y+=Math.min(0.8,dh*0.55); } // дуга: перелетает над соседями и мягко опускается
+    else o.position.lerp(s.pos,k); o.quaternion.slerp(s.quat,k);
     if(o.position.distanceTo(s.pos)<0.03&&o.quaternion.angleTo(s.quat)<0.02){ o.position.copy(s.pos); o.quaternion.copy(s.quat); if(s.done){ const f=s.done; s.done=null; f(); } } } }
 const _dm=new THREE.Object3D();
 function poseOf(spec,p,x,y,z){ placeObject(_dm,spec,p,x,y,z); return {pos:_dm.position.clone(),quat:_dm.quaternion.clone()}; }
@@ -5193,7 +5302,7 @@ async function route(){
   const h=location.hash.replace(/^#/,"");
   // модель, которой нужно перестроить порядок шагов, — сначала экран загрузки, потом страница
   const mid=h.indexOf("model-")===0?h.slice(6):h.indexOf("instr-")===0?h.slice(6):h.indexOf("build-")===0?instrModelOf((PROJ.get(h.slice(6))||{}).set):null;
-  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==24){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
+  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==25){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
   if(h==="sets") enterSets();
   else if(h==="free") location.replace("#set-"+CUR_SET);
   else if(h==="guided") location.replace("#catalog");
@@ -5253,7 +5362,7 @@ function insPages(id){
   if(insPagesCache[id]) return insPagesCache[id];
   const M=MODELS[id];
   // модель, загруженная до нового порядка сборки, перестраивается при первом открытии (не при запуске — чтобы приложение открывалось сразу)
-  if(M&&M.user&&M.grav!==24){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=24; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
+  if(M&&M.user&&M.grav!==25){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=25; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
   // модель из файла (BrickLink Studio, LDraw): шаги автора, крупные разбиты на страницы до 5 деталей
   splitBigSteps(M);
   if(M.breaks&&M.breaks.length){ const br=[0,...M.breaks.filter(k=>k>0&&k<M.steps.length),M.steps.length], out=[];
@@ -5315,6 +5424,7 @@ function enterInstrBuild(id,rec){
   const M=MODELS[id], pages=insPages(id);
   let pg=Number.isFinite(+rec.ip)?+rec.ip:+(ls.get("myblocks.ins.p."+rec.id)||0);
   IB={id,M,rec,pages,page:clamp(pg||0,0,pages.length-1),items:modelParts(M),check:null};
+  IB.celebrated=!!(rec&&rec.count>=IB.items.length); // уже собранную при входе не поздравляем повторно
   $("book").hidden=true; // в сборке по инструкции книга PDF не нужна — своё окно инструкции
   if(ls.get("myblocks.ins.view")===id){ ls.set("myblocks.ins.view",""); setTimeout(()=>{ try{ insShowPanel(false); toast("Собранная модель: крутите и рассматривайте"); }catch(_){} },60); }
   IB.box=IB.items.map(p=>{ const d=dims(specOf(p),p), x=p.x+(p.ox||0), z=p.z+(p.oz||0); return [x,p.y,z,x+d.W,p.y+d.H,z+d.D]; });
@@ -5550,7 +5660,7 @@ function insRender(){
 }
 function insLoop(){
   if(!IB){ IV.loop=false; return; } requestAnimationFrame(insLoop);
-  if(IV.follow){ const ph=clamp(cam.phi,0.45,1.2); if(Math.abs(cam.theta-IV.theta)>1e-3||Math.abs(ph-IV.phi)>1e-3){ IV.theta=cam.theta; IV.phi=ph; IV.dirty=true; } } // как на основной сцене
+  if(IV.follow){ const ph=clamp(cam.phi,0.45,1.2); if(Math.abs(cam.theta-IV.theta)>1e-3||Math.abs(ph-IV.phi)>1e-3){ const n=performance.now(); if(n-(IV.ft||0)>30){ IV.ft=n; IV.theta=cam.theta; IV.phi=ph; IV.dirty=true; } } } // во время вращения книга рисуется ~30 раз в секунду, основной сцене — остальное // как на основной сцене
   insPulse(performance.now());
   if(IV.dirty){ IV.dirty=false; insRender(); }
 }
@@ -5575,6 +5685,16 @@ function insShowGhosts(off){
 // в сборке по инструкции главное — положение детали в модели: если палец рядом с местом детали этого шага
 // (или пропущенной раньше), деталь из руки встаёт точно так, как в модели, — правила креплений не спорят с файлом
 const _bx=new THREE.Box3(), _bv=new THREE.Vector3();
+/* Место детали по модели занято чужой деталью (поставленной не на своё место): в настоящем наборе деталь не может
+   войти внутрь другой — она встанет сверху. Поэтому к месту по модели не «досаживаем», деталь ставится по обычным правилам
+   (на то, что под пальцем), а подсказка напоминает убрать лишнюю деталь. Правило 11 в ПРАВИЛА_СБОРКИ.md */
+let insStray=null;
+function insBlocked(x0,y,z0,d,o){ const st=IB&&IB.check&&IB.check.stray; if(!st||!st.size) return false; const e=0.12;
+  for(const q of parts){ if(q===o||!q.p||q.f) continue; const k=insKey(q)+"@"+r2(q.x+(q.ox||0))+"|"+r2(q.y/PH)+"|"+r2(q.z+(q.oz||0)); if(!(st.get(k)>0)) continue;
+    const sq=specOf(q); if(!sq) continue; const dq=dims(sq,q), qx=q.x+(q.ox||0), qz=q.z+(q.oz||0);
+    if(Math.min(x0+d.W,qx+dq.W)-Math.max(x0,qx)>e&&Math.min(y+d.H,q.y+dq.H)-Math.max(y,q.y)>e&&Math.min(z0+d.D,qz+dq.D)-Math.max(z0,qz)>e){
+      const t=performance.now(); if(t-(IB._blkT||0)>5000){ IB._blkT=t; try{ toast("Место этой детали занято другой, поставленной не туда — уберите её, и деталь встанет на своё место"); }catch(_){} } return true; } }
+  return false; }
 function insSnap(spec,o,h,wide){
   /* Главное правило сборки по инструкции: положение в модели важнее правил соединения.
      Деталь шага, поставленная на своё место (палец на месте детали или рядом, ±¼ шипа), садится ровно как в модели —
@@ -5590,6 +5710,7 @@ function insSnap(spec,o,h,wide){
     if(dist>R) continue;
     // место уже занято такой же деталью (проверка шага ещё не успела обновиться) — пропустить
     if(parts.some(q=>q.p===m.p&&Math.abs(q.x+(q.ox||0)-x0)<0.05&&Math.abs(q.z+(q.oz||0)-z0)<0.05&&Math.abs(q.y-y)<0.05)) continue;
+    if(insBlocked(x0,y,z0,d,o)) continue;
     // при равенстве — то место, чей центр ближе к пальцу
     const cd=Math.hypot(P.x-(x0+d.W/2),P.z-(z0+d.D/2),P.y-(y+d.H/2)), sc=dist+cd*0.02;
     if(!best||sc<best.dist) best={dist:sc,m,x,y,z,i}; }
@@ -5597,7 +5718,7 @@ function insSnap(spec,o,h,wide){
   const st=IB._stick; if(st&&st.p===o.p&&st.i<b&&!IB.check.ok.has(st.i)&&(!best||best.i!==st.i)){ const m=IB.items[st.i], s2=specOf(m); if(s2){ const d=dims(s2,m), x=m.x+off[0], y=m.y+off[1]*PH, z=m.z+off[2], x0=x+(m.ox||0), z0=z+(m.oz||0);
       const dx=Math.max(0,x0-P.x,P.x-(x0+d.W)), dz=Math.max(0,z0-P.z,P.z-(z0+d.D)), dy=Math.max(0,y-P.y-0.2,P.y-(y+d.H)-0.4); let near=Math.hypot(dx,dz,dy)<=0.5;
       if(!near&&RY){ _bx.min.set(x0-0.25,y-0.25,z0-0.25); _bx.max.set(x0+d.W+0.25,y+d.H+0.25,z0+d.D+0.25); const t=RY.intersectBox(_bx,_bv); near=!!t&&RY.origin.distanceTo(t)<=RY.origin.distanceTo(P)+0.05; }
-      if(near&&!parts.some(q=>q!==o&&q.p===m.p&&Math.abs(q.x+(q.ox||0)-x0)<0.05&&Math.abs(q.z+(q.oz||0)-z0)<0.05&&Math.abs(q.y-y)<0.05)) best={dist:0,m,x,y,z,i:st.i}; } }
+      if(near&&!parts.some(q=>q!==o&&q.p===m.p&&Math.abs(q.x+(q.ox||0)-x0)<0.05&&Math.abs(q.z+(q.oz||0)-z0)<0.05&&Math.abs(q.y-y)<0.05)&&!insBlocked(x0,y,z0,d,o)) best={dist:0,m,x,y,z,i:st.i}; } }
   if(best&&best.i!==undefined) IB._stick={i:best.i,p:o.p}; else if(!best) IB._stick=null;
   /* первая деталь модели ставится где угодно: пока ни одна деталь не на месте, место модели задаёт она сама —
      деталь садится под пальцем ровно в том положении, как в модели, а вся модель «переезжает» к ней */
@@ -5619,12 +5740,13 @@ function insCheck(){
     const dm=dims(specOf(m),m), w=1+dm.W*dm.D/8; // крупные детали (основа, пластины) весят больше: место модели задают они, а не мелочь
     for(const p of L){ pairs++; const dyv=r2((p.y-m.y)/PH); if(dyv+ymin<-0.3) continue; // модель не может уйти под основу
       const k=r2(p.x+(p.ox||0)-m.x-(m.ox||0))+"|"+dyv+"|"+r2(p.z+(p.oz||0)-m.z-(m.oz||0)); const v=(votes.get(k)||0)+w; votes.set(k,v); if(v>bv){ bv=v; best=k; } } }
-  const ok=new Set(); let off=null;
-  if(best){ const [dx,dy,dz]=best.split("|").map(Number), have=new Map(); off=[dx,dy,dz];
+  const ok=new Set(); let off=null, have=null;
+  if(best){ const [dx,dy,dz]=best.split("|").map(Number); have=new Map(); off=[dx,dy,dz];
     mine.forEach(p=>{ const k=insKey(p)+"@"+r2(p.x+(p.ox||0))+"|"+r2(p.y/PH)+"|"+r2(p.z+(p.oz||0)); have.set(k,(have.get(k)||0)+1); });
     for(let i=0;i<b;i++){ const m=IB.items[i], k=insKey(m)+"@"+r2(m.x+(m.ox||0)+dx)+"|"+r2(m.y/PH+dy)+"|"+r2(m.z+(m.oz||0)+dz), n=have.get(k)||0; if(n>0){ ok.add(i); have.set(k,n-1); } } }
+  insStray=best?have:null;
   let nNew=0, before=0; for(let i=a;i<b;i++) if(ok.has(i)) nNew++; for(let i=0;i<a;i++) if(!ok.has(i)) before++;
-  IB.check={ok,nNew,before,off};
+  IB.check={ok,nNew,before,off,stray:insStray};
   insShowGhosts(off);
   document.querySelectorAll("#insCall .ins-pt").forEach(el=>el.classList.toggle("done",el.dataset.idx.split(",").every(i=>ok.has(+i))));
   const st=$("insCheck"), n=b-a, done=nNew===n; st.className="ins-check"+(done?" ok":nNew?" part":"");
@@ -5639,12 +5761,29 @@ function insCheck(){
 let insAdvT=0;
 function insChanged(){ clearTimeout(insT); insT=setTimeout(()=>{ if(!IB) return; const was=IB.done, done=insCheck(); IB.done=done; insRefreshList(false);
   if(!done){ insCancelAdvance(); return; }
+  if(!IB.celebrated&&IB.page>=IB.pages.length-1&&IB.check&&parts.filter(p=>p.p&&!p.f).length>=IB.items.length-Math.floor(IB.items.length*0.02)){ /* последний шаг совпал и поставлены все детали модели (допуск 2% — на детали, которые проверка могла не узнать) */ IB.celebrated=true; insCancelAdvance(); setTimeout(insDone,500); return; }
   if(was||insAdvT) return;
   insOkShow(true);
   // переход на следующий шаг — по времени в цикле кадров, а не таймером: у большой модели (дворец) таймер мог не дождаться своей очереди
   if(insAuto()&&IB.page<IB.pages.length-1){ insAdvT=-1; insAdvAt={t:performance.now()+700,pg:IB.page}; }
   else insAdvT=setTimeout(()=>{ insAdvT=0; insOkShow(false); },1400); },150); }
 let insAdvAt=null;
+/* модель собрана: поздравление с конфетти из кирпичиков и что делать дальше — покрутить, взять в свою постройку, вернуться к модели.
+   Модель отмечается собранной и на главной уходит в раздел «Собранные» */
+function insDone(){ if(!IB) return; const M=IB.M, id=IB.id, n=IB.items.length; M.done=Date.now(); saveUserModels&&saveUserModels(); try{ delete bentoImgs[id]; }catch(_){}
+  try{ playClick&&playClick("place"); setTimeout(()=>playClick&&playClick("tick"),120); }catch(_){}
+  const w=$("doneSheet"); $("dnTitle").textContent="Модель собрана!"; $("dnSub").textContent="«"+M.name+"» · "+n+" "+plural(n,"деталь","детали","деталей")+" на своих местах";
+  const cf=$("dnConf"); cf.innerHTML=""; const cols=["#E3000B","#FFD500","#0057A8","#00852B","#F6A41D","#FFFFFF","#A0A5A9"];
+  if(!reduceMotion) for(let k=0;k<26;k++){ const b=document.createElement("i"); b.style.left=(Math.random()*100)+"%"; b.style.background=cols[k%cols.length]; b.style.animationDelay=(Math.random()*0.5)+"s"; b.style.animationDuration=(1.4+Math.random()*1.1)+"s"; b.style.setProperty("--r",(Math.random()*720-360)+"deg"); b.style.width=(k%3?14:22)+"px"; cf.appendChild(b); }
+  w.hidden=false; requestAnimationFrame(()=>w.classList.add("on")); }
+function insDoneClose(){ const w=$("doneSheet"); w.classList.remove("on"); setTimeout(()=>{ w.hidden=true; },220); }
+$("dnLook").addEventListener("click",()=>{ insDoneClose(); try{ insSetHints(false,true); insShowPanel(false); }catch(_){} toast("Готовая модель: крутите и рассматривайте"); });
+$("dnModel").addEventListener("click",()=>{ insDoneClose(); const id=IB&&IB.id; if(id) location.hash="model-"+id; });
+$("dnReuse").addEventListener("click",async()=>{ if(!IB||!IB.rec) return; insDoneClose(); const M=IB.M; try{ await saveNow(); }catch(_){}
+  // копия собранной модели — обычная постройка из всех деталей приложения: её можно достраивать, разбирать, брать части в свои сборки
+  buildAllSet(); const src=IB.rec, rec={id:newPid(),set:ALL_SET,name:M.name,updated:Date.now(),parts:JSON.parse(JSON.stringify(src.parts||[])),layers:{},count:0,thumb:null}; rec.count=rec.parts.length;
+  PROJ.set(rec.id,rec); await Store.put(rec); try{ Cloud.queue(rec.id); }catch(_){} toast("«"+M.name+"» — в ваших постройках: достраивайте и переделывайте"); location.hash="build-"+rec.id; });
+$("doneSheet").addEventListener("click",e=>{ if(e.target===$("doneSheet")) insDoneClose(); });
 function insCancelAdvance(){ if(insAdvT>0) clearTimeout(insAdvT); insAdvT=0; insAdvAt=null; insOkShow(false); }
 function insAdvTick(now){ if(!insAdvAt||now<insAdvAt.t) return; const pg=insAdvAt.pg; insAdvAt=null; insAdvT=0; insOkShow(false); if(IB&&IB.page===pg&&IB.done) insSetPage(pg+1); }
 function insOkShow(on){ $("insOk").hidden=!on; $("insBook").classList.toggle("okflash",on); }
@@ -5663,6 +5802,23 @@ $("insAuto").addEventListener("change",e=>{ ls.set("myblocks.ins.auto",e.target.
 let drawT=0, testDrawT=0;
 function resize(){ if(ws.hidden) return; const r=ws.getBoundingClientRect(); renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false); camera.aspect=r.width/Math.max(1,r.height); camera.updateProjectionMatrix(); if(!$("book").hidden){ applyBookPos(); clearTimeout(drawT); drawT=setTimeout(drawBook,60); } }
 new ResizeObserver(resize).observe(ws);
+/* плавное вращение больших моделей.
+   1) Тени: свет неподвижен относительно постройки, поэтому, пока крутится только камера, карту теней не перерисовываем
+      (это второй полный проход по всем деталям). Детали едут/падают или свет идёт за камерой — обновляем как раньше (за камерой — через кадр).
+   2) Чёткость: если во время вращения кадр дольше ~20 мс, на время движения чуть снижаем плотность пикселей
+      (запоминаем, какая держит плавность), а когда камера остановилась — возвращаем полную чёткость. */
+const PF={p:new THREE.Vector3(),q:new THREE.Quaternion(),t:0,ema:16.7,still:0,full:Math.min(window.devicePixelRatio||1,2),move:0,cur:0,stepT:0,n:0};
+renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;
+function perfSetPR(v){ if(Math.abs(v-PF.cur)<0.01) return; PF.cur=v; renderer.setPixelRatio(v); resize(); }
+function perfFrame(now){ const dt=PF.t?Math.min(100,now-PF.t):16.7; PF.t=now; PF.n++;
+  const moving=camera.position.distanceToSquared(PF.p)>1e-7||camera.quaternion.angleTo(PF.q)>1e-5; PF.p.copy(camera.position); PF.q.copy(camera.quaternion);
+  if(!PF.cur) PF.cur=PF.full; if(!PF.move) PF.move=PF.full;
+  const lightCam=!!(LIGHTS[lightMode]||{}).cam, busy=SMOOTH.length>0||drops.length>0||!!gdrag||!!hand;
+  renderer.shadowMap.needsUpdate=!moving||busy||(lightCam&&PF.n%2===0);
+  if(moving){ PF.still=0; if(PF.cur>PF.move) perfSetPR(PF.move);
+    PF.ema=PF.ema*0.85+dt*0.15;
+    if(PF.ema>20&&PF.cur>1&&now-PF.stepT>300){ PF.stepT=now; PF.move=Math.max(1,PF.cur-0.25); perfSetPR(PF.move); PF.ema=16.7; } }
+  else { if(!PF.still) PF.still=now; if(PF.cur<PF.full&&now-PF.still>260){ perfSetPR(PF.full); renderer.shadowMap.needsUpdate=true; } } }
 function frame(now){
   requestAnimationFrame(frame);
   insAdvTick(performance.now());
@@ -5674,6 +5830,7 @@ function frame(now){
     if(!reduceMotion) outlineMat.opacity=0.65+0.35*Math.sin(now/180);
     const ek=clamp((85-cam.r)/50,0.3,1); for(const k in edgeMats) edgeMats[k].opacity=edgeMats[k].userData.base*ek;
     // тестовый прогон без экрана: рисуем редко (программная графика съедает весь процессор), матрицы обновляем всегда
+    perfFrame(now);
     if(window.__testFps&&now-testDrawT<1000/window.__testFps) scene.updateMatrixWorld(); else { testDrawT=now; renderer.render(scene,camera); }
   } else if(mode==="home") renderSpins();
   if(MV.host) mvRender();
@@ -5887,7 +6044,7 @@ const LDIMP_APPCOLS=new Set(Object.keys(COLORS));
 $("hModelLoad").addEventListener("click",()=>$("modelFile").click());
 /* версия чтения файлов: когда чтение моделей улучшается, модели, загруженные раньше, перечитываются из своего файла
    (файл модели хранится на устройстве вместе с ней), иначе исправления их не касаются */
-const IMP_VER=31;
+const IMP_VER=32;
 let reimportId=null;
 $("modelFile").addEventListener("change",async e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return; const rid=reimportId; reimportId=null; await importModelFile(f,rid); });
 async function importModelFile(f,replaceId,quiet){
@@ -5900,8 +6057,8 @@ async function importModelFile(f,replaceId,quiet){
     if(prev){ ["pin","view","cover","desc"].forEach(k=>{ if(prev[k]!==undefined&&model[k]===undefined) model[k]=prev[k]; }); delete MODELS[id]; delete insPagesCache[id]; try{ delete prev._figs; }catch(_){} }
     try{ await IDB.put("kv",f,"src:"+id); }catch(_){}
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); gravityOrder(model); model.grav=24; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
-    if(!quiet) toast(prev?"Модель обновлена: "+model.steps.length+" деталей":miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей");
+    snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); let cleaned=0; try{ cleaned=cleanModel(model); }catch(err){ console.warn(err); } gravityOrder(model); model.grav=25; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    if(!quiet) toast(prev?"Модель обновлена: "+model.steps.length+" деталей":miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей"+(cleaned?" · убрано лишних: "+cleaned+" (спрятаны внутри других или повторяются)":""));
     loaderHide(); if(location.hash==="#model-"+id){ enterModelPage(id); } else location.hash="model-"+id; return id; }
   catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); return null; } }
 /* модель загружена прошлой версией: если её файл хранится — перечитываем сами; если нет — просим загрузить файл ещё раз */
@@ -6263,6 +6420,41 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
           for(const i of U){ const a=B[i]; let g=Infinity; for(const j of P){ const b=B[j]; let q=0; for(let k=0;k<3;k++){ const d=Math.max(a[k],b[k])-Math.min(a[k+3],b[k+3]); if(d>q) q=d; } if(q<g){ g=q; if(g<=0) break; } }
             if(bg===Infinity||better(i,g,best,bg)){ bg=g; best=i; } } } }
       put(best); } }
+  /* Правило 13 (ПРАВИЛА_СБОРКИ.md): деталь ставится, пока к её месту можно подобраться и его видно.
+     В настоящем наборе деталь нажимают на шипы сверху, поэтому её нельзя поставить под то, что уже нависает над её местом
+     (арка, балка, перекрытие ниже трёх кирпичей): такая деталь переносится раньше — сразу до первой нависающей,
+     если всё, на чём она стоит, к тому времени уже поставлено. Штифт и ось вставляются в первую деталь до того,
+     как поставлена вторая, которую они соединяют, — иначе их пришлось бы вставлять вглубь готового блока */
+  M.access=accessRepair(out);
+  function accessRepair(out){ const pos=new Int32Array(n), tl=i=>!!(S[i].tq||S[i].rx||S[i].rz), R={cover:0,pin:0,early:0,late:0,left:0,ex:[]}; const nmx=q=>q+":"+(designName(S[q].p)||S[q].p).slice(0,20);
+    const ox=(a,b)=>Math.min(a[3],b[3])-Math.max(a[0],b[0]), oz=(a,b)=>Math.min(a[5],b[5])-Math.max(a[2],b[2]), oy=(a,b)=>Math.min(a[4],b[4])-Math.max(a[1],b[1]);
+    const PIN=/^(полу)?штифт|^ось(\s|$)|^technic,?\s*(pin|axle)\b/i, isPin=S.map(st=>PIN.test((designName(st.p)||"").trim()));
+    const re=()=>out.forEach((i,k)=>pos[i]=k); re();
+    // что должно стоять раньше детали: всё, на чём она лежит снизу, её держатели; у штифта — только держатели
+    const byX=[...Array(n).keys()].sort((p,q)=>B[p][0]-B[q][0]);
+    const PRE=S.map((_,i)=>{ const L=new Set(isPin[i]?[]:(FP.get(i)||[]).concat(SUP[i]||[])); /* штифт и ось: правило 7 (ждать боковых держателей) здесь не действует — их вставляют в первую деталь, а вторую надевают сверху */ if(!isPin[i]){ const a=B[i]; for(const k of byX){ if(B[k][0]>=a[3]) break; if(k===i||B[k][3]<=a[0]) continue; const b=B[k]; if(Math.abs(b[4]-a[1])<e&&ox(a,b)>0.1&&oz(a,b)>0.1) L.add(k); } } L.delete(i); return [...L]; });
+    const DEP=S.map(()=>[]); PRE.forEach((L,i)=>L.forEach(k=>DEP[k].push(i)));
+    const covers=(i,j)=>{ if(isPin[j]) return false; /* тонкий штифт сверху не мешает нажать деталь */ const a=B[i], b=B[j]; if(b[4]<=a[4]+0.05||b[1]>=a[4]+3.6||ox(a,b)<0.15||oz(a,b)<0.15) return false; const P=pts(j);
+      for(let k=0;k<P.length;k+=3){ const x=P[k], y=P[k+1], z=P[k+2]; if(y>a[4]+0.05&&y<a[4]+3.6&&x>a[0]+0.1&&x<a[3]-0.1&&z>a[2]+0.1&&z<a[5]-0.1) return true; } return false; };
+    const moveTo=(i,t)=>{ const p=pos[i]; out.splice(p,1); out.splice(t,0,i); re(); };
+    // «нависающую» j (и всё, что за ней тянется: стоит на ней, держится за неё) переносим сразу после i
+    const delay=(j,i)=>{ const lo=pos[j], hi=pos[i], D=new Set([j]); for(let k=lo+1;k<hi;k++){ const q=out[k]; if(PRE[q].some(x=>D.has(x))) D.add(q); }
+      if(PRE[i].some(x=>D.has(x))||D.size>400) return false; const keep=out.filter(q=>!D.has(q)), blk=out.filter(q=>D.has(q)), at=keep.indexOf(i)+1;
+      out.length=0; keep.slice(0,at).concat(blk,keep.slice(at)).forEach(q=>out.push(q)); re(); return true; };
+    const tries=new Uint8Array(n); let budget=2*n+50; // каждая деталь переносится не больше трёх раз — без зацикливания
+    for(let pass=0;pass<4;pass++){ let moves=0, left=0;
+      for(let k=0;k<out.length&&budget>0;k++){ const i=out[k], a=B[i]; if(tries[i]>=3) continue;
+        if(isPin[i]){ const H=[]; for(let j=0;j<n;j++){ if(j===i||isPin[j]) continue; const b=B[j]; if(!(ox(a,b)>0.15&&oz(a,b)>0.15&&oy(a,b)>0.15)) continue;
+            // держит штифт — та деталь, чья настоящая поверхность (стенки отверстия) проходит внутри рамки штифта, а не та, чья рамка просто задевает
+            const P=pts(j); let c=0; for(let q=0;q<P.length&&c<3;q+=3){ if(P[q]>a[0]+0.05&&P[q]<a[3]-0.05&&P[q+1]>a[1]+0.05&&P[q+1]<a[4]-0.05&&P[q+2]>a[2]+0.05&&P[q+2]<a[5]-0.05) c++; } if(c>=3) H.push(j); }
+          if(H.length<2) continue; H.sort((x,y)=>pos[x]-pos[y]); if(pos[H[1]]>pos[i]) continue; if(!pass) R.pin++;
+          const t=pos[H[1]], Hs=new Set(H.slice(1)); if(PRE[i].every(q=>pos[q]<t||Hs.has(q))){ moveTo(i,t); moves++; R.early++; tries[i]++; budget--; } else { left++; if(R.ex.length<12) R.ex.push("pin "+nmx(i)+" H="+H.map(nmx).join(",")+" pre>=t: "+PRE[i].filter(q=>pos[q]>=t&&!Hs.has(q)).map(nmx).join(",")); } continue; }
+        if(tl(i)||!(a[1]<Y0+0.05||PRE[i].length)) continue;
+        let jm=-1; for(let q=0;q<k;q++){ if(covers(i,out[q])){ jm=out[q]; break; } } if(jm<0) continue; if(!pass) R.cover++;
+        const t=pos[jm]; if(PRE[i].every(q=>pos[q]<t)){ moveTo(i,t); moves++; R.early++; tries[i]++; budget--; k=Math.max(-1,t-1); continue; }
+        if(tries[jm]<3&&delay(jm,i)){ moves++; R.late++; tries[jm]++; tries[i]++; budget--; k=Math.max(-1,pos[i]-1); continue; } left++; if(R.ex.length<24) R.ex.push("cover "+nmx(i)+" by "+nmx(jm)+" pre>=t: "+PRE[i].filter(q=>pos[q]>=t).map(nmx).join(",")); }
+      R.left=left; if(!moves) break; }
+    return R; }
   let moved=0; out.forEach((i,k)=>{ if(i!==k) moved++; });
   const nb=[], cur=new Set(out.length?[out[0]]:[]); for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k], f=FP.get(b); if(chOf[a]!==chOf[b]||depth[a]!==depth[b]||stepOf[a]!==stepOf[b]||f&&f.some(j=>cur.has(j))){ nb.push(k); cur.clear(); } cur.add(b); }
   const pos=new Int32Array(n); out.forEach((i,k)=>pos[i]=k);
@@ -6276,6 +6468,36 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
    1) почти все детали подняты на одну и ту же долю пластины (автор поставил основу чуть выше нуля) — опускаем всю модель на эту долю;
    2) деталь, лежащая на основе, но не на шипах (камешки дорожки, разбросанный декор: сдвиг на полшипа, лёгкий доворот),
       и на которой ничего не стоит, — ставим на ближайшие шипы и ровно. Иначе её по инструкции надо ставить между шипами, «в текстуру» */
+/* Правило 11 (ПРАВИЛА_СБОРКИ.md): каждая деталь модели должна работать. Лишние детали из файла убираются при загрузке:
+   1) точный повтор — та же деталь того же цвета в том же месте и положении (в редакторе случайно вставили дважды);
+   2) деталь, целиком спрятанная внутри цельной детали (кирпич, пластина, плитка): в настоящем наборе она туда не войдёт,
+      а кирпич над ней встал бы выше. Проверка — по настоящей форме: почти вся поверхность детали внутри другой.
+   Детали, которые по задумке входят внутрь (камень в кирпиче «фара», штифт в отверстии, палка в клипсе, всё под аркой,
+   в окне, под скосом), не трогаются: внутри «цельной» считаются только обычные кирпичи, пластины и плитки без вырезов,
+   отверстий и боковых шипов. Что убрано — записывается в модель (M.cleaned) и показывается на странице модели */
+const SOLID_NOT=/арк|окн|двер|рам|решет|забор|ограж|перев|изогн|клипс|держат|кронштейн|углов|створ|ставн|паутин|сетк|скос|наклон|купол|конус|ручк|шарнир|выступ|вырез|паз|лист|растен|цвет|колонн|балясин|пружин|контейнер|ящик|корыт|рельс|бортик|скал|кругл|техник|отверст|сбоку|шип|фар/i;
+function cleanModel(M){ const S=M.steps, n=S.length; if(!n) return 0;
+  const cat=p=>{ const gi=gIndex[p]; return gi!==undefined?GROUPS[gi].cat:""; };
+  const B=S.map(s=>{ const d=dims(designSpec(s.p),s), x=s.x+(s.ox||0), z=s.z+(s.oz||0), y=s.y*PH; return [x,y,z,x+d.W,y+d.H,z+d.D]; });
+  const vol=b=>(b[3]-b[0])*(b[4]-b[1])*(b[5]-b[2]);
+  const solid=i=>{ const st=S[i]; if(st.tq||st.rx||st.rz||/^x_/.test(st.p)) return false; const c=cat(st.p); return (c==="bricks"||c==="plates"||c==="tiles")&&!SOLID_NOT.test(designName(st.p)||""); };
+  const rm=new Map(), DK=new Map();
+  S.forEach((st,i)=>{ const k=st.p+"|"+st.c+"|"+B[i].map(v=>Math.round(v*20)).join(",")+"|"+(st.ry||0)+"|"+(st.rx||0)+"|"+(st.rz||0)+"|"+JSON.stringify(st.tq||0); if(DK.has(k)) rm.set(i,"dup"); else DK.set(k,i); });
+  const G=new Map(); B.forEach((b,i)=>{ if(rm.has(i)) return; for(let x=Math.floor(b[0]);x<Math.ceil(b[3]);x++) for(let z=Math.floor(b[2]);z<Math.ceil(b[5]);z++){ const k=x+","+z; let L=G.get(k); if(!L) G.set(k,L=[]); L.push(i); } });
+  const PT=new Map(), half=new THREE.Vector3(); const pts=i=>{ let a=PT.get(i); if(a) return a; const st=S[i], sp=designSpec(st.p); let L=[]; try{ L=surfPts(sp); }catch(_){} const M4=poseQ(sp,st,st.x,st.y*PH,st.z); half.set(sp.w/2,sp.h*PH/2,sp.d/2); a=L.map(p=>p.clone().sub(half).applyMatrix4(M4)); PT.set(i,a); return a; };
+  const seen=new Set();
+  for(const L of G.values()) for(const j of L){ if(rm.has(j)||!solid(j)) continue; const b=B[j], h=0.1, inb=[b[0]+h,b[1]+0.06,b[2]+h,b[3]-h,b[4]-0.06,b[5]-h];
+    for(const i of L){ if(i===j||rm.has(i)||seen.has(i+"_"+j)) continue; seen.add(i+"_"+j); const a=B[i];
+      if(a[0]<b[0]-0.05||a[1]<b[1]-0.05||a[2]<b[2]-0.05||a[3]>b[3]+0.05||a[4]>b[4]+0.05||a[5]>b[5]+0.05) continue; // рамка детали — внутри рамки цельной детали
+      if(vol(a)>vol(b)+1e-6||(Math.abs(vol(a)-vol(b))<1e-6&&i<j)) continue; // убирается меньшая (при равенстве — поставленная позже)
+      const P=pts(i); if(P.length<4) continue; let k=0; for(const p of P) if(p.x>inb[0]&&p.x<inb[3]&&p.y>inb[1]&&p.y<inb[4]&&p.z>inb[2]&&p.z<inb[5]) k++;
+      if(k/P.length>=0.9) rm.set(i,"in"); } }
+  if(!rm.size) return 0;
+  const list=[...rm.entries()].map(([i,w])=>({p:S[i].p,c:S[i].c,w}));
+  M.steps=S.filter((_,i)=>!rm.has(i));
+  if(M.chapters&&M.chapters.length){ const keep=new Int32Array(n+1); for(let i=0,k=0;i<=n;i++){ keep[i]=k; if(i<n&&!rm.has(i)) k++; } M.chapters=M.chapters.map(c=>({...c,from:keep[Math.min(n,c.from)]})); }
+  M.cleaned={dup:list.filter(x=>x.w==="dup").length,inn:list.filter(x=>x.w==="in").length,list:list.slice(0,60)};
+  return rm.size; }
 function groundGrid(M){ const S=M.steps; if(!S.length) return false; let ch=false; const fr=v=>{ let f=v-Math.floor(v); if(f>0.995||f<0.005) f=0; return f; };
   const hist=new Map(); let cnt=0; S.forEach(s=>{ if(s.tq||s.rx||s.rz) return; cnt++; const k=Math.round(fr(s.y)*20)%20; hist.set(k,(hist.get(k)||0)+1); });
   let bk=0, bn=0; hist.forEach((v,k)=>{ if(v>bn){ bn=v; bk=k; } });
