@@ -3297,12 +3297,19 @@ function pointerRay(){ const rect=canvas.getBoundingClientRect(); _gp.set((lastP
 // точка на луче стилуса на глубине depth от камеры
 function flyPoint(depth,out){ const r=pointerRay(); return out.copy(r.direction).multiplyScalar(depth).add(r.origin); }
 let flyDepth=0;
-// глубина полёта: поверхность под стилусом минус полвысоты детали (деталь перед поверхностью, а не в ней); над пустотой — прежняя
-function flyDepthNow(s,fallback){ let d=0; try{ const h=pickAt(lastPointer.x,lastPointer.y); if(h){ const hh=dims(s,hand).H/2+0.06; d=Math.max(1.5,camera.position.distanceTo(h.point)-hh*1.4); } }catch(_){}
-  if(!d) d=flyDepth||fallback||0; if(!d){ const r=pointerRay(); _gpl.set(_gup,0); d=r.intersectPlane(_gpl,_gh)?camera.position.distanceTo(_gh):cam.rGoal||20; } return flyDepth=d; }
+/* глубина полёта — глубина места сборки, чтобы деталь в руке была того же размера, что и детали постройки:
+   по инструкции — место детали этого шага, иначе — точка, на которую смотрит камера. Над более близкой поверхностью
+   (стена перед местом) деталь выходит перед ней, а не прячется за неё. Над пустотой и из-под панели — та же глубина, деталь не мельчает */
+function flyDepthNow(s,fallback){ let ref=null; try{ ref=typeof insRefPoint==="function"?insRefPoint():null; }catch(_){} const dRef=camera.position.distanceTo(ref||cam.t);
+  let d=dRef; try{ const h=pickAt(lastPointer.x,lastPointer.y); if(h){ const hh=dims(s,hand).H/2+0.06; d=Math.min(dRef,camera.position.distanceTo(h.point)-hh*1.4); } }catch(_){}
+  return flyDepth=Math.max(1.5,d); }
 // экранные координаты точки и пикселей на шип на её глубине
 function toScreen(P,out){ const rect=canvas.getBoundingClientRect(); _gs.copy(P).project(camera); out.x=rect.left+(_gs.x+1)/2*rect.width; out.y=rect.top+(1-_gs.y)/2*rect.height; return _gs.z<1&&Math.abs(_gs.x)<4&&Math.abs(_gs.y)<4; }
 function pxPerStud(P){ const rect=canvas.getBoundingClientRect(); return (rect.height/2)/(Math.max(0.5,camera.position.distanceTo(P))*Math.tan(camera.fov*Math.PI/360)); }
+/* по инструкции стилус прошёл над пустой пластиной далеко позади постройки: садиться там незачем, а деталь на той глубине
+   выглядела бы крошечной — считаем, что сесть некуда, и деталь просто висит под стилусом в размере постройки */
+function farLanding(c){ if(c.insSnap||!hand) return false; let ref=null; try{ ref=typeof insRefPoint==="function"?insRefPoint():null; }catch(_){} if(!ref) return false;
+  const d=dims(handSpec(),c), P=_gs.set(c.x+(c.ox||0)+d.W/2,c.y+d.H/2,c.z+(c.oz||0)+d.D/2); return camera.position.distanceTo(P)>camera.position.distanceTo(ref)*1.2+2; }
 /* деталь в полёте там, где сесть ей не на что (или нельзя): не исчезает и не дёргается, а висит под стилусом как взята.
    Отпустить тут нельзя — деталь останется в руке */
 function flyGhost(){ if(!ghost||!hand||!lastPointer) return; const B=hand.base||{rx:0,ry:0,rz:0};
@@ -3311,21 +3318,23 @@ function flyGhost(){ if(!ghost||!hand||!lastPointer) return; const B=hand.base||
   const d=flyDepthNow(s,ghost.visible?camera.position.distanceTo(ghost.position):0), tgt=flyPoint(d,new THREE.Vector3());
   if(!ghost.visible){ ghost.position.copy(tgt); ghost.quaternion.copy(_g.quaternion); try{ const sm=SMOOTH.find(q=>q.o===ghost); if(sm) sm.cur=null; }catch(_){} }
   ghost.visible=true; ghostPos=null; landPrev=null; ghostNear=false; ghostAcc=tgt.clone(); jumpPend=null; oriPend={k:"",t:0};
-  if(typeof smoothTo==="function") smoothTo(ghost,tgt,_g.quaternion,0.45+0.3*dragFollow,false); else { ghost.position.copy(tgt); ghost.quaternion.copy(_g.quaternion); } }
+  if(typeof smoothTo==="function") smoothTo(ghost,tgt,_g.quaternion,0.6,false); else { ghost.position.copy(tgt); ghost.quaternion.copy(_g.quaternion); } }
 function showGhostAt(c){
   if(!ghost||!hand) return;
   if(!c){ ghost.visible=false; ghostPos=null; landPrev=null; ghostAcc=null; jumpPend=null; ghostNear=false; landPrevSnap=null; flyDepth=0; return; }
   const B=hand.base||{rx:0,ry:0,rz:0};
   let nr={rx:c.rx!==undefined?c.rx:B.rx,ry:c.ry!==undefined?c.ry:B.ry,rz:c.rz!==undefined?c.rz:B.rz};
   const s=handSpec();
-  /* плавность перемещения (волшебная палочка справа вверху): 0 — «магнит», деталь сама цепляется за соединения под стилусом;
-     N% — деталь оторвана от найденного соединения и идёт за стилусом на эту долю; 100% — строго под стилусом.
-     k — насколько деталь сейчас «в полёте»: 0 — сидит на соединении (стилус рядом с ним на экране), 1 — целиком под стилусом.
+  /* плавность перемещения (волшебная палочка справа вверху). Движение всегда одно и то же — плавно, строго под стилусом;
+     настройка задаёт только радиус «магнита»: с какого расстояния деталь притягивается к соединению под стилусом.
+     100% — только у самого места (по инструкции ~0,6 шипа, иначе ~0,2 шипа); чем меньше процент, тем шире радиус (до ~2 шипов);
+     0 — «магнит»: деталь всегда сидит на ближайшем соединении (прежний способ).
+     k — насколько деталь сейчас «в полёте»: 0 — сидит на соединении, 1 — под стилусом; между — короткий плавный переход.
      Близость меряется на экране (в пикселях по глубине соединения): одинаково удобно и вблизи, и издалека */
   let k=0, fx=0, fz=0, hit=false; const _c=new THREE.Object3D();
   placeObject(_c,s,{...hand,...nr,ox:c.ox||0,oz:c.oz||0,tq:c.tq,tp:c.tp},c.x,c.y,c.z);
   if(lastPointer&&dragFollow>0&&toScreen(_c.position,_gr)){ hit=true; const pps=pxPerStud(_c.position), fd=Math.hypot(_gr.x-lastPointer.x,_gr.y-lastPointer.y);
-    const R=Math.max(c.insSnap?0.6*pps:0.18*pps,c.insSnap?30:7), ramp=Math.max(0.25*pps,8); if(fd>R) k=dragFollow*Math.min(1,(fd-R)/ramp); fx=fd; }
+    const R=Math.max(c.insSnap?0.6*pps:0.18*pps,c.insSnap?30:7)+(1-dragFollow)*Math.max(c.insSnap?1.5*pps:1.2*pps,c.insSnap?60:45), ramp=Math.max(0.25*pps,8); if(fd>R) k=Math.min(1,(fd-R)/ramp); fx=fd; }
   else if(lastPointer&&dragFollow===0){ hit=true; const rect=canvas.getBoundingClientRect(); _gp.set((lastPointer.x-rect.left)/rect.width*2-1,-((lastPointer.y-rect.top)/rect.height)*2+1); ray.setFromCamera(_gp,camera); _gpl.set(_gup,-_c.position.y); if(ray.ray.intersectPlane(_gpl,_gh)){ fx=_gh.x-_c.position.x; fz=_gh.z-_c.position.z; } else hit=false; }
   /* в полёте деталь не поворачивается и не наклоняется за соединениями, над которыми проходит стилус (боковые шипы, отверстия) —
      остаётся как взята; поворот принимается только у соединения, на которое она садится */
@@ -3353,7 +3362,7 @@ function showGhostAt(c){
       if(now-jumpT<90){ clearTimeout(jumpTimer); const cc=c; jumpTimer=setTimeout(()=>{ if(landPrev===cc&&hand) showGhostAt(cc); },130); return; } } }
   jumpPend=null; ghostAcc=tgt.clone();
   // в полёте деталь держится под стилусом плотно (быстрее доезжает), у соединения — доезжает мягко
-  ghost.visible=true; if(typeof smoothTo==="function"){ smoothTo(ghost,tgt,_g.quaternion,fly?0.45+0.3*dragFollow:0.34+Math.max(0,dragFollow-0.7)*0.7,dragFollow>0&&!fly); }
+  ghost.visible=true; if(typeof smoothTo==="function"){ smoothTo(ghost,tgt,_g.quaternion,fly?0.6:0.4,dragFollow>0&&!fly); }
   ghostPos=c;
 }
 const drops=[];
@@ -3668,7 +3677,7 @@ $("sndFile").addEventListener("change",async()=>{ const f=$("sndFile").files[0];
   const ab=await f.arrayBuffer(); if(!await loadOwnSound(ab)){ toast("Не получилось прочитать этот звук — попробуйте mp3, m4a или wav"); return; }
   try{ await IDB.put("kv",ab,"snd:own"); }catch(_){} setSound("own"); toast("Свой звук установлен — он останется на этом устройстве"); });
 /* волшебная палочка: плавность перемещения детали под стилусом */
-function dragDesc(v){ return v===0?"Магнит: деталь сама цепляется за ближайшее соединение под стилусом":v>=1?"100%: деталь строго под стилусом и ни за что не цепляется — садится только у своего места":Math.round(v*100)+"% — деталь идёт за стилусом на эту долю; у соединения встаёт на него"; }
+function dragDesc(v){ return v===0?"Магнит: деталь всегда сидит на ближайшем соединении под стилусом":v>=1?"100%: деталь плавно идёт строго под стилусом и садится, только когда стилус у самого места":Math.round(v*100)+"% — деталь плавно идёт под стилусом; к соединению притягивается с расстояния до "+(Math.round((0.2+(1-v)*1.2)*10)/10).toString().replace(".",",")+" шипа"; }
 function dragPopSync(){ const r=$("dpRange"); if(r) r.value=Math.round(dragFollow*100); const o=$("dpVal"); if(o) o.textContent=dragFollow===0?"Магнит":Math.round(dragFollow*100)+"%"; const d=$("dpDesc"); if(d) d.textContent=dragDesc(dragFollow);
   document.querySelectorAll("#dragPop .dp-q").forEach(b=>b.setAttribute("aria-pressed",String(Math.abs(parseFloat(b.dataset.m)-dragFollow)<0.01))); }
 function dragPopShow(on){ const P=$("dragPop"), b=$("tDrag"); if(!P||!b) return; if(on){ const r=b.getBoundingClientRect(); P.style.top=(r.bottom+8)+"px"; P.style.right=Math.max(16,innerWidth-r.right)+"px"; dragPopSync(); }
@@ -4165,7 +4174,7 @@ function startListDrag(ev,take){
   dragFromList={id:ev.pointerId,lift:ev.pointerType==="touch"?50:0};
   const done=()=>{ el.removeEventListener("pointermove",mv); el.removeEventListener("pointerup",up); el.removeEventListener("pointercancel",cn); dragFromList=null; };
   const mv=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; const r=canvas.getBoundingClientRect(); const x=e.clientX, y=e.clientY-dragFromList.lift;
-    const overUI=document.elementFromPoint(e.clientX,e.clientY); if(x<r.left||x>r.right||y<r.top||y>r.bottom||(overUI&&overUI!==canvas)){ showGhostAt(null); return; } lastPointer={x,y}; const c=landing(handSpec(),hand,x,y); if(c||dragFollow===0) showGhostAt(c); else flyGhost(); };
+    const overUI=document.elementFromPoint(e.clientX,e.clientY); if(x<r.left||x>r.right||y<r.top||y>r.bottom||(overUI&&overUI!==canvas)){ showGhostAt(null); return; } lastPointer={x,y}; const c=landing(handSpec(),hand,x,y); if(c&&dragFollow>0&&farLanding(c)) flyGhost(); else if(c||dragFollow===0) showGhostAt(c); else flyGhost(); };
   const up=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; const g=ghostPos; done(); if(g){ placeHand(g); setHand(null); } else showGhostAt(null); };
   const cn=()=>{ done(); showGhostAt(null); };
   el.addEventListener("pointermove",mv); el.addEventListener("pointerup",up); el.addEventListener("pointercancel",cn);
@@ -4786,7 +4795,7 @@ function closeSheets(){ ["acctSheet","projSheet","dumpSheet","groupSheet","stkSh
 document.querySelectorAll(".acct-btn,.acct-open").forEach(b=>b.addEventListener("click",openAccount));
 $("acX").addEventListener("click",()=>closeSheet("acctSheet"));
 function openAccount(){ renderAccount(); openSheet("acctSheet"); }
-const APP_VER="v148"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
+const APP_VER="v149"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
 async function renderAccount(){ try{ $("acVer").textContent="Версия приложения: "+APP_VER; }catch(_){}
   const st=Cloud.state;
   $("acName").textContent=(st==="on"||st==="sync")?(Cloud.name?"Вы вошли как "+Cloud.name:"Синхронизация включена"):"Синхронизация";
@@ -5519,6 +5528,12 @@ function insApplyLib(M){
   const need=SET_GROUPS.map(G=>gIndex[G.id]).filter(i=>!thumbs[i]), idle=!thumbQueue.length; // миниатюры деталей модели — первыми
   thumbQueue=[...need,...thumbQueue.filter(i=>!need.includes(i))]; if(idle&&need.length) requestAnimationFrame(pumpThumbs);
 }
+/* место детали текущего шага (центр, в координатах постройки) — для глубины полёта детали в руке: сначала недостающая деталь
+   того же вида, что в руке, иначе первая недостающая на шаге, иначе центр шага */
+function insRefPoint(){ if(!IB||!IB.pages||!IB.check) return null; const pg=IB.pages[IB.page]; if(!pg) return null; const off=IB.check.off||[0,0,0], ok=IB.check.ok;
+  let pick=-1, first=-1; for(let i=pg.a;i<pg.b;i++){ if(ok.has(i)) continue; if(first<0) first=i; if(hand&&IB.items[i].p===hand.p){ pick=i; break; } }
+  const i=pick>=0?pick:first>=0?first:pg.a; const m=IB.items[i]; if(!m) return null; const d=dims(designSpec(m.p),m);
+  return new THREE.Vector3(m.x+off[0]+(m.ox||0)+d.W/2,m.y+off[1]*PH+d.H/2,m.z+off[2]+(m.oz||0)+d.D/2); }
 // подпись порядка шагов модели: меняется, когда модель переупорядочена или перечитана новой версией
 const insOrderKey=M=>(M.grav||0)+"."+(M.impv||0)+"."+M.steps.length;
 function enterInstrBuild(id,rec){
