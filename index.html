@@ -931,6 +931,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 .ins-cam.ins-put{background:#3D8BFF;color:#fff;border-color:transparent}
 .ins-nav .navb{min-width:46px}.ins.s .ins-go .t,.ins.m .ins-go .t{display:none} /* место под кнопку «Поставить за меня»: номер шага не обрезается */
 .ins.xs .ins-where{display:none!important} /* в самом маленьком окне номер шага не помещается — не оставляем от него обрезок между точкой и стрелкой */
+.ins-nav .grip{width:20px;height:21px;align-self:center;margin:0 2px;background-position:center;background-size:7px 7px} /* шесть точек ровно посередине своей ячейки, по высоте кнопок */
 </style>
 </head>
 <body>
@@ -1307,6 +1308,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <p class="ac-note" id="acBkNote" hidden></p>
       <input type="file" id="backupFile" accept=".json,application/json" hidden>
     </div>
+    <p class="ac-note" id="acVer"></p>
     <button class="btn" id="acClose">Готово</button>
   </div>
 </div>
@@ -4692,7 +4694,8 @@ function closeSheets(){ ["acctSheet","projSheet","dumpSheet","groupSheet","stkSh
 document.querySelectorAll(".acct-btn,.acct-open").forEach(b=>b.addEventListener("click",openAccount));
 $("acX").addEventListener("click",()=>closeSheet("acctSheet"));
 function openAccount(){ renderAccount(); openSheet("acctSheet"); }
-async function renderAccount(){
+const APP_VER="v144"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
+async function renderAccount(){ try{ $("acVer").textContent="Версия приложения: "+APP_VER; }catch(_){}
   const st=Cloud.state;
   $("acName").textContent=(st==="on"||st==="sync")?(Cloud.name?"Вы вошли как "+Cloud.name:"Синхронизация включена"):"Синхронизация";
   const big=[...PROJ.values()].filter(r=>r.tooBig).length;
