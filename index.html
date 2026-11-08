@@ -148,7 +148,7 @@ button{font:inherit;color:inherit}
 .fill{height:100%;background:var(--accent);width:0;transition:width .3s}
 .lib-list{flex:1;min-height:0;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:2px;touch-action:pan-y}
 .group-h{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:12px 8px 4px}
-.item{display:flex;align-items:center;gap:10px;padding:6px;border-radius:12px;cursor:pointer;border:1px solid transparent}
+.item{display:flex;align-items:center;gap:10px;padding:6px;border-radius:12px;cursor:pointer;border:1px solid transparent;touch-action:pan-y}
 .item:hover{background:rgba(255,255,255,.05)}
 .item.on{border-color:var(--accent);background:var(--accent-soft)}
 .item.done .cnt{color:var(--ok)}
@@ -1163,7 +1163,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <button class="ib free-only" id="tLight" title="Свет" aria-label="Откуда светит свет"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="10" r="5"/><path d="M9.5 18h5M10 21h4M12 1.5v1.5M4 10H2.5M21.5 10H20M5.6 3.6l1 1M18.4 3.6l-1 1"/></svg></button>
       <button class="ib free-only" id="tSide" title="Панель деталей слева или справа" aria-label="Перенести панель деталей на другую сторону"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/><path d="M7 12h5M9.5 9.5 12 12l-2.5 2.5"/></svg></button>
       <button class="ib free-only" id="tBase" title="Цвет основы" aria-label="Цвет основы"><span class="basedot" id="tBaseDot"></span></button>
-      <button class="ib" id="tDrag" title="Как деталь идёт за стилусом" aria-label="Как деталь идёт за стилусом" aria-expanded="false"><svg class="ic"><use href="#i-wand"/></svg></button>
+      <button class="ib" id="tDrag" title="Плавность перемещения" aria-label="Плавность перемещения" aria-expanded="false"><svg class="ic"><use href="#i-wand"/></svg></button>
       <button class="cdot" id="tColor" title="Цвет" aria-label="Цвет"></button>
     </div>
     <div class="wb-r glass play-only">
@@ -1433,9 +1433,9 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 <input type="file" id="stFile" accept="image/*" hidden>
 <input type="file" id="projFile" accept="application/json,.json" hidden>
 <div class="toast gtoast" id="gtoast" hidden></div>
-<div class="drag-pop glass" id="dragPop" hidden role="dialog" aria-label="Как деталь идёт за стилусом">
-  <div class="dp-t">Как деталь идёт за стилусом <output id="dpVal">80%</output></div>
-  <div class="dp-rng"><input type="range" id="dpRange" min="0" max="100" step="10" aria-label="Насколько деталь идёт за стилусом"></div>
+<div class="drag-pop glass" id="dragPop" hidden role="dialog" aria-label="Плавность перемещения">
+  <div class="dp-t">Плавность перемещения <output id="dpVal">80%</output></div>
+  <div class="dp-rng"><input type="range" id="dpRange" min="0" max="100" step="10" aria-label="Плавность перемещения: насколько деталь идёт за стилусом"></div>
   <div class="dp-qs"><button class="dp-q" data-m="0">Магнит</button><button class="dp-q" data-m="0.4">40%</button><button class="dp-q" data-m="0.8">80%</button><button class="dp-q" data-m="1">100%</button></div>
   <p class="dp-desc" id="dpDesc"></p>
   <div class="dp-t dp-t2">Звук соединения</div>
@@ -3288,41 +3288,72 @@ function insertFit(o,x,z,ignore,hy){
   }
   return best;
 }
+/* полёт детали под стилусом считается по глубине вдоль луча стилуса, а не по пересечению с горизонтальной плоскостью:
+   плоскость на высоте цели при низкой камере пересекается у самого объектива — деталь вырастала на весь экран.
+   Деталь держится на глубине того, что под стилусом (чуть перед поверхностью), а над пустотой — на прежней глубине:
+   её размер на экране остаётся как у постройки под стилусом */
+const _gr=new THREE.Vector3(), _gs=new THREE.Vector3();
+function pointerRay(){ const rect=canvas.getBoundingClientRect(); _gp.set((lastPointer.x-rect.left)/rect.width*2-1,-((lastPointer.y-rect.top)/rect.height)*2+1); ray.setFromCamera(_gp,camera); return ray.ray; }
+// точка на луче стилуса на глубине depth от камеры
+function flyPoint(depth,out){ const r=pointerRay(); return out.copy(r.direction).multiplyScalar(depth).add(r.origin); }
+let flyDepth=0;
+// глубина полёта: поверхность под стилусом минус полвысоты детали (деталь перед поверхностью, а не в ней); над пустотой — прежняя
+function flyDepthNow(s,fallback){ let d=0; try{ const h=pickAt(lastPointer.x,lastPointer.y); if(h){ const hh=dims(s,hand).H/2+0.06; d=Math.max(1.5,camera.position.distanceTo(h.point)-hh*1.4); } }catch(_){}
+  if(!d) d=flyDepth||fallback||0; if(!d){ const r=pointerRay(); _gpl.set(_gup,0); d=r.intersectPlane(_gpl,_gh)?camera.position.distanceTo(_gh):cam.rGoal||20; } return flyDepth=d; }
+// экранные координаты точки и пикселей на шип на её глубине
+function toScreen(P,out){ const rect=canvas.getBoundingClientRect(); _gs.copy(P).project(camera); out.x=rect.left+(_gs.x+1)/2*rect.width; out.y=rect.top+(1-_gs.y)/2*rect.height; return _gs.z<1&&Math.abs(_gs.x)<4&&Math.abs(_gs.y)<4; }
+function pxPerStud(P){ const rect=canvas.getBoundingClientRect(); return (rect.height/2)/(Math.max(0.5,camera.position.distanceTo(P))*Math.tan(camera.fov*Math.PI/360)); }
+/* деталь в полёте там, где сесть ей не на что (или нельзя): не исчезает и не дёргается, а висит под стилусом как взята.
+   Отпустить тут нельзя — деталь останется в руке */
+function flyGhost(){ if(!ghost||!hand||!lastPointer) return; const B=hand.base||{rx:0,ry:0,rz:0};
+  if((hand.rx||0)!==B.rx||(hand.ry||0)!==B.ry||(hand.rz||0)!==B.rz){ const keep=ghost.visible?ghost.position.clone():null; Object.assign(hand,{rx:B.rx,ry:B.ry,rz:B.rz}); rebuildGhost(); if(keep) ghost.position.copy(keep); }
+  const s=handSpec(), _g=new THREE.Object3D(); placeObject(_g,s,{...hand,ox:0,oz:0,tq:undefined,tp:undefined},0,0,0);
+  const d=flyDepthNow(s,ghost.visible?camera.position.distanceTo(ghost.position):0), tgt=flyPoint(d,new THREE.Vector3());
+  if(!ghost.visible){ ghost.position.copy(tgt); ghost.quaternion.copy(_g.quaternion); try{ const sm=SMOOTH.find(q=>q.o===ghost); if(sm) sm.cur=null; }catch(_){} }
+  ghost.visible=true; ghostPos=null; landPrev=null; ghostNear=false; ghostAcc=tgt.clone(); jumpPend=null; oriPend={k:"",t:0};
+  if(typeof smoothTo==="function") smoothTo(ghost,tgt,_g.quaternion,0.45+0.3*dragFollow,false); else { ghost.position.copy(tgt); ghost.quaternion.copy(_g.quaternion); } }
 function showGhostAt(c){
   if(!ghost||!hand) return;
-  const ol=ghost.userData.ol;
-  if(!c){ ghost.visible=false; ghostPos=null; landPrev=null; ghostAcc=null; jumpPend=null; ghostNear=false; landPrevSnap=null; return; }
+  if(!c){ ghost.visible=false; ghostPos=null; landPrev=null; ghostAcc=null; jumpPend=null; ghostNear=false; landPrevSnap=null; flyDepth=0; return; }
   const B=hand.base||{rx:0,ry:0,rz:0};
-  const nr={rx:c.rx!==undefined?c.rx:B.rx,ry:c.ry!==undefined?c.ry:B.ry,rz:c.rz!==undefined?c.rz:B.rz};
+  let nr={rx:c.rx!==undefined?c.rx:B.rx,ry:c.ry!==undefined?c.ry:B.ry,rz:c.rz!==undefined?c.rz:B.rz};
+  const s=handSpec();
+  /* плавность перемещения (волшебная палочка справа вверху): 0 — «магнит», деталь сама цепляется за соединения под стилусом;
+     N% — деталь оторвана от найденного соединения и идёт за стилусом на эту долю; 100% — строго под стилусом.
+     k — насколько деталь сейчас «в полёте»: 0 — сидит на соединении (стилус рядом с ним на экране), 1 — целиком под стилусом.
+     Близость меряется на экране (в пикселях по глубине соединения): одинаково удобно и вблизи, и издалека */
+  let k=0, fx=0, fz=0, hit=false; const _c=new THREE.Object3D();
+  placeObject(_c,s,{...hand,...nr,ox:c.ox||0,oz:c.oz||0,tq:c.tq,tp:c.tp},c.x,c.y,c.z);
+  if(lastPointer&&dragFollow>0&&toScreen(_c.position,_gr)){ hit=true; const pps=pxPerStud(_c.position), fd=Math.hypot(_gr.x-lastPointer.x,_gr.y-lastPointer.y);
+    const R=Math.max(c.insSnap?0.6*pps:0.18*pps,c.insSnap?30:7), ramp=Math.max(0.25*pps,8); if(fd>R) k=dragFollow*Math.min(1,(fd-R)/ramp); fx=fd; }
+  else if(lastPointer&&dragFollow===0){ hit=true; const rect=canvas.getBoundingClientRect(); _gp.set((lastPointer.x-rect.left)/rect.width*2-1,-((lastPointer.y-rect.top)/rect.height)*2+1); ray.setFromCamera(_gp,camera); _gpl.set(_gup,-_c.position.y); if(ray.ray.intersectPlane(_gpl,_gh)){ fx=_gh.x-_c.position.x; fz=_gh.z-_c.position.z; } else hit=false; }
+  /* в полёте деталь не поворачивается и не наклоняется за соединениями, над которыми проходит стилус (боковые шипы, отверстия) —
+     остаётся как взята; поворот принимается только у соединения, на которое она садится */
+  const fly=k>0; if(fly) nr={rx:B.rx,ry:B.ry,rz:B.rz};
   /* деталь не «мельтешит»: новое положение (повернуться, лечь набок) принимается, только когда палец задержался на нём —
      случайные варианты на долю секунды не показываются */
   const now=performance.now(), nk=nr.rx+","+nr.ry+","+nr.rz, turn=nr.rx!==(hand.rx||0)||nr.ry!==(hand.ry||0)||nr.rz!==(hand.rz||0);
   if(turn&&ghost.visible&&ghostPos){ if(oriPend.k!==nk){ oriPend={k:nk,t:now}; return; } if(now-oriPend.t<170) return; }
   oriPend={k:"",t:0}; landPrev=c;
   let keep=null; if(turn){ keep=ghost.visible?ghost.position.clone():null; Object.assign(hand,nr); rebuildGhost(); }
-  const s=handSpec();
   // призрак детали плавно, с весом доезжает до нового места, а не прыгает
-  const _g=new THREE.Object3D(); placeObject(_g,s,{...hand,ox:c.ox||0,oz:c.oz||0,tq:c.tq,tp:c.tp},c.x,c.y,c.z);
+  const _g=new THREE.Object3D(); if(fly) placeObject(_g,s,{...hand,ox:0,oz:0,tq:undefined,tp:undefined},c.x,c.y,c.z); else placeObject(_g,s,{...hand,ox:c.ox||0,oz:c.oz||0,tq:c.tq,tp:c.tp},c.x,c.y,c.z);
   if(keep){ ghost.position.copy(keep); ghost.quaternion.copy(_g.quaternion); }
   else if(!ghost.visible||typeof smoothTo!=="function"){ ghost.position.copy(_g.position); ghost.quaternion.copy(_g.quaternion); try{ const sm=SMOOTH.find(q=>q.o===ghost); if(sm) sm.cur=null; }catch(_){} }
-  /* плавно, но быстро: деталь не «плывёт» сквозь соседние, а коротко доезжает; на большой прыжок (другое место) — поднимается над постройкой */
-  /* деталь тянется за стилусом непрерывно: место, куда она сядет, притягивает её как магнит, но между шипами она не прыгает,
-     а плавно скользит за рукой (смещение к пальцу — до полшипа). Отпустили — доезжает точно на место */
-  /* три способа вести деталь (волшебная палочка справа вверху): «Магнит» — деталь сама цепляется за соединение;
-     40% и 80% — деталь идёт за стилусом на эту долю, а у соединения (рядом с шипом; у места по инструкции — ближе ~0,6 шипа) встаёт на него. Отпустили — садится на соединение */
-  const tgt=_g.position.clone(); if(lastPointer){ const rect=canvas.getBoundingClientRect(); _gp.set((lastPointer.x-rect.left)/rect.width*2-1,-((lastPointer.y-(c.lift||0)-rect.top)/rect.height)*2+1); ray.setFromCamera(_gp,camera);
-      _gpl.set(_gup,-tgt.y); if(ray.ray.intersectPlane(_gpl,_gh)){ const fx=_gh.x-tgt.x, fz=_gh.z-tgt.z, fd=Math.hypot(fx,fz);
-        if(dragFollow>0){ const R=c.insSnap?0.6:0.18; if(fd>R){ const k=dragFollow*Math.min(1,(fd-R)/0.25); tgt.x+=fx*k; tgt.z+=fz*k; tgt.y+=0.12*k; ghostNear=false;
-            // в полёте деталь идёт поверх постройки, а не сквозь неё: не ниже того, что под стилусом
-            try{ const h=pickAt(lastPointer.x,lastPointer.y); if(h){ const hh=dims(s,hand).H/2+0.06; if(tgt.y<h.point.y+hh) tgt.y=h.point.y+hh; } }catch(_){} } else { if(!ghostNear) playClick("tick"); ghostNear=true; } } // у соединения (ближе R) — встаёт на него, с тихим щелчком
-        else if(c.insSnap&&(!landPrevSnap||landPrevSnap!==c.x+','+c.y+','+c.z)){ playClick("tick"); landPrevSnap=c.x+','+c.y+','+c.z; }
-        else if(!c.insSnap){ tgt.x+=Math.max(-0.45,Math.min(0.45,fx))*0.6; tgt.z+=Math.max(-0.45,Math.min(0.45,fz))*0.6; } } }
-  /* стилус на мгновение прошёл над высокой деталью (колонна, стена) — деталь не взлетает туда и обратно:
+  /* деталь тянется за стилусом непрерывно: место, куда она сядет, притягивает её как магнит (стилус рядом — садится, с тихим щелчком),
+     дальше — идёт за стилусом на долю k: по лучу стилуса, на глубине того, что под стилусом */
+  const tgt=_g.position.clone();
+  if(hit){ if(dragFollow>0){ if(k>0){ const d=flyDepthNow(s,camera.position.distanceTo(_c.position)); tgt.lerp(flyPoint(d,_gh),k); ghostNear=false; }
+        else { flyDepth=0; if(!ghostNear) playClick("tick"); ghostNear=true; } }
+    else if(c.insSnap&&(!landPrevSnap||landPrevSnap!==c.x+','+c.y+','+c.z)){ playClick("tick"); landPrevSnap=c.x+','+c.y+','+c.z; }
+    else if(!c.insSnap){ tgt.x+=Math.max(-0.45,Math.min(0.45,fx))*0.6; tgt.z+=Math.max(-0.45,Math.min(0.45,fz))*0.6; } }
+  /* магнит: стилус на мгновение прошёл над высокой деталью (колонна, стена) — деталь не взлетает туда и обратно:
      дальний перескок (больше полутора шипов) принимается, только если место держится ~0,12 с */
   if(ghost.visible&&ghostAcc&&!turn&&dragFollow===0){ const d=tgt.distanceTo(ghostAcc); if(d>1.6){ if(!jumpPend||jumpPend.distanceTo(tgt)>0.6){ jumpPend=tgt.clone(); jumpT=now; }
       if(now-jumpT<90){ clearTimeout(jumpTimer); const cc=c; jumpTimer=setTimeout(()=>{ if(landPrev===cc&&hand) showGhostAt(cc); },130); return; } } }
   jumpPend=null; ghostAcc=tgt.clone();
-  ghost.visible=true; if(typeof smoothTo==="function"){ smoothTo(ghost,tgt,_g.quaternion,0.34+Math.max(0,dragFollow-0.7)*0.7,dragFollow>0); } // за стилусом — перелетает дугой
+  // в полёте деталь держится под стилусом плотно (быстрее доезжает), у соединения — доезжает мягко
+  ghost.visible=true; if(typeof smoothTo==="function"){ smoothTo(ghost,tgt,_g.quaternion,fly?0.45+0.3*dragFollow:0.34+Math.max(0,dragFollow-0.7)*0.7,dragFollow>0&&!fly); }
   ghostPos=c;
 }
 const drops=[];
@@ -3636,8 +3667,8 @@ $("sndFile").addEventListener("change",async()=>{ const f=$("sndFile").files[0];
   if(f.size>1500000){ toast("Файл большой — возьмите короткий звук, до 1,5 МБ"); return; }
   const ab=await f.arrayBuffer(); if(!await loadOwnSound(ab)){ toast("Не получилось прочитать этот звук — попробуйте mp3, m4a или wav"); return; }
   try{ await IDB.put("kv",ab,"snd:own"); }catch(_){} setSound("own"); toast("Свой звук установлен — он останется на этом устройстве"); });
-/* волшебная палочка: как деталь идёт за стилусом */
-function dragDesc(v){ return v===0?"Магнит: деталь сама цепляется за ближайшее соединение":v>=1?"100%: деталь точно под стилусом, у соединения встаёт на него":Math.round(v*100)+"% — деталь идёт за рукой на эту долю, у соединения встаёт на него"; }
+/* волшебная палочка: плавность перемещения детали под стилусом */
+function dragDesc(v){ return v===0?"Магнит: деталь сама цепляется за ближайшее соединение под стилусом":v>=1?"100%: деталь строго под стилусом и ни за что не цепляется — садится только у своего места":Math.round(v*100)+"% — деталь идёт за стилусом на эту долю; у соединения встаёт на него"; }
 function dragPopSync(){ const r=$("dpRange"); if(r) r.value=Math.round(dragFollow*100); const o=$("dpVal"); if(o) o.textContent=dragFollow===0?"Магнит":Math.round(dragFollow*100)+"%"; const d=$("dpDesc"); if(d) d.textContent=dragDesc(dragFollow);
   document.querySelectorAll("#dragPop .dp-q").forEach(b=>b.setAttribute("aria-pressed",String(Math.abs(parseFloat(b.dataset.m)-dragFollow)<0.01))); }
 function dragPopShow(on){ const P=$("dragPop"), b=$("tDrag"); if(!P||!b) return; if(on){ const r=b.getBoundingClientRect(); P.style.top=(r.bottom+8)+"px"; P.style.right=Math.max(16,innerWidth-r.right)+"px"; dragPopSync(); }
@@ -4036,11 +4067,18 @@ function renderList(){
     const dots=el.querySelector(".dots");
     if(G.extra) dots.hidden=true; else G.colors.forEach(v=>dots.appendChild(dotEl(v.c,v.q,G.n,()=>takeItem(i,v.c))));
     if(thumbs[i]) el.querySelector("img").src=thumbs[i];
-    el.addEventListener("click",()=>takeItem(i));
+    el.addEventListener("click",()=>{ if(el.dataset.dragged){ delete el.dataset.dragged; return; } takeItem(i); });
     el.addEventListener("keydown",ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); takeItem(i); } });
     const th=el.querySelector(".thumb");
     th.addEventListener("pointerdown",ev=>startListDrag(ev,()=>takeItem(i,null,true)));
     th.addEventListener("click",ev=>ev.stopPropagation());
+    /* деталь вытягивается не только за картинку, но и за всю плашку: нажали на карточку и повели в сторону (вбок — к постройке) —
+       деталь в руке и идёт за стилусом; простое касание по-прежнему берёт/кладёт деталь; движение вверх-вниз листает список */
+    el.addEventListener("pointerdown",ev=>{ if(ev.target===th||ev.target.closest(".dots")||ev.button>0) return; const sx=ev.clientX, sy=ev.clientY, pid=ev.pointerId;
+      const stop=()=>{ el.removeEventListener("pointermove",mv); el.removeEventListener("pointerup",stop); el.removeEventListener("pointercancel",stop); };
+      const mv=e=>{ if(e.pointerId!==pid) return; const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.abs(dx)<10&&Math.abs(dy)<10) return; stop(); if(Math.abs(dy)>Math.abs(dx)*1.5) return; // листание
+        el.dataset.dragged="1"; startListDrag(e,()=>takeItem(i,null,true)); };
+      el.addEventListener("pointermove",mv); el.addEventListener("pointerup",stop); el.addEventListener("pointercancel",stop); });
     if(io) insMarkItem(el,io,i);
     list.appendChild(el);
   });
@@ -4127,7 +4165,7 @@ function startListDrag(ev,take){
   dragFromList={id:ev.pointerId,lift:ev.pointerType==="touch"?50:0};
   const done=()=>{ el.removeEventListener("pointermove",mv); el.removeEventListener("pointerup",up); el.removeEventListener("pointercancel",cn); dragFromList=null; };
   const mv=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; const r=canvas.getBoundingClientRect(); const x=e.clientX, y=e.clientY-dragFromList.lift;
-    const overUI=document.elementFromPoint(e.clientX,e.clientY); if(x<r.left||x>r.right||y<r.top||y>r.bottom||(overUI&&overUI!==canvas)){ showGhostAt(null); return; } lastPointer={x,y}; showGhostAt(landing(handSpec(),hand,x,y)); };
+    const overUI=document.elementFromPoint(e.clientX,e.clientY); if(x<r.left||x>r.right||y<r.top||y>r.bottom||(overUI&&overUI!==canvas)){ showGhostAt(null); return; } lastPointer={x,y}; const c=landing(handSpec(),hand,x,y); if(c||dragFollow===0) showGhostAt(c); else flyGhost(); };
   const up=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; const g=ghostPos; done(); if(g){ placeHand(g); setHand(null); } else showGhostAt(null); };
   const cn=()=>{ done(); showGhostAt(null); };
   el.addEventListener("pointermove",mv); el.addEventListener("pointerup",up); el.addEventListener("pointercancel",cn);
@@ -4748,7 +4786,7 @@ function closeSheets(){ ["acctSheet","projSheet","dumpSheet","groupSheet","stkSh
 document.querySelectorAll(".acct-btn,.acct-open").forEach(b=>b.addEventListener("click",openAccount));
 $("acX").addEventListener("click",()=>closeSheet("acctSheet"));
 function openAccount(){ renderAccount(); openSheet("acctSheet"); }
-const APP_VER="v147"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
+const APP_VER="v148"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
 async function renderAccount(){ try{ $("acVer").textContent="Версия приложения: "+APP_VER; }catch(_){}
   const st=Cloud.state;
   $("acName").textContent=(st==="on"||st==="sync")?(Cloud.name?"Вы вошли как "+Cloud.name:"Синхронизация включена"):"Синхронизация";
