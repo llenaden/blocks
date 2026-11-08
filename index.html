@@ -928,6 +928,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 .snd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;padding:0 4px}.snd-o b{font-weight:600}.snd-vol{display:flex;align-items:center;gap:10px;padding:6px 8px 0;font-size:13px;color:var(--faint)}.snd-vol.dim{opacity:.45}
 .snd-own{appearance:none;border:0;background:transparent;color:#3D8BFF;font:inherit;font-size:13px;font-weight:600;padding:6px 8px;text-align:left;cursor:pointer}
 .drag-pop{width:320px;max-height:calc(100vh - 90px);overflow:auto}
+.ins-cam.ins-put{background:#3D8BFF;color:#fff;border-color:transparent}
 </style>
 </head>
 <body>
@@ -1209,7 +1210,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <canvas id="insCanvas" aria-label="Модель на этом шаге: тяните, чтобы повернуть"></canvas>
       <div class="ins-top"><div class="ins-num mono" id="insNum">1</div><div class="ins-call" id="insCall" aria-label="Что взять"></div></div>
       <span class="ins-hint" id="insHint">тяните — повернуть</span>
-      <div class="ins-tools"><button class="ins-cam" id="insCam" hidden>Как на сцене</button><button class="ins-cam" id="insWhole" aria-pressed="false">Вся модель</button><button class="ins-cam" id="insDark" aria-pressed="false" aria-label="Тёмный фон инструкции">Тёмный фон</button></div>
+      <div class="ins-tools"><button class="ins-cam ins-put" id="insPut" hidden title="Если место детали закрыто и до него не дотянуться — приложение поставит детали шага само">Поставить за меня</button><button class="ins-cam" id="insCam" hidden>Как на сцене</button><button class="ins-cam" id="insWhole" aria-pressed="false">Вся модель</button><button class="ins-cam" id="insDark" aria-pressed="false" aria-label="Тёмный фон инструкции">Тёмный фон</button></div>
       <div class="ins-ok" id="insOk" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Шаг собран</div>
     </div>
     <div class="ins-foot" hidden><label class="ins-auto" title="Показывать на основе, куда ставить детали шага"><input type="checkbox" id="insHints" checked><span>Подсказки</span></label><label class="ins-auto" title="Когда детали шага на месте, сразу открыть следующий шаг"><input type="checkbox" id="insAuto" checked><span>Дальше сам</span></label></div>
@@ -5302,7 +5303,7 @@ async function route(){
   const h=location.hash.replace(/^#/,"");
   // модель, которой нужно перестроить порядок шагов, — сначала экран загрузки, потом страница
   const mid=h.indexOf("model-")===0?h.slice(6):h.indexOf("instr-")===0?h.slice(6):h.indexOf("build-")===0?instrModelOf((PROJ.get(h.slice(6))||{}).set):null;
-  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==25){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
+  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==26){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
   if(h==="sets") enterSets();
   else if(h==="free") location.replace("#set-"+CUR_SET);
   else if(h==="guided") location.replace("#catalog");
@@ -5362,7 +5363,7 @@ function insPages(id){
   if(insPagesCache[id]) return insPagesCache[id];
   const M=MODELS[id];
   // модель, загруженная до нового порядка сборки, перестраивается при первом открытии (не при запуске — чтобы приложение открывалось сразу)
-  if(M&&M.user&&M.grav!==25){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=25; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
+  if(M&&M.user&&M.grav!==26){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=26; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
   // модель из файла (BrickLink Studio, LDraw): шаги автора, крупные разбиты на страницы до 5 деталей
   splitBigSteps(M);
   if(M.breaks&&M.breaks.length){ const br=[0,...M.breaks.filter(k=>k>0&&k<M.steps.length),M.steps.length], out=[];
@@ -5755,10 +5756,19 @@ function insCheck(){
     :nNew?"На месте "+nNew+" из "+n+(before?" · раньше не хватает "+before:"")
     :"Детали этого шага пока не на своих местах"+(before&&a?" · раньше не хватает "+before:"");
   const go=$("insGo"), last=IB.page>=IB.pages.length-1; go.disabled=last; go.classList.toggle("primary",done&&!last);
+  try{ insPutSync(); }catch(_){}
   return done;
 }
 // постройка изменилась: проверить шаг; если детали шага только что встали на места — коротко «Шаг собран» и следующий шаг
 let insAdvT=0;
+/* «Поставить за меня»: место детали закрыто (внутри готового блока, не видно и не дотянуться) — детали шага встают сами,
+   ровно как в модели. Кнопка видна, пока шаг не собран */
+function insPutSync(){ const b=$("insPut"); if(!b) return; const pg=IB&&IB.pages[IB.page]; let miss=0; if(pg&&IB.check) for(let i=pg.a;i<pg.b;i++) if(!IB.check.ok.has(i)) miss++; b.hidden=!miss; }
+$("insPut").addEventListener("click",()=>{ if(!IB||!IB.check) return; insCheck(); const pg=IB.pages[IB.page], off=IB.check.off||[0,0,0]; let n=0;
+  for(let i=pg.a;i<pg.b;i++){ if(IB.check.ok.has(i)) continue; const m=IB.items[i]; setHand({p:m.p,c:m.c,ry:0});
+    const r={x:m.x+off[0],y:m.y+off[1]*PH,z:m.z+off[2],rx:m.rx||0,ry:m.ry||0,rz:m.rz||0,insSnap:1}; ["ox","oz","side","tq","tp","ra","sw"].forEach(k=>{ if(m[k]!==undefined) r[k]=m[k]; });
+    try{ placeHand(r); n++; }catch(e){ console.warn(e); } }
+  try{ setHand(null); }catch(_){} if(n) toast("Поставлено за вас: "+n+" "+plural(n,"деталь","детали","деталей")); });
 function insChanged(){ clearTimeout(insT); insT=setTimeout(()=>{ if(!IB) return; const was=IB.done, done=insCheck(); IB.done=done; insRefreshList(false);
   if(!done){ insCancelAdvance(); return; }
   if(!IB.celebrated&&IB.page>=IB.pages.length-1&&IB.check&&parts.filter(p=>p.p&&!p.f).length>=IB.items.length-Math.floor(IB.items.length*0.02)){ /* последний шаг совпал и поставлены все детали модели (допуск 2% — на детали, которые проверка могла не узнать) */ IB.celebrated=true; insCancelAdvance(); setTimeout(insDone,500); return; }
@@ -5805,8 +5815,7 @@ new ResizeObserver(resize).observe(ws);
 /* плавное вращение больших моделей.
    1) Тени: свет неподвижен относительно постройки, поэтому, пока крутится только камера, карту теней не перерисовываем
       (это второй полный проход по всем деталям). Детали едут/падают или свет идёт за камерой — обновляем как раньше (за камерой — через кадр).
-   2) Чёткость: если во время вращения кадр дольше ~20 мс, на время движения чуть снижаем плотность пикселей
-      (запоминаем, какая держит плавность), а когда камера остановилась — возвращаем полную чёткость. */
+   2) Чёткость всегда полная — снижение плотности пикселей на время вращения убрано: модель размывалась. */
 const PF={p:new THREE.Vector3(),q:new THREE.Quaternion(),t:0,ema:16.7,still:0,full:Math.min(window.devicePixelRatio||1,2),move:0,cur:0,stepT:0,n:0};
 renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;
 function perfSetPR(v){ if(Math.abs(v-PF.cur)<0.01) return; PF.cur=v; renderer.setPixelRatio(v); resize(); }
@@ -5817,7 +5826,7 @@ function perfFrame(now){ const dt=PF.t?Math.min(100,now-PF.t):16.7; PF.t=now; PF
   renderer.shadowMap.needsUpdate=!moving||busy||(lightCam&&PF.n%2===0);
   if(moving){ PF.still=0; if(PF.cur>PF.move) perfSetPR(PF.move);
     PF.ema=PF.ema*0.85+dt*0.15;
-    if(PF.ema>20&&PF.cur>1&&now-PF.stepT>300){ PF.stepT=now; PF.move=Math.max(1,PF.cur-0.25); perfSetPR(PF.move); PF.ema=16.7; } }
+    /* чёткость во время вращения не снижаем: модель должна оставаться резкой (просьба после проверки на iPad) */ }
   else { if(!PF.still) PF.still=now; if(PF.cur<PF.full&&now-PF.still>260){ perfSetPR(PF.full); renderer.shadowMap.needsUpdate=true; } } }
 function frame(now){
   requestAnimationFrame(frame);
@@ -6057,7 +6066,7 @@ async function importModelFile(f,replaceId,quiet){
     if(prev){ ["pin","view","cover","desc"].forEach(k=>{ if(prev[k]!==undefined&&model[k]===undefined) model[k]=prev[k]; }); delete MODELS[id]; delete insPagesCache[id]; try{ delete prev._figs; }catch(_){} }
     try{ await IDB.put("kv",f,"src:"+id); }catch(_){}
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); let cleaned=0; try{ cleaned=cleanModel(model); }catch(err){ console.warn(err); } gravityOrder(model); model.grav=25; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); let cleaned=0; try{ cleaned=cleanModel(model); }catch(err){ console.warn(err); } gravityOrder(model); model.grav=26; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     if(!quiet) toast(prev?"Модель обновлена: "+model.steps.length+" деталей":miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей"+(cleaned?" · убрано лишних: "+cleaned+" (спрятаны внутри других или повторяются)":""));
     loaderHide(); if(location.hash==="#model-"+id){ enterModelPage(id); } else location.hash="model-"+id; return id; }
   catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); return null; } }
@@ -6251,6 +6260,7 @@ document.addEventListener("wheel",e=>{ if(e.ctrlKey) e.preventDefault(); },{pass
 /* Порядок сборки — по правилам из ПРАВИЛА_СБОРКИ.md: каждая деталь на своём шаге держится (стоит или крепится), ничего не висит,
    не подсовывается под поставленное и не вставляется между. «Стоит на одном шипе» ≠ «закреплена»: держатель (клипса, кронштейн)
    идёт раньше удерживаемой высокой тонкой детали (правило 7). */
+const ACC_D=1.25; // правило 13: насколько близко над местом детали уже должна быть другая, чтобы деталь было не поставить (≈ кирпич: пальцу и детали нужен зазор)
 function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   /* Порядок «от основания наружу»: сначала то, что стоит на пластине, затем то, что крепится к этому, затем то, что крепится к тому…
      Глубина детали — сколько креплений от основания (касание гранью). Шаги идут по глубине; внутри одной глубины — в порядке автора.
@@ -6431,29 +6441,51 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
     const PIN=/^(полу)?штифт|^ось(\s|$)|^technic,?\s*(pin|axle)\b/i, isPin=S.map(st=>PIN.test((designName(st.p)||"").trim()));
     const re=()=>out.forEach((i,k)=>pos[i]=k); re();
     // что должно стоять раньше детали: всё, на чём она лежит снизу, её держатели; у штифта — только держатели
+    /* сторона, с которой деталь ставят: её «верх» (шипы) в мире. Обычная деталь — сверху; повёрнутая набок (на боковые шипы) — сбоку */
+    const upAx=S.map(st=>{ if(!st.tq&&!st.rx&&!st.rz) return [1,1]; try{ const sp=designSpec(st.p), m=poseQ(sp,st,st.x,st.y*PH,st.z).elements, u=[m[4],m[5],m[6]]; let k=0; for(let q=1;q<3;q++) if(Math.abs(u[q])>Math.abs(u[k])) k=q; return [k,u[k]>0?1:-1]; }catch(_){ return [1,1]; } });
     const byX=[...Array(n).keys()].sort((p,q)=>B[p][0]-B[q][0]);
-    const PRE=S.map((_,i)=>{ const L=new Set(isPin[i]?[]:(FP.get(i)||[]).concat(SUP[i]||[])); /* штифт и ось: правило 7 (ждать боковых держателей) здесь не действует — их вставляют в первую деталь, а вторую надевают сверху */ if(!isPin[i]){ const a=B[i]; for(const k of byX){ if(B[k][0]>=a[3]) break; if(k===i||B[k][3]<=a[0]) continue; const b=B[k]; if(Math.abs(b[4]-a[1])<e&&ox(a,b)>0.1&&oz(a,b)>0.1) L.add(k); } } L.delete(i); return [...L]; });
+    const hz=q=>upAx[q][0]!==1; const PRE=S.map((_,i)=>{ const L=new Set(isPin[i]?[]:(FP.get(i)||[]).concat(SUP[i]||[])); /* две детали набок, лежащие ребром одна на другой, друг друга не держат — держит то, к чему они прижаты шипами */ /* штифт и ось: правило 7 (ждать боковых держателей) здесь не действует — их вставляют в первую деталь, а вторую надевают сверху */ if(!isPin[i]){ const a=B[i], [ax,sg]=upAx[i], a1=(ax+1)%3, a2=(ax+2)%3; /* «снизу» — со стороны, противоположной шипам детали (у детали набок — сбоку) */ for(const k of byX){ if(B[k][0]>=a[3]+e) break; if(k===i||B[k][3]<=a[0]-e) continue; const b=B[k]; const touch=(sg>0?Math.abs(b[ax+3]-a[ax])<e:Math.abs(b[ax]-a[ax+3])<e)&&!(upAx[k][0]===ax&&upAx[k][1]===-sg); /* спиной к спине (шипы врозь) — друг на друге не держатся */ if(touch&&Math.min(a[a1+3],b[a1+3])-Math.max(a[a1],b[a1])>0.1&&Math.min(a[a2+3],b[a2+3])-Math.max(a[a2],b[a2])>0.1) L.add(k); } } L.delete(i); return [...L]; });
     const DEP=S.map(()=>[]); PRE.forEach((L,i)=>L.forEach(k=>DEP[k].push(i)));
-    const covers=(i,j)=>{ if(isPin[j]) return false; /* тонкий штифт сверху не мешает нажать деталь */ const a=B[i], b=B[j]; if(b[4]<=a[4]+0.05||b[1]>=a[4]+3.6||ox(a,b)<0.15||oz(a,b)<0.15) return false; const P=pts(j);
-      for(let k=0;k<P.length;k+=3){ const x=P[k], y=P[k+1], z=P[k+2]; if(y>a[4]+0.05&&y<a[4]+3.6&&x>a[0]+0.1&&x<a[3]-0.1&&z>a[2]+0.1&&z<a[5]-0.1) return true; } return false; };
-    const moveTo=(i,t)=>{ const p=pos[i]; out.splice(p,1); out.splice(t,0,i); re(); };
-    // «нависающую» j (и всё, что за ней тянется: стоит на ней, держится за неё) переносим сразу после i
-    const delay=(j,i)=>{ const lo=pos[j], hi=pos[i], D=new Set([j]); for(let k=lo+1;k<hi;k++){ const q=out[k]; if(PRE[q].some(x=>D.has(x))) D.add(q); }
-      if(PRE[i].some(x=>D.has(x))||D.size>400) return false; const keep=out.filter(q=>!D.has(q)), blk=out.filter(q=>D.has(q)), at=keep.indexOf(i)+1;
-      out.length=0; keep.slice(0,at).concat(blk,keep.slice(at)).forEach(q=>out.push(q)); re(); return true; };
-    const tries=new Uint8Array(n); let budget=2*n+50; // каждая деталь переносится не больше трёх раз — без зацикливания
-    for(let pass=0;pass<4;pass++){ let moves=0, left=0;
-      for(let k=0;k<out.length&&budget>0;k++){ const i=out[k], a=B[i]; if(tries[i]>=3) continue;
-        if(isPin[i]){ const H=[]; for(let j=0;j<n;j++){ if(j===i||isPin[j]) continue; const b=B[j]; if(!(ox(a,b)>0.15&&oz(a,b)>0.15&&oy(a,b)>0.15)) continue;
-            // держит штифт — та деталь, чья настоящая поверхность (стенки отверстия) проходит внутри рамки штифта, а не та, чья рамка просто задевает
-            const P=pts(j); let c=0; for(let q=0;q<P.length&&c<3;q+=3){ if(P[q]>a[0]+0.05&&P[q]<a[3]-0.05&&P[q+1]>a[1]+0.05&&P[q+1]<a[4]-0.05&&P[q+2]>a[2]+0.05&&P[q+2]<a[5]-0.05) c++; } if(c>=3) H.push(j); }
-          if(H.length<2) continue; H.sort((x,y)=>pos[x]-pos[y]); if(pos[H[1]]>pos[i]) continue; if(!pass) R.pin++;
-          const t=pos[H[1]], Hs=new Set(H.slice(1)); if(PRE[i].every(q=>pos[q]<t||Hs.has(q))){ moveTo(i,t); moves++; R.early++; tries[i]++; budget--; } else { left++; if(R.ex.length<12) R.ex.push("pin "+nmx(i)+" H="+H.map(nmx).join(",")+" pre>=t: "+PRE[i].filter(q=>pos[q]>=t&&!Hs.has(q)).map(nmx).join(",")); } continue; }
-        if(tl(i)||!(a[1]<Y0+0.05||PRE[i].length)) continue;
-        let jm=-1; for(let q=0;q<k;q++){ if(covers(i,out[q])){ jm=out[q]; break; } } if(jm<0) continue; if(!pass) R.cover++;
-        const t=pos[jm]; if(PRE[i].every(q=>pos[q]<t)){ moveTo(i,t); moves++; R.early++; tries[i]++; budget--; k=Math.max(-1,t-1); continue; }
-        if(tries[jm]<3&&delay(jm,i)){ moves++; R.late++; tries[jm]++; tries[i]++; budget--; k=Math.max(-1,pos[i]-1); continue; } left++; if(R.ex.length<24) R.ex.push("cover "+nmx(i)+" by "+nmx(jm)+" pre>=t: "+PRE[i].filter(q=>pos[q]>=t).map(nmx).join(",")); }
-      R.left=left; if(!moves) break; }
+    // нависает ли деталь j над местом детали i со стороны sg по оси k: точки её настоящей формы в слое до трёх кирпичей от грани, над площадкой i
+    const coversAx=(i,j,k,sg)=>{ if(isPin[j]) return false; /* тонкий штифт не мешает нажать деталь */ const a=B[i], b=B[j], k1=(k+1)%3, k2=(k+2)%3, D=ACC_D;
+      const lo=sg>0?a[k+3]+0.05:a[k]-D, hi=sg>0?a[k+3]+D:a[k]-0.05; if(b[k+3]<=lo||b[k]>=hi) return false;
+      if(Math.min(a[k1+3],b[k1+3])-Math.max(a[k1],b[k1])<0.15||Math.min(a[k2+3],b[k2+3])-Math.max(a[k2],b[k2])<0.15) return false; const P=pts(j);
+      /* закрывает место, только если нависает над серединой детали (средняя половина её площадки): край соседней детали
+         или плитка на полу перед боком стены не мешают поставить деталь */ const c1=(a[k1]+a[k1+3])/2, c2=(a[k2]+a[k2+3])/2, h1=Math.max(0.25,(a[k1+3]-a[k1])/4), h2=Math.max(0.25,(a[k2+3]-a[k2])/4);
+      for(let q=0;q<P.length;q+=3){ const v=P[q+k], v1=P[q+k1], v2=P[q+k2]; if(v>lo&&v<hi&&Math.abs(v1-c1)<h1&&Math.abs(v2-c2)<h2) return true; } return false; };
+        // фигурки собираются по своему порядку (правило 4) — их здесь не двигаем; кто над чем нависает — считаем один раз
+    const isFig=S.map(st=>{ try{ return figRank(st.p)>=0; }catch(_){ return false; } });
+    /* над местом детали — со стороны её шипов (у обычной — сверху, у детали набок — сбоку): её ставят оттуда, там должно быть свободно */
+    const C=S.map((_,i)=>{ const L=[]; if(isPin[i]||isFig[i]) return L; const a=B[i], [k,sg]=upAx[i];
+      for(const j of byX){ if(B[j][0]>=a[3]+(k===0?3.6:-0.15)) break; if(j===i||isFig[j]||B[j][3]<=a[0]-(k===0?3.6:-0.15)) continue; if(coversAx(i,j,k,sg)) L.push(j); } return L; });
+    /* Сборка как разборка наоборот. Снимаем с готовой модели по одной детали: можно снять ту, над которой (со стороны её шипов)
+       ничего не осталось и на которой ничего не держится. Порядок сборки — обратный. Так каждая деталь при сборке ставится,
+       пока её место открыто, и только на то, что уже стоит. Из нескольких свободных снимаем самую позднюю по прежнему порядку —
+       поэтому там, где прежний порядок и так хорош, он не меняется */
+    const CC=C.map(L=>new Set(L)), PP=PRE.map(L=>new Set(L));
+    for(let i=0;i<n;i++){ if(!isPin[i]) continue; const a=B[i], H=[]; for(let j=0;j<n;j++){ if(j===i||isPin[j]) continue; const b=B[j]; if(!(ox(a,b)>0.15&&oz(a,b)>0.15&&oy(a,b)>0.15)) continue;
+        // держит штифт — деталь, чья настоящая поверхность (стенки отверстия) проходит внутри рамки штифта
+        const P=pts(j); let c=0; for(let q=0;q<P.length&&c<3;q+=3){ if(P[q]>a[0]+0.05&&P[q]<a[3]-0.05&&P[q+1]>a[1]+0.05&&P[q+1]<a[4]-0.05&&P[q+2]>a[2]+0.05&&P[q+2]<a[5]-0.05) c++; } if(c>=3) H.push(j); }
+      if(!H.length) continue; H.sort((x,y)=>pos[x]-pos[y]); R.pin++; PP[i].add(H[0]); H.slice(1).forEach(j=>CC[i].add(j)); } // штифт — в первую деталь, остальные надевают на него
+    for(let i=0;i<n;i++){ if(isPin[i]||isFig[i]||PP[i].size||B[i][1]<Y0+0.05) continue; // висит снизу: держится за то, к чему прижата шипами, — его ставят раньше
+      const t=[...CC[i]].filter(j=>N[i].has(j)&&!PP[j].has(i)); /* но не то, что само стоит на ней */ t.forEach(j=>{ CC[i].delete(j); PP[i].add(j); }); }
+    for(let i=0;i<n;i++){ CC[i].forEach(j=>{ if(PP[j].has(i)) CC[i].delete(j); }); } // j держится за i — значит, i раньше j, а не «под» j
+    const blk=new Int32Array(n), byC=S.map(()=>[]);
+    for(let i=0;i<n;i++){ CC[i].forEach(j=>{ blk[i]++; byC[j].push(i); }); PP[i].forEach(j=>{ blk[j]++; }); }
+    R.cover=0; for(let i=0;i<n;i++){ for(const j of CC[i]) if(pos[j]<pos[i]){ R.cover++; break; } }
+    const gone=new Uint8Array(n), rem=[], h=[]; const push=x=>{ h.push(x); let k=h.length-1; while(k>0){ const p=(k-1)>>1; if(pos[h[k]]>pos[h[p]]){ [h[k],h[p]]=[h[p],h[k]]; k=p; } else break; } };
+    const pop=()=>{ const top=h[0], last=h.pop(); if(h.length){ h[0]=last; let k=0; for(;;){ const l=2*k+1, r=l+1; let m=k; if(l<h.length&&pos[h[l]]>pos[h[m]]) m=l; if(r<h.length&&pos[h[r]]>pos[h[m]]) m=r; if(m===k) break; [h[k],h[m]]=[h[m],h[k]]; k=m; } } return top; };
+    for(let i=0;i<n;i++) if(!blk[i]) push(i);
+    let tail=n-1; R.forced=0;
+    const take=i=>{ gone[i]=1; rem.push(i); byC[i].forEach(q=>{ if(!gone[q]&&--blk[q]===0) push(q); }); PP[i].forEach(q=>{ if(!gone[q]&&--blk[q]===0) push(q); }); };
+    while(rem.length<n){ let i=-1; while(h.length){ const x=pop(); if(!gone[x]){ i=x; break; } }
+      if(i<0){ while(tail>=0&&gone[out[tail]]) tail--; i=out[tail]; R.forced++;
+        if(window.__accDbg&&(R.cyc=R.cyc||[]).length<4){ const ch=[]; let x=i; const seen=new Set(); for(let st=0;st<14&&x>=0&&!seen.has(x);st++){ seen.add(x); let nx=-1, why="";
+            for(const j of CC[x]) if(!gone[j]){ nx=j; why="под"; break; } if(nx<0) for(let q=0;q<n;q++) if(!gone[q]&&PP[q].has(x)){ nx=q; why="держит:"+((FP.get(q)||[]).includes(x)?"FP":"")+((SUP[q]||[]).includes(x)?"SUP":"")+(PRE[q].includes(x)?"":"pin")+" up"+upAx[q].join("")+"/"+upAx[x].join("")+" y"+B[q][1].toFixed(1)+"/"+B[x][1].toFixed(1); break; }
+            ch.push(nmx(x)+(nx>=0?" ["+why+"→]":"")); x=nx; } R.cyc.push(ch.join(" ")); } } // замкнутый круг: снимаем самую позднюю по прежнему порядку
+      take(i); }
+    rem.reverse(); out.length=0; rem.forEach(i=>out.push(i)); re();
+    R.left=0; for(let i=0;i<n;i++){ for(const j of CC[i]) if(pos[j]<pos[i]){ R.left++; if(R.ex.length<16) R.ex.push(nmx(i)+" под "+nmx(j)); break; } }
     return R; }
   let moved=0; out.forEach((i,k)=>{ if(i!==k) moved++; });
   const nb=[], cur=new Set(out.length?[out[0]]:[]); for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k], f=FP.get(b); if(chOf[a]!==chOf[b]||depth[a]!==depth[b]||stepOf[a]!==stepOf[b]||f&&f.some(j=>cur.has(j))){ nb.push(k); cur.clear(); } cur.add(b); }
