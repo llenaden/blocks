@@ -516,7 +516,7 @@ textarea.text-in{height:160px;padding:10px;font-family:var(--f-mono);font-size:1
 .ins.dragging .ins-drag{cursor:grabbing}
 .ins-nav .grip{width:22px;align-self:stretch;flex:none;background:radial-gradient(circle,var(--faint) 1.2px,transparent 1.6px) 0 0/7px 7px;opacity:.9;margin-left:2px}
 .xs-only{display:none!important}
-.ins.xs{width:335px} /* 7 кнопок в строке, включая «Поставить за меня»; справа отступ как слева */
+.ins.xs{width:382px} /* 7 кнопок в строке, включая «Поставить за меня»; справа отступ как слева */
 .ins.xs .book-head,.ins.xs .ins-foot,.ins.xs .ins-hint,.ins.xs .ins-tools{display:none!important}
 .ins.xs .xs-only{display:inline-flex!important}
 .ins.xs .ins-nav{padding:4px;gap:4px}
@@ -537,7 +537,7 @@ textarea.text-in{height:160px;padding:10px;font-family:var(--f-mono);font-size:1
 @media (prefers-reduced-motion: reduce){ .ins-ok{animation:none} }
 .ins-auto{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:none;cursor:pointer;min-height:44px;padding:0 4px}
 .ins-auto input{width:18px;height:18px;accent-color:var(--accent);margin:0}
-@media (max-width: 860px){ .ins.xs{width:335px} }
+@media (max-width: 860px){ .ins.xs{width:382px} }
 /* панель деталей слева (под левую руку и для тех, кому удобнее): библиотека и слои — слева, инструкция и правка — справа */
 @media (min-width: 861px){
   #ws.side-l .pop{right:auto;left:max(12px, env(safe-area-inset-left, 0px))}
@@ -959,6 +959,9 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 }
 /* телефон: на всю ширину, три строки деталей целиком */
 @media (max-width: 520px){ :root{--popH:clamp(360px,46%,470px)} }
+.ack-p{font-size:14px;line-height:1.45;margin:0 0 10px;text-align:left;color:var(--ink)}.rep-opts{display:flex;flex-direction:column;gap:6px;margin:4px 0 0}.dn-card .rep-note{margin:16px 0}.rep-o{justify-content:flex-start;text-align:left}.rep-o.on{background:rgba(61,139,255,.18);border-color:rgba(61,139,255,.6)}
+.dn-row{flex-direction:row;flex-wrap:nowrap}.dn-row .btn{flex:1 1 auto;width:auto;white-space:nowrap;padding:0 14px}.dn-row .btn.sq{flex:0 0 46px;min-width:46px;padding:0}.dn-row .btn.sq .ic{width:22px;height:22px}
+.navb.hint{background:rgba(61,139,255,.22);box-shadow:0 0 0 2px rgba(61,139,255,.55) inset}
 </style>
 </head>
 <body>
@@ -974,6 +977,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
   <symbol id="i-put" viewBox="0 0 24 24"><path d="M12 2.5v8.5"/><path d="M8.5 7.5L12 11l3.5-3.5"/><rect x="4" y="15" width="16" height="6" rx="1.2"/><path d="M7.5 15v-1.6h3V15M13.5 15v-1.6h3V15"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/><path d="M11 6.5v3"/><circle cx="11" cy="11" r=".3"/></symbol>
   <symbol id="i-follow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   <symbol id="i-follow-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   <symbol id="i-wand" viewBox="0 0 24 24"><path d="M4 20L15.5 8.5"/><path d="M18.5 2.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/><path d="M9 3.5l.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z"/><path d="M19.5 13l.4.9.9.4-.9.4-.4.9-.4-.9-.9-.4.9-.4z"/></symbol>
@@ -1234,7 +1238,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <span class="ins-check" id="insCheck" role="status"></span><div class="ins-where"><div class="where" id="insWhere">Шаг 1</div><div class="track"><div class="fill" id="insFill"></div></div></div>
       <button class="navb" id="insNext" aria-label="Следующий шаг" hidden><svg class="ic"><use href="#i-next"/></svg></button>
       <button class="navb ins-go" id="insGo" aria-label="Дальше: следующий шаг"><span class="t">Дальше</span><svg class="ic"><use href="#i-next"/></svg></button>
-      <button class="navb" id="insFollowBtn" aria-pressed="true" aria-label="Инструкция поворачивается вместе с моделью: включить или выключить" title="Поворачивать вместе с моделью"><svg class="ic"><use href="#i-follow"/></svg></button><button class="navb" id="insHintsBtn" aria-pressed="true" aria-label="Подсказки на основе: показать или спрятать" title="Подсказки на основе"><svg class="ic"><use href="#i-eye"/></svg></button><button class="navb" id="insPut" disabled aria-label="Поставить за меня: детали шага встанут на свои места сами" title="Поставить за меня — если место закрыто и до него не дотянуться"><svg class="ic"><use href="#i-put"/></svg></button>
+      <button class="navb" id="insFollowBtn" aria-pressed="true" aria-label="Инструкция поворачивается вместе с моделью: включить или выключить" title="Поворачивать вместе с моделью"><svg class="ic"><use href="#i-follow"/></svg></button><button class="navb" id="insHintsBtn" aria-pressed="true" aria-label="Подсказки на основе: показать или спрятать" title="Подсказки на основе"><svg class="ic"><use href="#i-eye"/></svg></button><button class="navb" id="insPut" disabled aria-label="Поставить за меня: детали шага встанут на свои места сами" title="Поставить за меня — если место закрыто и до него не дотянуться"><svg class="ic"><use href="#i-put"/></svg></button><button class="navb" id="insRep" aria-label="Сообщить о проблеме на этом шаге" title="Что-то не так на этом шаге — записать в отчёт"><svg class="ic"><use href="#i-flag"/></svg></button>
       <button class="navb xs-only" id="insBig" aria-label="Окно побольше"><svg class="ic" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
     </div>
     <div class="ins-page" id="insPage">
@@ -1437,6 +1441,29 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
   <div class="dp-t dp-t2">Звук соединения</div>
   <div id="dpSounds"></div>
   <p class="dp-desc snd-desc"></p>
+</div>
+<div class="done-sheet" id="ackSheet" hidden role="dialog" aria-label="Чужая модель">
+  <div class="dn-card glass">
+    <h2>Модель из чужого файла</h2>
+    <p class="ack-p">Эту модель собрал другой человек в редакторе. Приложение само выстраивает порядок так, чтобы каждая деталь ставилась на видное место и на то, что уже стоит. Но в чужом файле бывают детали, которые висят в воздухе или спрятаны внутри — так их поставил автор, и физически по-другому их не собрать.</p>
+    <p class="ack-p">Если до места не дотянуться, нажмите <b>«Поставить за меня»</b> (стрелка над кирпичиком в строке инструкции) — детали шага встанут сами. Если что-то выглядит неправильно, нажмите <b>флажок</b> рядом: случай запишется в отчёт, который можно скачать и прислать.</p>
+    <div class="dn-act"><button class="btn primary" id="ackOk">Понятно, собираю</button></div>
+    <p class="dn-note">Это сообщение показывается один раз.</p>
+  </div>
+</div>
+<div class="done-sheet" id="repSheet" hidden role="dialog" aria-label="Что не так на этом шаге">
+  <div class="dn-card glass">
+    <h2>Что не так на этом шаге?</h2><p id="repSub"></p>
+    <div class="rep-opts">
+      <button class="btn rep-o" data-k="closed">Место закрыто — не дотянуться</button>
+      <button class="btn rep-o" data-k="air">Деталь висит в воздухе</button>
+      <button class="btn rep-o" data-k="inside">Деталь внутри другой</button>
+      <button class="btn rep-o" data-k="order">Странный порядок</button>
+      <button class="btn rep-o" data-k="other">Другое</button>
+    </div>
+    <p class="dn-note rep-note">В отчёт запишутся модель, шаг, детали шага и их соседи. Отчёт остаётся на этом устройстве, пока вы его не скачаете.</p>
+    <div class="dn-act dn-row"><button class="btn sq" id="repPut" aria-label="Поставить за меня" title="Поставить за меня"><svg class="ic"><use href="#i-put"/></svg></button><button class="btn" id="repDl">Скачать отчёт</button><button class="btn" id="repClose">Закрыть</button></div>
+  </div>
 </div>
 <input type="file" id="sndFile" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden>
 <div class="done-sheet" id="doneSheet" hidden role="dialog" aria-label="Модель собрана">
@@ -4721,7 +4748,7 @@ function closeSheets(){ ["acctSheet","projSheet","dumpSheet","groupSheet","stkSh
 document.querySelectorAll(".acct-btn,.acct-open").forEach(b=>b.addEventListener("click",openAccount));
 $("acX").addEventListener("click",()=>closeSheet("acctSheet"));
 function openAccount(){ renderAccount(); openSheet("acctSheet"); }
-const APP_VER="v146"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
+const APP_VER="v147"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
 async function renderAccount(){ try{ $("acVer").textContent="Версия приложения: "+APP_VER; }catch(_){}
   const st=Cloud.state;
   $("acName").textContent=(st==="on"||st==="sync")?(Cloud.name?"Вы вошли как "+Cloud.name:"Синхронизация включена"):"Синхронизация";
@@ -4963,7 +4990,7 @@ function renderBento(){
     const cls="sq";
     const c=document.createElement("button"); c.className="tile "+cls;
     c.innerHTML='<img alt=""><span class="tt"><b></b><span></span></span>'+(done?'<span class="bar"><i></i></span>':'');
-    c.querySelector("b").textContent=M.name; c.querySelector(".tt span").textContent=n+" "+plural(n,"деталь","детали","деталей")+(isDone(id)?" · собрана":done?" · собрано "+done:"");
+    c.querySelector("b").textContent=M.name||"Модель без названия"; c.querySelector(".tt span").textContent=n+" "+plural(n,"деталь","детали","деталей")+(isDone(id)?" · собрана":done?" · собрано "+done:"");
     if(isDone(id)){ c.classList.add("is-done"); const bd=document.createElement("span"); bd.className="done-badge"; bd.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Собрана'; c.appendChild(bd); }
     if(done) c.querySelector(".bar i").style.width=Math.min(100,done/n*100)+"%";
     c.querySelector("img").alt="Модель «"+M.name+"»";
@@ -4988,7 +5015,7 @@ function renderOwn(){
   const todo=[];
   L.forEach(r=>{ const c=document.createElement("div"); c.className="card"; c.tabIndex=0; c.setAttribute("role","button");
     c.innerHTML='<img class="img" alt=""><div class="tx"><b></b><div class="meta"></div></div><button class="more" aria-label="Действия с постройкой"><svg class="ic"><use href="#i-more"/></svg></button>';
-    const S=SETS[r.set]; c.querySelector("b").textContent=r.name; c.querySelector(".meta").textContent=(S?S.name+" · ":"")+(r.count||0)+" "+plural(r.count||0,"деталь","детали","деталей")+" · "+fmtDate(r.updated);
+    const S=SETS[r.set]; c.querySelector("b").textContent=r.name||"Постройка"; c.querySelector(".meta").textContent=(S?S.name+" · ":"")+(r.count||0)+" "+plural(r.count||0,"деталь","детали","деталей")+" · "+fmtDate(r.updated);
     const img=c.querySelector("img"); img.alt="Постройка «"+r.name+"»";
     if(r.thumb) img.src=r.thumb; else if(r.count) todo.push([r,img]); else { const ph=document.createElement("div"); ph.className="ph"; ph.textContent="Пока пустая пластина"; img.replaceWith(ph); }
     const open=()=>{ location.hash="build-"+r.id; };
@@ -5336,7 +5363,7 @@ async function route(){
   const h=location.hash.replace(/^#/,"");
   // модель, которой нужно перестроить порядок шагов, — сначала экран загрузки, потом страница
   const mid=h.indexOf("model-")===0?h.slice(6):h.indexOf("instr-")===0?h.slice(6):h.indexOf("build-")===0?instrModelOf((PROJ.get(h.slice(6))||{}).set):null;
-  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==26){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
+  if(mid&&MODELS[mid]&&MODELS[mid].user&&MODELS[mid].grav!==27){ const M=MODELS[mid]; loaderShow("Готовлю инструкцию к «"+M.name+"» — "+M.steps.length+" "+plural(M.steps.length,"деталь","детали","деталей")+"…",bootDone); await nextFrame(); try{ insPages(mid); }catch(e){ console.warn(e); } if(bootDone) loaderHide(); }
   if(h==="sets") enterSets();
   else if(h==="free") location.replace("#set-"+CUR_SET);
   else if(h==="guided") location.replace("#catalog");
@@ -5396,7 +5423,7 @@ function insPages(id){
   if(insPagesCache[id]) return insPagesCache[id];
   const M=MODELS[id];
   // модель, загруженная до нового порядка сборки, перестраивается при первом открытии (не при запуске — чтобы приложение открывалось сразу)
-  if(M&&M.user&&M.grav!==26){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=26; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
+  if(M&&M.user&&M.grav!==27){ try{ gravityOrder(M); splitBigSteps(M); }catch(e){ console.warn(e); } M.grav=27; delete insPagesCache[id]; setTimeout(saveUserModels,0); }
   // модель из файла (BrickLink Studio, LDraw): шаги автора, крупные разбиты на страницы до 5 деталей
   splitBigSteps(M);
   if(M.breaks&&M.breaks.length){ const br=[0,...M.breaks.filter(k=>k>0&&k<M.steps.length),M.steps.length], out=[];
@@ -5454,11 +5481,21 @@ function insApplyLib(M){
   const need=SET_GROUPS.map(G=>gIndex[G.id]).filter(i=>!thumbs[i]), idle=!thumbQueue.length; // миниатюры деталей модели — первыми
   thumbQueue=[...need,...thumbQueue.filter(i=>!need.includes(i))]; if(idle&&need.length) requestAnimationFrame(pumpThumbs);
 }
+// подпись порядка шагов модели: меняется, когда модель переупорядочена или перечитана новой версией
+const insOrderKey=M=>(M.grav||0)+"."+(M.impv||0)+"."+M.steps.length;
 function enterInstrBuild(id,rec){
   const M=MODELS[id], pages=insPages(id);
   let pg=Number.isFinite(+rec.ip)?+rec.ip:+(ls.get("myblocks.ins.p."+rec.id)||0);
   IB={id,M,rec,pages,page:clamp(pg||0,0,pages.length-1),items:modelParts(M),check:null};
   IB.celebrated=!!(rec&&rec.count>=IB.items.length); // уже собранную при входе не поздравляем повторно
+  /* порядок шагов модели изменился с прошлого раза (обновление приложения перечитало или переупорядочило модель):
+     поставленные детали узнаются по месту, а не по номеру шага, поэтому продолжаем с первого шага, где чего-то не хватает,
+     а не с запомненного номера — он теперь указывает на другие детали */
+  { const key=insOrderKey(M); if(rec&&rec.ok!==key){ if(rec.count&&parts.some(p=>p.p&&!p.f)){ const was=IB.page; IB.page=pages.length-1; try{ insCheck(); }catch(_){}
+        const ok=IB.check&&IB.check.ok||new Set(); let first=pages.findIndex(pg=>{ for(let i=pg.a;i<pg.b;i++) if(!ok.has(i)) return true; return false; }); if(first<0) first=pages.length-1;
+        IB.page=first; if(first!==was){ IB._hintPg=first; setTimeout(()=>toast("Порядок сборки обновился — продолжаем с первого несобранного шага ("+(first+1)+" из "+pages.length+")"),900); } }
+      rec.ok=key; rec.ip=IB.page; Store.put(rec); } }
+  if(M.user&&!ls.get("myblocks.ins.ack")) setTimeout(()=>{ const w=$("ackSheet"); w.hidden=false; requestAnimationFrame(()=>w.classList.add("on")); },400); // один раз: про детали в воздухе/внутри в чужих файлах и кнопки «Поставить за меня» и флажок
   $("book").hidden=true; // в сборке по инструкции книга PDF не нужна — своё окно инструкции
   if(ls.get("myblocks.ins.view")===id){ ls.set("myblocks.ins.view",""); setTimeout(()=>{ try{ insShowPanel(false); toast("Собранная модель: крутите и рассматривайте"); }catch(_){} },60); }
   IB.box=IB.items.map(p=>{ const d=dims(specOf(p),p), x=p.x+(p.ox||0), z=p.z+(p.oz||0); return [x,p.y,z,x+d.W,p.y+d.H,z+d.D]; });
@@ -5796,7 +5833,23 @@ function insCheck(){
 let insAdvT=0;
 /* «Поставить за меня»: место детали закрыто (внутри готового блока, не видно и не дотянуться) — детали шага встают сами,
    ровно как в модели. Кнопка видна, пока шаг не собран */
-function insPutSync(){ const b=$("insPut"); if(!b) return; const pg=IB&&IB.pages[IB.page]; let miss=0; if(pg&&IB.check) for(let i=pg.a;i<pg.b;i++) if(!IB.check.ok.has(i)) miss++; b.disabled=!miss; }
+function insPutSync(){ const b=$("insPut"); if(!b) return; const pg=IB&&IB.pages[IB.page]; let miss=0, hid=false; if(pg&&IB.check){ for(let i=pg.a;i<pg.b;i++) if(!IB.check.ok.has(i)) miss++; const H=IB.M.hidden||[]; hid=miss>0&&H.some(h=>h>=pg.a&&h<pg.b); } b.disabled=!miss; b.classList.toggle("hint",hid);
+  if(hid&&IB._hintPg!==IB.page){ IB._hintPg=IB.page; toast("Место этой детали закрыто другими — нажмите «Поставить за меня»"); } }
+/* ---------- Отчёт о проблемах сборки: остаётся на устройстве, скачивается одним файлом ---------- */
+let REPORTS=null; async function repLoad(){ if(REPORTS) return REPORTS; try{ REPORTS=(await IDB.get("kv","reports"))||[]; }catch(_){ REPORTS=[]; } return REPORTS; }
+async function repAdd(kind){ if(!IB) return; await repLoad(); const M=IB.M, pg=IB.pages[IB.page], items=[]; const near=new Set();
+  for(let i=pg.a;i<pg.b;i++){ const m=IB.items[i], b=IB.box[i]; items.push({p:m.p,name:designName(m.p)||m.p,c:m.c,x:m.x,y:+(m.y/PH).toFixed(2),z:m.z,ry:m.ry||0,rx:m.rx||0,rz:m.rz||0,tq:!!m.tq,placed:!!(IB.check&&IB.check.ok.has(i)),hiddenByApp:(M.hidden||[]).includes(i)});
+    IB.items.forEach((q,j)=>{ if(j===i||j>=pg.b) return; const d=IB.box[j]; if(Math.min(b[3],d[3])-Math.max(b[0],d[0])>-1.1&&Math.min(b[4],d[4])-Math.max(b[1],d[1])>-1.3&&Math.min(b[5],d[5])-Math.max(b[2],d[2])>-1.1) near.add(j); }); }
+  const entry={t:new Date().toISOString(),app:APP_VER,model:M.name,modelId:IB.id,parts:M.steps.length,step:IB.page+1,steps:IB.pages.length,kind,placedTotal:IB.rec?IB.rec.count:0,items,nearEarlier:[...near].slice(0,40).map(j=>{ const q=IB.items[j]; return {step:IB.pages.findIndex(P=>j>=P.a&&j<P.b)+1,p:q.p,name:designName(q.p)||q.p,c:q.c,x:q.x,y:+(q.y/PH).toFixed(2),z:q.z}; }),access:M.access?{hidden:M.access.hidden,forcedVis:M.access.forcedVis,pulled:M.access.pulled}:null};
+  REPORTS.push(entry); try{ await IDB.put("kv",REPORTS,"reports"); }catch(_){} return REPORTS.length; }
+async function repDownload(){ await repLoad(); if(!REPORTS.length){ toast("Отчёт пока пуст"); return; } const data=JSON.stringify({format:"myblocks-report",version:1,app:APP_VER,exported:new Date().toISOString(),count:REPORTS.length,reports:REPORTS},null,1);
+  await offerFile("MyBlocks-отчёт-"+new Date().toISOString().slice(0,10)+".json",data); }
+function repOpen(){ if(!IB) return; const n=IB.page+1; $("repSub").textContent="«"+IB.M.name+"», шаг "+n+" из "+IB.pages.length; document.querySelectorAll("#repSheet .rep-o").forEach(b=>b.classList.remove("on")); repLoad().then(()=>{ $("repDl").textContent="Скачать отчёт"+(REPORTS.length?" ("+REPORTS.length+")":""); }); const w=$("repSheet"); w.hidden=false; requestAnimationFrame(()=>w.classList.add("on")); }
+function repClose(){ const w=$("repSheet"); w.classList.remove("on"); setTimeout(()=>{ w.hidden=true; },220); }
+$("insRep").addEventListener("click",repOpen); $("repClose").addEventListener("click",repClose); $("repSheet").addEventListener("click",e=>{ if(e.target===$("repSheet")) repClose(); });
+document.querySelectorAll("#repSheet .rep-o").forEach(b=>b.addEventListener("click",async()=>{ b.classList.add("on"); const k=await repAdd(b.dataset.k); $("repDl").textContent="Скачать отчёт ("+k+")"; toast("Записано в отчёт: "+k+" "+plural(k,"случай","случая","случаев")); setTimeout(repClose,500); }));
+$("repDl").addEventListener("click",()=>{ repDownload(); }); $("repPut").addEventListener("click",()=>{ repClose(); $("insPut").click(); });
+$("ackOk").addEventListener("click",()=>{ ls.set("myblocks.ins.ack","1"); const w=$("ackSheet"); w.classList.remove("on"); setTimeout(()=>{ w.hidden=true; },220); });
 $("insPut").addEventListener("click",()=>{ if(!IB||!IB.check) return; insCheck(); const pg=IB.pages[IB.page], off=IB.check.off||[0,0,0]; let n=0;
   for(let i=pg.a;i<pg.b;i++){ if(IB.check.ok.has(i)) continue; const m=IB.items[i]; setHand({p:m.p,c:m.c,ry:0});
     const r={x:m.x+off[0],y:m.y+off[1]*PH,z:m.z+off[2],rx:m.rx||0,ry:m.ry||0,rz:m.rz||0,insSnap:1}; ["ox","oz","side","tq","tp","ra","sw"].forEach(k=>{ if(m[k]!==undefined) r[k]=m[k]; });
@@ -6099,7 +6152,7 @@ async function importModelFile(f,replaceId,quiet){
     if(prev){ ["pin","view","cover","desc"].forEach(k=>{ if(prev[k]!==undefined&&model[k]===undefined) model[k]=prev[k]; }); delete MODELS[id]; delete insPagesCache[id]; try{ delete prev._figs; }catch(_){} }
     try{ await IDB.put("kv",f,"src:"+id); }catch(_){}
     const miss=Object.entries(missing); if(miss.length) model.missing=missing;
-    snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); let cleaned=0; try{ cleaned=cleanModel(model); }catch(err){ console.warn(err); } gravityOrder(model); model.grav=26; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
+    snapModelGrid(model); model.grid=1; try{ groundGrid(model); }catch(_){} model.gg=1; MODELS[id]=model; regModelParts(model); let cleaned=0; try{ cleaned=cleanModel(model); }catch(err){ console.warn(err); } gravityOrder(model); model.grav=27; splitBigSteps(model); await saveUserModels(); delete insPagesCache[id];
     if(!quiet) toast(prev?"Модель обновлена: "+model.steps.length+" деталей":miss.length?"Модель добавлена, но "+miss.reduce((s,[,n])=>s+n,0)+" "+plural(miss.reduce((s,[,n])=>s+n,0),"детали","деталей","деталей")+" нет в библиотеке — их номера на странице модели":"Модель добавлена: "+model.steps.length+" деталей"+(cleaned?" · убрано лишних: "+cleaned+" (спрятаны внутри других или повторяются)":""));
     loaderHide(); if(location.hash==="#model-"+id){ enterModelPage(id); } else location.hash="model-"+id; return id; }
   catch(err){ loaderHide(); toast("Не получилось прочитать файл: "+(err&&err.message||err)); return null; } }
@@ -6263,7 +6316,7 @@ async function renderSessions(id){ const tok=++sessTok, M=MODELS[id]; M.id=M.id|
     const d=new Date(S.t), when=d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+", "+d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
     row.innerHTML='<div class="sess-tx"><b></b><span></span></div><button class="btn" data-a="go">Продолжить</button><button class="ib" data-a="dl" aria-label="Скачать файлом"><svg class="ic"><use href="#i-export"/></svg></button><button class="ib" data-a="rm" aria-label="Удалить сессию"><svg class="ic"><use href="#i-trash"/></svg></button>';
     row.querySelector("b").textContent=when+(S.auto?" · сохранилась сама":"");
-    row.querySelector(".sess-tx span").textContent="Поставлено "+S.count+" из "+n+" ("+Math.round(S.count/n*100)+"%) · шаг "+(Math.min(S.ip,pages-1)+1)+" из "+pages;
+    row.querySelector(".sess-tx span").textContent="Поставлено "+(S.count||0)+" из "+n+" ("+Math.round((S.count||0)/n*100)+"%) · шаг "+(Math.min(S.ip,pages-1)+1)+" из "+pages;
     const go=row.querySelector('[data-a="go"]');
     go.onclick=async()=>{ if(!go.dataset.armed){ go.dataset.armed=1; go.textContent="Точно? Текущий прогресс заменится"; setTimeout(()=>{ delete go.dataset.armed; go.textContent="Продолжить"; },4000); return; }
       const r=setProjects(INSTR_PREFIX+id)[0]; if(r&&r.count&&r.count!==S.count) await autoSession(id,r); await restoreSession(id,S); location.hash="instr-"+id; };
@@ -6293,7 +6346,7 @@ document.addEventListener("wheel",e=>{ if(e.ctrlKey) e.preventDefault(); },{pass
 /* Порядок сборки — по правилам из ПРАВИЛА_СБОРКИ.md: каждая деталь на своём шаге держится (стоит или крепится), ничего не висит,
    не подсовывается под поставленное и не вставляется между. «Стоит на одном шипе» ≠ «закреплена»: держатель (клипса, кронштейн)
    идёт раньше удерживаемой высокой тонкой детали (правило 7). */
-const ACC_D=1.25; // правило 13: насколько близко над местом детали уже должна быть другая, чтобы деталь было не поставить (≈ кирпич: пальцу и детали нужен зазор)
+const ACC_D=1.25, ACC_GAP=(window.__accGap||5), ACC_GAP2=(window.__accGap2||10); // правило 13: ближе кирпича над местом — не нажать; через сколько слоёв простоя закрытую деталь всё же ставим // правило 13: насколько близко над местом детали уже должна быть другая, чтобы деталь было не поставить (≈ кирпич: пальцу и детали нужен зазор)
 function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
   /* Порядок «от основания наружу»: сначала то, что стоит на пластине, затем то, что крепится к этому, затем то, что крепится к тому…
      Глубина детали — сколько креплений от основания (касание гранью). Шаги идут по глубине; внутри одной глубины — в порядке автора.
@@ -6469,56 +6522,157 @@ function gravityOrder(M){ const S=M.steps, n=S.length; if(n<2) return 0;
      если всё, на чём она стоит, к тому времени уже поставлено. Штифт и ось вставляются в первую деталь до того,
      как поставлена вторая, которую они соединяют, — иначе их пришлось бы вставлять вглубь готового блока */
   M.access=accessRepair(out);
-  function accessRepair(out){ const pos=new Int32Array(n), tl=i=>!!(S[i].tq||S[i].rx||S[i].rz), R={cover:0,pin:0,early:0,late:0,left:0,ex:[]}; const nmx=q=>q+":"+(designName(S[q].p)||S[q].p).slice(0,20);
-    const ox=(a,b)=>Math.min(a[3],b[3])-Math.max(a[0],b[0]), oz=(a,b)=>Math.min(a[5],b[5])-Math.max(a[2],b[2]), oy=(a,b)=>Math.min(a[4],b[4])-Math.max(a[1],b[1]);
+  function accessRepair(out){
+    const pos=new Int32Array(n); out.forEach((i,k)=>pos[i]=k);
+    const R={pin:0,cyc:0,covDrop:0,forcedVis:0,forcedEarly:0,forcedStruct:0,left:0,hidden:0,ex:[]}; const nmx=q=>q+":"+(designName(S[q].p)||S[q].p).slice(0,20);
     const PIN=/^(полу)?штифт|^ось(\s|$)|^technic,?\s*(pin|axle)\b/i, isPin=S.map(st=>PIN.test((designName(st.p)||"").trim()));
-    const re=()=>out.forEach((i,k)=>pos[i]=k); re();
-    // что должно стоять раньше детали: всё, на чём она лежит снизу, её держатели; у штифта — только держатели
-    /* сторона, с которой деталь ставят: её «верх» (шипы) в мире. Обычная деталь — сверху; повёрнутая набок (на боковые шипы) — сбоку */
+    const isFig=S.map(st=>{ try{ return figRank(st.p)>=0; }catch(_){ return false; } });
+    /* ось шипов детали в мире: обычная — вверх; на боковых шипах — вбок; перевёрнутая — вниз */
     const upAx=S.map(st=>{ if(!st.tq&&!st.rx&&!st.rz) return [1,1]; try{ const sp=designSpec(st.p), m=poseQ(sp,st,st.x,st.y*PH,st.z).elements, u=[m[4],m[5],m[6]]; let k=0; for(let q=1;q<3;q++) if(Math.abs(u[q])>Math.abs(u[k])) k=q; return [k,u[k]>0?1:-1]; }catch(_){ return [1,1]; } });
     const byX=[...Array(n).keys()].sort((p,q)=>B[p][0]-B[q][0]);
-    const hz=q=>upAx[q][0]!==1; const PRE=S.map((_,i)=>{ const L=new Set(isPin[i]?[]:(FP.get(i)||[]).concat(SUP[i]||[])); /* две детали набок, лежащие ребром одна на другой, друг друга не держат — держит то, к чему они прижаты шипами */ /* штифт и ось: правило 7 (ждать боковых держателей) здесь не действует — их вставляют в первую деталь, а вторую надевают сверху */ if(!isPin[i]){ const a=B[i], [ax,sg]=upAx[i], a1=(ax+1)%3, a2=(ax+2)%3; /* «снизу» — со стороны, противоположной шипам детали (у детали набок — сбоку) */ for(const k of byX){ if(B[k][0]>=a[3]+e) break; if(k===i||B[k][3]<=a[0]-e) continue; const b=B[k]; const touch=(sg>0?Math.abs(b[ax+3]-a[ax])<e:Math.abs(b[ax]-a[ax+3])<e)&&!(upAx[k][0]===ax&&upAx[k][1]===-sg); /* спиной к спине (шипы врозь) — друг на друге не держатся */ if(touch&&Math.min(a[a1+3],b[a1+3])-Math.max(a[a1],b[a1])>0.1&&Math.min(a[a2+3],b[a2+3])-Math.max(a[a2],b[a2])>0.1) L.add(k); } } L.delete(i); return [...L]; });
-    const DEP=S.map(()=>[]); PRE.forEach((L,i)=>L.forEach(k=>DEP[k].push(i)));
-    // нависает ли деталь j над местом детали i со стороны sg по оси k: точки её настоящей формы в слое до трёх кирпичей от грани, над площадкой i
-    const coversAx=(i,j,k,sg)=>{ if(isPin[j]) return false; /* тонкий штифт не мешает нажать деталь */ const a=B[i], b=B[j], k1=(k+1)%3, k2=(k+2)%3, D=ACC_D;
-      const lo=sg>0?a[k+3]+0.05:a[k]-D, hi=sg>0?a[k+3]+D:a[k]-0.05; if(b[k+3]<=lo||b[k]>=hi) return false;
-      if(Math.min(a[k1+3],b[k1+3])-Math.max(a[k1],b[k1])<0.15||Math.min(a[k2+3],b[k2+3])-Math.max(a[k2],b[k2])<0.15) return false; const P=pts(j);
-      /* закрывает место, только если нависает над серединой детали (средняя половина её площадки): край соседней детали
-         или плитка на полу перед боком стены не мешают поставить деталь */ const c1=(a[k1]+a[k1+3])/2, c2=(a[k2]+a[k2+3])/2, h1=Math.max(0.25,(a[k1+3]-a[k1])/4), h2=Math.max(0.25,(a[k2+3]-a[k2])/4);
-      for(let q=0;q<P.length;q+=3){ const v=P[q+k], v1=P[q+k1], v2=P[q+k2]; if(v>lo&&v<hi&&Math.abs(v1-c1)<h1&&Math.abs(v2-c2)<h2) return true; } return false; };
-        // фигурки собираются по своему порядку (правило 4) — их здесь не двигаем; кто над чем нависает — считаем один раз
-    const isFig=S.map(st=>{ try{ return figRank(st.p)>=0; }catch(_){ return false; } });
-    /* над местом детали — со стороны её шипов (у обычной — сверху, у детали набок — сбоку): её ставят оттуда, там должно быть свободно */
-    const C=S.map((_,i)=>{ const L=[]; if(isPin[i]||isFig[i]) return L; const a=B[i], [k,sg]=upAx[i];
-      for(const j of byX){ if(B[j][0]>=a[3]+(k===0?3.6:-0.15)) break; if(j===i||isFig[j]||B[j][3]<=a[0]-(k===0?3.6:-0.15)) continue; if(coversAx(i,j,k,sg)) L.push(j); } return L; });
-    /* Сборка как разборка наоборот. Снимаем с готовой модели по одной детали: можно снять ту, над которой (со стороны её шипов)
-       ничего не осталось и на которой ничего не держится. Порядок сборки — обратный. Так каждая деталь при сборке ставится,
-       пока её место открыто, и только на то, что уже стоит. Из нескольких свободных снимаем самую позднюю по прежнему порядку —
-       поэтому там, где прежний порядок и так хорош, он не меняется */
-    const CC=C.map(L=>new Set(L)), PP=PRE.map(L=>new Set(L));
-    for(let i=0;i<n;i++){ if(!isPin[i]) continue; const a=B[i], H=[]; for(let j=0;j<n;j++){ if(j===i||isPin[j]) continue; const b=B[j]; if(!(ox(a,b)>0.15&&oz(a,b)>0.15&&oy(a,b)>0.15)) continue;
-        // держит штифт — деталь, чья настоящая поверхность (стенки отверстия) проходит внутри рамки штифта
+    const ovl=(a,b,k)=>Math.min(a[k+3],b[k+3])-Math.max(a[k],b[k]);
+    /* ДЕРЖИТ (что должно стоять раньше детали), с весом правила: 4 — на чём лежит по форме (SUP), 3 — к чему прижата нижней стороной
+       (противоположной шипам; спина к спине не держит), 2 — первая деталь штифта, 1 — порядок фигурки (FP), 0 — ближайший ранний сосед
+       (для звена цепи и навесной детали, у которых опоры не нашлось) */
+    const LIFT=/liftarm|балка|рычаг/i, isLift=S.map(st=>LIFT.test(designName(st.p)||"")); // балки Техник надевают на штифты вдоль оси отверстий
+    const HOLD=S.map(()=>new Map()); const hold=(i,h,c)=>{ if(h===i) return; const v=HOLD[i].get(h); if(v===undefined||v<c) HOLD[i].set(h,c); };
+    for(let i=0;i<n;i++){ if(isPin[i]) continue; (FP.get(i)||[]).forEach(j=>{ if(B[i][4]>B[j][1]+e) hold(i,j,1); }); /* «предмет в руке» целиком под деталью фигурки — не предмет, а то, на чём она стоит */ (SUP[i]||[]).forEach(j=>{ if(!(B[j][4]<=B[i][1]+0.35||S[j].tq||S[i].tq)) return; if(upAx[j][0]!==1&&!S[j].tq) return; /* ребро стоящей набок пластины ничего не держит */ hold(i,j,upAx[i][0]===1&&upAx[i][1]<0?2:4); }); /* перевёрнутая деталь (шипами вниз) висит на том, что над ней: контакт снизу для неё слабее, чем «прижата сверху» */ /* опора — то, чей верх на уровне низа детали; стоящая рядом высокая пластина опорой не считается */
+      if(LIFT.test(designName(S[i].p)||"")) continue; /* балку держат штифты, а не то, к чему она прилегает */
+      const a=B[i], [ax,sg]=upAx[i], a1=(ax+1)%3, a2=(ax+2)%3;
+      for(const j of byX){ if(B[j][0]>=a[3]+e) break; if(j===i||B[j][3]<=a[0]-e) continue; const b=B[j];
+        const touch=sg>0?Math.abs(b[ax+3]-a[ax])<e:Math.abs(b[ax]-a[ax+3])<e; if(!touch||ovl(a,b,a1)<0.1||ovl(a,b,a2)<0.1) continue;
+        if(upAx[j][0]===ax&&upAx[j][1]===-sg) continue; hold(i,j,3); } }
+    /* штифт и ось: держатели — детали, чьи стенки отверстий проходят внутри рамки штифта */
+    const PINH=S.map(()=>null);
+    for(let i=0;i<n;i++){ if(!isPin[i]) continue; const a=B[i], H=[]; for(let j=0;j<n;j++){ if(j===i||isPin[j]) continue; const b=B[j]; if(!(ovl(a,b,0)>0.15&&ovl(a,b,1)>0.15&&ovl(a,b,2)>0.15)) continue;
         const P=pts(j); let c=0; for(let q=0;q<P.length&&c<3;q+=3){ if(P[q]>a[0]+0.05&&P[q]<a[3]-0.05&&P[q+1]>a[1]+0.05&&P[q+1]<a[4]-0.05&&P[q+2]>a[2]+0.05&&P[q+2]<a[5]-0.05) c++; } if(c>=3) H.push(j); }
-      if(!H.length) continue; H.sort((x,y)=>pos[x]-pos[y]); R.pin++; PP[i].add(H[0]); H.slice(1).forEach(j=>CC[i].add(j)); } // штифт — в первую деталь, остальные надевают на него
-    for(let i=0;i<n;i++){ if(isPin[i]||isFig[i]||PP[i].size||B[i][1]<Y0+0.05) continue; // висит снизу: держится за то, к чему прижата шипами, — его ставят раньше
-      const t=[...CC[i]].filter(j=>N[i].has(j)&&!PP[j].has(i)); /* но не то, что само стоит на ней */ t.forEach(j=>{ CC[i].delete(j); PP[i].add(j); }); }
-    for(let i=0;i<n;i++){ CC[i].forEach(j=>{ if(PP[j].has(i)) CC[i].delete(j); }); } // j держится за i — значит, i раньше j, а не «под» j
-    const blk=new Int32Array(n), byC=S.map(()=>[]);
-    for(let i=0;i<n;i++){ CC[i].forEach(j=>{ blk[i]++; byC[j].push(i); }); PP[i].forEach(j=>{ blk[j]++; }); }
-    R.cover=0; for(let i=0;i<n;i++){ for(const j of CC[i]) if(pos[j]<pos[i]){ R.cover++; break; } }
-    const gone=new Uint8Array(n), rem=[], h=[]; const push=x=>{ h.push(x); let k=h.length-1; while(k>0){ const p=(k-1)>>1; if(pos[h[k]]>pos[h[p]]){ [h[k],h[p]]=[h[p],h[k]]; k=p; } else break; } };
-    const pop=()=>{ const top=h[0], last=h.pop(); if(h.length){ h[0]=last; let k=0; for(;;){ const l=2*k+1, r=l+1; let m=k; if(l<h.length&&pos[h[l]]>pos[h[m]]) m=l; if(r<h.length&&pos[h[r]]>pos[h[m]]) m=r; if(m===k) break; [h[k],h[m]]=[h[m],h[k]]; k=m; } } return top; };
-    for(let i=0;i<n;i++) if(!blk[i]) push(i);
-    let tail=n-1; R.forced=0;
-    const take=i=>{ gone[i]=1; rem.push(i); byC[i].forEach(q=>{ if(!gone[q]&&--blk[q]===0) push(q); }); PP[i].forEach(q=>{ if(!gone[q]&&--blk[q]===0) push(q); }); };
-    while(rem.length<n){ let i=-1; while(h.length){ const x=pop(); if(!gone[x]){ i=x; break; } }
-      if(i<0){ while(tail>=0&&gone[out[tail]]) tail--; i=out[tail]; R.forced++;
-        if(window.__accDbg&&(R.cyc=R.cyc||[]).length<4){ const ch=[]; let x=i; const seen=new Set(); for(let st=0;st<14&&x>=0&&!seen.has(x);st++){ seen.add(x); let nx=-1, why="";
-            for(const j of CC[x]) if(!gone[j]){ nx=j; why="под"; break; } if(nx<0) for(let q=0;q<n;q++) if(!gone[q]&&PP[q].has(x)){ nx=q; why="держит:"+((FP.get(q)||[]).includes(x)?"FP":"")+((SUP[q]||[]).includes(x)?"SUP":"")+(PRE[q].includes(x)?"":"pin")+" up"+upAx[q].join("")+"/"+upAx[x].join("")+" y"+B[q][1].toFixed(1)+"/"+B[x][1].toFixed(1); break; }
-            ch.push(nmx(x)+(nx>=0?" ["+why+"→]":"")); x=nx; } R.cyc.push(ch.join(" ")); } } // замкнутый круг: снимаем самую позднюю по прежнему порядку
+      if(H.length){ H.sort((x,y)=>pos[x]-pos[y]); R.pin++; PINH[i]=H; } }
+    const pinned=new Uint8Array(n); PINH.forEach(H=>{ if(H) H.forEach(h=>pinned[h]=1); }); // через деталь проходит штифт/ось — её держит штифт, «ближайший сосед» ей не нужен
+    for(let i=0;i<n;i++){ if(HOLD[i].size||PINH[i]||pinned[i]||B[i][1]<Y0+0.05) continue; let best=-1; for(const j of N[i]) if(pos[j]<pos[i]&&(best<0||pos[j]>pos[best])) best=j; if(best>=0) hold(i,best,0); }
+    /* С КАКОЙ СТОРОНЫ СТАВЯТ: деталь прижимают к тому, к чему она прилегает вдоль оси шипов. Обычно к ней прилегают снизу — ставят со стороны
+       шипов. Если снизу пусто, а прилегает со стороны шипов (перевёрнутая пластина, вставленная шипами вниз в такую же) — ставят с другой стороны */
+    const holeAx=S.map((st,i)=>isLift[i]?upAx[i][0]:null); // у балки ось отверстий — её местная ось Y (та же, что «ось шипов» у кирпича)
+    const pinAx=S.map((st,i)=>{ if(!isPin[i]) return -1; let k=-1; try{ const sp=designSpec(st.p), m=poseQ(sp,st,st.x,st.y*PH,st.z).elements, u=[m[0],m[1],m[2]]; k=0; for(let q=1;q<3;q++) if(Math.abs(u[q])>Math.abs(u[k])) k=q; }catch(_){} const a=B[i], ex=[a[3]-a[0],a[4]-a[1],a[5]-a[2]]; let L=0; for(let q=1;q<3;q++) if(ex[q]>ex[L]) L=q; return ex[L]>1.3?L:(k>=0?k:L); }); /* ось штифта: самая длинная сторона рамки, у короткого — местная ось X */
+    const APP=S.map((_,i)=>{ const [ax,sg]=upAx[i]; if(isPin[i]) return [pinAx[i],1]; if(holeAx[i]!==null) return [holeAx[i],1]; const a=B[i], a1=(ax+1)%3, a2=(ax+2)%3; let back=false, front=false;
+      for(const j of byX){ if(B[j][0]>=a[3]+e) break; if(j===i||B[j][3]<=a[0]-e) continue; const b=B[j]; if(ovl(a,b,a1)<0.1||ovl(a,b,a2)<0.1) continue;
+        if(sg>0?Math.abs(b[ax+3]-a[ax])<e:Math.abs(b[ax]-a[ax+3])<e) back=true; else if(sg>0?Math.abs(b[ax]-a[ax+3])<e:Math.abs(b[ax+3]-a[ax])<e) front=true; }
+      return !back&&front&&ax===1&&sg<0?[1,1]:[ax,sg]; }); /* перевёрнутая, шипами в деталь под ней — ставят сверху; во всех остальных случаях — со стороны шипов (деталь без опоры снизу ставится первой, то, что на неё ляжет, — после: правило «накрывает») */
+    /* НАКРЫВАЕТ: со стороны, с которой деталь ставят, ближе кирпича над серединой её площадки уже стоит другая — такую не нажать, она идёт раньше */
+    const coversAx=(i,j,k,sg)=>{ if(isPin[j]) return false; const a=B[i], b=B[j], k1=(k+1)%3, k2=(k+2)%3, D=ACC_D;
+      const lo=sg>0?a[k+3]+0.05:a[k]-D, hi=sg>0?a[k+3]+D:a[k]-0.05; if(b[k+3]<=lo||b[k]>=hi) return false;
+      if(ovl(a,b,k1)<0.15||ovl(a,b,k2)<0.15) return false; const P=pts(j);
+      const c1=(a[k1]+a[k1+3])/2, c2=(a[k2]+a[k2+3])/2, h1=Math.max(0.25,(a[k1+3]-a[k1])/4), h2=Math.max(0.25,(a[k2+3]-a[k2])/4);
+      for(let q=0;q<P.length;q+=3){ const v=P[q+k], v1=P[q+k1], v2=P[q+k2]; if(v>lo&&v<hi&&Math.abs(v1-c1)<h1&&Math.abs(v2-c2)<h2) return true; } return false; };
+    const COV=S.map((_,i)=>{ const L=new Set(); if(isPin[i]||isFig[i]||holeAx[i]!==null) return L; /* балку надевают на штифты вдоль оси отверстий — соседи вдоль этой оси ей не мешают */ const a=B[i], [k,sg]=APP[i], w=k===0?ACC_D+0.1:-0.15;
+      for(const j of byX){ if(B[j][0]>=a[3]+w) break; if(j===i||isFig[j]||B[j][3]<=a[0]-w) continue; if(coversAx(i,j,k,sg)) L.add(j); } return L; });
+    /* первый держатель штифта — кого не накрывает другой держатель, при равенстве ранний по основному порядку; остальные надевают после штифта */
+    for(let i=0;i<n;i++){ const H=PINH[i]; if(!H) continue; const h0=H.find(h=>!H.some(g=>g!==h&&COV[h].has(g)))??H[0]; hold(i,h0,2); H.forEach(h=>{ if(h!==h0){ COV[i].add(h); hold(h,i,2); } }); /* остальные держатели надевают на штифт — штифт их держит */
+      const ax=APP[i][0], ci=(B[i][ax]+B[i][ax+3])/2, ch=(B[h0][ax]+B[h0][ax+3])/2; APP[i]=[ax,ch<ci?1:-1]; /* штифт виден с торца, который не в первом держателе */  if(window.__accDbg&&(R.pins=R.pins||[]).length<6) R.pins.push(nmx(i)+" ax"+ax+" H="+H.map(h=>nmx(h)+"@"+pos[h]+(holeAx[h]!==null?"L"+holeAx[h]:"")+" cov["+[...COV[h]].filter(g=>H.includes(g)).map(nmx).join(",")+"]").join(" ; ")+" -> h0="+nmx(h0)); }
+    const HOLD0=HOLD.map(m=>new Set(m.keys()));
+    /* круги среди «держит» (A держит B, B держит A — напрямую или через цепочку) разрываются заранее, начиная с самых слабых правил;
+       среди равных по силе убирается связь против основного порядка */
+    const tarjan=(adj,onComp)=>{ const idx=new Int32Array(n).fill(-1), low=new Int32Array(n), on=new Uint8Array(n), st=[]; let cnt=0, found=0;
+      const sc=v=>{ idx[v]=low[v]=cnt++; st.push(v); on[v]=1; for(const w of adj(v)){ if(idx[w]<0){ sc(w); if(low[w]<low[v]) low[v]=low[w]; } else if(on[w]&&idx[w]<low[v]) low[v]=idx[w]; }
+        if(low[v]===idx[v]){ const comp=[]; let w; do{ w=st.pop(); on[w]=0; comp.push(w); }while(w!==v); if(comp.length>1){ found++; onComp(new Set(comp)); } } };
+      for(let v=0;v<n;v++) if(idx[v]<0){ try{ sc(v); }catch(_){ } } return found; };
+    for(let it=0;it<n;it++){ let any=false; const f=tarjan(v=>HOLD[v].keys(),comp=>{ let bi=-1, bh=-1, bc=9, bd=-Infinity; /* в круге убираем одну связь: самое слабое правило, из равных — самую «против» основного порядка */
+        for(const i of comp) for(const [h,cls] of HOLD[i]) if(comp.has(h)){ const d=pos[h]-pos[i]; if(cls<bc||cls===bc&&d>bd){ bc=cls; bd=d; bi=i; bh=h; } }
+        if(bi>=0){ HOLD[bi].delete(bh); any=true; } }); if(f) R.cyc++; if(!f||!any) break; }
+    for(let i=0;i<n;i++) for(const j of [...COV[i]]) if(HOLD0[i].has(j)||HOLD0[j].has(i)) COV[i].delete(j);
+    /* круги с участием «накрывает» (A накрывает B, а B через опоры держит A): сначала убираем накрывания против основного порядка,
+       если круг остался — все накрывания внутри него. Опоры остаются: порядок без кругов гарантирован */
+    for(let pass=0;pass<2;pass++){ const ADJ=S.map((_,i)=>[...HOLD[i].keys()]); for(let i=0;i<n;i++) COV[i].forEach(j=>ADJ[j].push(i));
+      const f=tarjan(v=>ADJ[v],comp=>{ for(const i of comp) for(const j of [...COV[i]]) if(comp.has(j)&&(pass===1||pos[i]>pos[j])){ COV[i].delete(j); R.covDrop++; } }); if(!f) break; }
+    /* ПРИОРИТЕТ: слой верха детали (в кирпичах); всё, что держится за деталь, не ниже её — высокая боковая пластина и всё на ней ставятся вместе,
+       когда стройка дошла до её верха. Фигурка (связи FP) — одним приоритетом, чтобы не растягивалась по слоям */
+    const prio=new Float64Array(n), DEP=S.map(()=>[]), indeg=new Int32Array(n);
+    for(let i=0;i<n;i++){ prio[i]=Math.floor(B[i][4]/1.2+0.02); HOLD[i].forEach((c,h)=>{ if(c<2) return; /* наследуется только через настоящие опоры и штифты, не через фигурку и не через «ближайшего соседа» */ DEP[h].push(i); indeg[i]++; }); }
+    { const q=[]; for(let i=0;i<n;i++) if(!indeg[i]) q.push(i); for(let k=0;k<q.length;k++){ const h=q[k]; for(const i of DEP[h]){ if(prio[h]>prio[i]) prio[i]=prio[h]; if(--indeg[i]===0) q.push(i); } } }
+    const clu=new Int32Array(n).fill(-1), cluM=[]; { const par=new Int32Array(n); for(let i=0;i<n;i++) par[i]=i; const f=x=>{ while(par[x]!==x) x=par[x]=par[par[x]]; return x; };
+      const fpN=new Int32Array(n); for(let i=0;i<n;i++) HOLD[i].forEach((c,j)=>{ if(c===1){ fpN[i]++; fpN[j]++; const a=f(i), b=f(j); if(a!==b) par[a]=b; } }); const map=new Map(); for(let i=0;i<n;i++){ const r=f(i); if(!fpN[i]) continue; let k=map.get(r); if(k===undefined){ k=cluM.length; map.set(r,k); cluM.push([]); } clu[i]=k; cluM[k].push(i); }
+      cluM.forEach(m=>{ let p=0; m.forEach(i=>{ if(prio[i]>p) p=prio[i]; }); m.forEach(i=>{ prio[i]=p; }); }); }
+    /* ВИДНО ЛИ МЕСТО: от грани, с которой ставят (несколько точек у крупной детали) — лучи прямо и под 30°, 55°, 75°; лучи вниз не считаются
+       (камера не смотрит снизу); у детали, которую ставят снизу вверх, — горизонтальные лучи из-под неё. Луч перекрывают оставшиеся детали
+       с запасом на палец (0.55 шипа вбок, дальше — шире: узкий колодец не считается открытым). Место видно, если хоть один луч выходит наружу */
+    const MR=64, cnt=new Int32Array(n*MR), nr=new Int32Array(n), nfree=new Int32Array(n), rev=S.map(()=>[]), BLK=new Array(n*MR);
+    { const bb=[Infinity,Infinity,Infinity,-Infinity,-Infinity,-Infinity]; B.forEach(b=>{ for(let c=0;c<3;c++){ if(b[c]<bb[c]) bb[c]=b[c]; if(b[c+3]>bb[c+3]) bb[c+3]=b[c+3]; } });
+      const gx0=Math.floor(bb[0])-1, gz0=Math.floor(bb[2])-1, gw=Math.floor(bb[3])-gx0+3, gh=Math.floor(bb[5])-gz0+3, grid=Array.from({length:gw*gh},()=>[]);
+      B.forEach((b,i)=>{ for(let x=Math.floor(b[0]-3);x<=Math.floor(b[3]+3);x++) for(let z=Math.floor(b[2]-3);z<=Math.floor(b[5]+3);z++){ const gx=x-gx0, gz=z-gz0; if(gx>=0&&gz>=0&&gx<gw&&gz<gh) grid[gz*gw+gx].push(i); } });
+      const seen=new Int32Array(n).fill(-1), L=12;
+      const ring=(u,a1,a2,th,m)=>{ const D=[]; for(let k=0;k<m;k++){ const ph=k*2*Math.PI/m, d=[0,0,0]; for(let c=0;c<3;c++) d[c]=Math.cos(th)*u[c]; d[a1]+=Math.sin(th)*Math.cos(ph); d[a2]+=Math.sin(th)*Math.sin(ph); D.push(d); } return D; };
+      const dirs=[]; for(let ax=0;ax<3;ax++) for(const sg of [1,-1]){ const u=[0,0,0]; u[ax]=sg; const a1=(ax+1)%3, a2=(ax+2)%3; let full, short;
+        if(ax===1&&sg<0){ full=ring(u,a1,a2,Math.PI/2,16); short=ring(u,a1,a2,Math.PI/2,8); } /* снизу вверх: смотрим сбоку из-под детали */
+        else { full=[u.slice()].concat(ring(u,a1,a2,Math.PI/6,8),ring(u,a1,a2,Math.PI*55/180,8),ring(u,a1,a2,Math.PI*75/180,8)).filter(d=>d[1]>=-0.2); short=[u.slice()].concat(ring(u,a1,a2,Math.PI/6,8)).filter(d=>d[1]>=-0.2); }
+        dirs.push({full,short}); }
+      for(let i=0;i<n;i++){ const a=B[i], [ax,sg]=APP[i], DS=dirs[ax*2+(sg>0?0:1)], a1=(ax+1)%3, a2=(ax+2)%3, f=sg>0?a[ax+3]:a[ax], hz=ax===1&&sg<0;
+        const c0=[(a[0]+a[3])/2,(a[1]+a[4])/2,(a[2]+a[5])/2]; c0[ax]=hz?f-0.5:f; const pts0=[[c0,DS.full]];
+        if(holeAx[i]!==null){ const c1=c0.slice(); c1[ax]=a[ax]; pts0.length=0; pts0.push([c0,DS.short],[c1,dirs[ax*2+1].short]); } /* балка: с обеих сторон по оси отверстий */
+        const w1=a[a1+3]-a[a1], w2=a[a2+3]-a[a2]; if(w1>2.5){ for(const q of [0.25,0.75]){ const c=c0.slice(); c[a1]=a[a1]+w1*q; pts0.push([c,DS.short]); } } if(w2>2.5){ for(const q of [0.25,0.75]){ const c=c0.slice(); c[a2]=a[a2]+w2*q; pts0.push([c,DS.short]); } }
+        let r=0; for(const [c,DD] of pts0) for(const d of DD){ if(r>=MR) break; const o=[c[0]+0.5*d[0],c[1]+0.5*d[1],c[2]+0.5*d[2]], stamp=i*MR+r; let k=0; const bl=[];
+          for(let t=0;t<=L;t+=0.5){ const px=o[0]+t*d[0], py=o[1]+t*d[1], pz=o[2]+t*d[2]; if(px<bb[0]-0.6||px>bb[3]+0.6||py>bb[4]+0.6||pz<bb[2]-0.6||pz>bb[5]+0.6) break; if(py<bb[1]-0.1) break;
+            const gx=Math.floor(px)-gx0, gz=Math.floor(pz)-gz0; if(gx<0||gz<0||gx>=gw||gz>=gh) break;
+            for(const j of grid[gz*gw+gx]){ if(j===i||seen[j]===stamp) continue; seen[j]=stamp; if(HOLD0[i].has(j)) continue; const b=B[j];
+              /* запас вбок зависит от того, насколько помеха поднимается над гранью детали: низкий бортик рядом не мешает, высокая стена рядом —
+                 узкий колодец, деталь не достать (1 шип ширины: открыт до 2 кирпичей глубины, 3 и глубже — закрыт) */
+              const hb=hz?0.6:(sg>0?b[ax+3]-f:f-b[ax]); if(hb<=0.05) continue; const m=hz?0.3:Math.min(1.5,0.15+0.12*hb);
+              let tmin=-Infinity, tmax=Infinity, ok=true; for(let c=0;c<3&&ok;c++){ const mm=c===ax?0.02:m, lo=b[c]-mm, hi=b[c+3]+mm; if(Math.abs(d[c])<1e-9){ if(o[c]<lo||o[c]>hi) ok=false; } else { let t1=(lo-o[c])/d[c], t2=(hi-o[c])/d[c]; if(t1>t2){ const tt=t1; t1=t2; t2=tt; } if(t1>tmin) tmin=t1; if(t2<tmax) tmax=t2; if(tmin>tmax) ok=false; } }
+              if(ok&&tmax>=0&&tmin<L){ cnt[stamp]++; rev[j].push(stamp); bl.push(j); k++; } } }
+          BLK[stamp]=bl; if(!k) nfree[i]++; r++; } nr[i]=r; } }
+    /* РАЗБОРКА НАОБОРОТ: снимаем с готовой модели деталь, на которой ничего не держится, которую ничто не накрывает и место которой видно;
+       из таких — самую верхнюю (по приоритету), затем из той же фигурки, затем соседнюю с только что снятой, затем позднюю по основному порядку.
+       Если видимых нет, а структурно свободная деталь ждёт уже на 3 слоя выше остальных — ставим её сейчас (пока вокруг ещё низко).
+       Сборка — в обратном порядке */
+    const DEPf=S.map(()=>[]); for(let i=0;i<n;i++) HOLD[i].forEach((c,h)=>{ if(c<2) DEPf[h].push(i); });
+    R.pulled=0;
+    const depCnt=new Int32Array(n), covCnt=new Int32Array(n), byCov=S.map(()=>[]);
+    for(let i=0;i<n;i++){ HOLD[i].forEach((c,h)=>depCnt[h]++); COV[i].forEach(j=>{ covCnt[i]++; byCov[j].push(i); }); }
+    const gone=new Uint8Array(n), inH=new Uint8Array(n), inV=new Uint8Array(n), rem=[]; const gt=(x,y)=>prio[x]>prio[y]||prio[x]===prio[y]&&pos[x]>pos[y];
+    const mkHeap=()=>{ const h=[]; return { h, push(x){ h.push(x); let k=h.length-1; while(k>0){ const p=(k-1)>>1; if(gt(h[k],h[p])){ [h[k],h[p]]=[h[p],h[k]]; k=p; } else break; } },
+      pop(){ const top=h[0], last=h.pop(); if(h.length){ h[0]=last; let k=0; for(;;){ const l=2*k+1, r=l+1; let m=k; if(l<h.length&&gt(h[l],h[m])) m=l; if(r<h.length&&gt(h[r],h[m])) m=r; if(m===k) break; [h[k],h[m]]=[h[m],h[k]]; k=m; } } return top; } }; };
+    const HF=mkHeap(), HV=mkHeap();
+    const chk=q=>{ if(gone[q]||depCnt[q]||covCnt[q]) return; if(nfree[q]>0){ if(!inH[q]){ inH[q]=1; HF.push(q); } } else if(!inV[q]){ inV[q]=1; HV.push(q); } };
+    for(let i=0;i<n;i++) chk(i);
+    const vf=new Uint8Array(n); let last=-1; const remCnt=new Int32Array(64); let maxRem=0; for(let i=0;i<n;i++){ const pq=Math.min(63,Math.max(0,prio[i]|0)); remCnt[pq]++; if(pq>maxRem) maxRem=pq; }
+    const take=i=>{ gone[i]=1; rem.push(i); last=i; remCnt[Math.min(63,Math.max(0,prio[i]|0))]--; HOLD[i].forEach((c,q)=>{ if(!gone[q]&&--depCnt[q]===0) chk(q); }); byCov[i].forEach(q=>{ if(!gone[q]&&--covCnt[q]===0) chk(q); });
+      for(const st of rev[i]){ if(--cnt[st]===0){ const q=(st/MR)|0; if(++nfree[q]===1) chk(q); } } };
+    const peek=H=>{ while(H.h.length&&gone[H.h[0]]) H.pop(); return H.h.length?H.h[0]:-1; };
+    const valid=q=>!gone[q]&&!depCnt[q]&&!covCnt[q];
+    while(rem.length<n){ let i=-1; let t=peek(HF); let v=peek(HV); while(v>=0&&(!valid(v)||nfree[v]>0)){ inV[v]=0; HV.pop(); if(nfree[v]>0) chk(v); v=peek(HV); }
+      if(v>=0&&t<0&&window.__accDbg&&!R.stall){ const rm=[]; for(let q=0;q<n;q++) if(!gone[q]) rm.push(q); let nd=0,nc=0,nv=0; rm.forEach(q=>{ if(depCnt[q]) nd++; else if(covCnt[q]) nc++; else if(!nfree[q]) nv++; });
+        rm.sort((a,b)=>prio[b]-prio[a]); const blkInfo=[]; for(const q of rm){ if(blkInfo.length>=6) break; if(depCnt[q]||covCnt[q]||nfree[q]) continue; let r0=0,c0=1e9; for(let r=0;r<nr[q];r++){ const c=cnt[q*MR+r]; if(c<c0){ c0=c; r0=r; } }
+          for(const z of BLK[q*MR+r0].filter(z=>!gone[z]).slice(0,2)){ const dq=[]; for(let w=0;w<n;w++) if(!gone[w]&&HOLD[w].has(z)) dq.push(nmx(w)+"/c"+HOLD[w].get(z)+(nfree[w]?"":"·невид")+(covCnt[w]?"·накрыт":"")+(depCnt[w]?"·держ"+depCnt[w]:"")); blkInfo.push(nmx(q)+" ← "+nmx(z)+" p"+prio[z]+" dep"+depCnt[z]+" cov"+covCnt[z]+" vis"+nfree[z]+" держат:"+dq.slice(0,6).join(", ")+(dq.length>6?" +"+(dq.length-6):"")); } }
+        R.stall={remaining:rm.length,dep:nd,cov:nc,vis:nv,blk:blkInfo,top:rm.slice(0,14).map(q=>{ let w=""; if(depCnt[q]){ const dq=[]; for(const z of DEP[q]) if(!gone[z]) dq.push(nmx(z)); for(const z of DEPf[q]) if(!gone[z]) dq.push(nmx(z)); w="держат:"+dq.slice(0,3).join(","); } else if(covCnt[q]) w="накрыт:"+[...COV[q]].filter(z=>!gone[z]).slice(0,3).map(nmx).join(","); else if(!nfree[q]){ let r0=0,c0=1e9; for(let r=0;r<nr[q];r++){ const c=cnt[q*MR+r]; if(c<c0){ c0=c; r0=r; } } w="невид:"+BLK[q*MR+r0].filter(z=>!gone[z]).slice(0,3).map(nmx).join(","); } return nmx(q)+" p"+prio[q]+" "+w; })}; }
+      if(v>=0&&t<0&&window.__accDbg&&!R.cl){ R.cl=[]; const seenc=new Set([v]), qq=[v]; const bx=q=>"["+B[q].map(x=>+x.toFixed(1)).join(",")+"]";
+        while(qq.length&&R.cl.length<16){ const q=qq.shift(); let r0=0,c0=1e9; for(let r=0;r<nr[q];r++){ const c=cnt[q*MR+r]; if(c<c0){ c0=c; r0=r; } } const bl=BLK[q*MR+r0].filter(z=>!gone[z]);
+          const dq=[]; for(const z of DEP[q]) if(!gone[z]) dq.push(z); for(const z of DEPf[q]) if(!gone[z]) dq.push(z);
+          R.cl.push(nmx(q)+" "+bx(q)+" app"+APP[q].join("")+" p"+prio[q]+" dep"+dq.length+(dq.length?"("+dq.slice(0,3).map(nmx).join(",")+")":"")+" cov"+covCnt[q]+" vis"+nfree[q]+" луч"+r0+"←"+bl.slice(0,4).map(z=>nmx(z)+bx(z)).join("; "));
+          for(const z of bl.concat(dq)) if(!seenc.has(z)){ seenc.add(z); qq.push(z); } } }
+      while(maxRem>=0&&!remCnt[maxRem]) maxRem--;
+      if(v>=0&&(t<0||prio[v]>=prio[t]+ACC_GAP||maxRem>=prio[t]+ACC_GAP2)){ /* самые верхние из оставшихся застряли (их держит невидимая деталь), а свободны только детали на много слоёв ниже — иначе весь низ уйдёт раньше, а застрявший верх ляжет в начало */ /* видимых свободных нет совсем — или свободная, но закрытая деталь ждёт уже на много слоёв выше остальных: дальше ждать — значит класть пол после крыши */ /* место закрыто: сначала пробуем убрать помеху — снять то, что её держит/накрывает и свободно и не ниже текущего слоя (оно встанет чуть раньше своего слоя) */
+        const floor=window.__accFloor===undefined?-1e9:prio[v]-window.__accFloor; let budget=80; const TR=window.__accDbg?[]:null; const pull=(y,d)=>{ if(gone[y]) return true; if(budget<=0||d>14||prio[y]<floor){ if(TR&&TR.length<8) TR.push("  ".repeat(d)+nmx(y)+" p"+prio[y]+(budget<=0?" бюджет":d>14?" глубина":" ниже пола")); return false; }
+          if(inH[y]&&!depCnt[y]&&!covCnt[y]&&nfree[y]>0){ budget--; R.pulled++; take(y); return true; }
+          if(depCnt[y]){ for(const q of DEP[y]) if(!gone[q]&&!pull(q,d+1)) return false; for(const q of [...DEPf[y]]) if(!gone[q]&&!pull(q,d+1)) return false; }
+          if(covCnt[y]){ for(const q of COV[y]) if(!gone[q]&&!pull(q,d+1)) return false; }
+          if(!gone[y]&&!depCnt[y]&&!covCnt[y]&&!nfree[y]){ let r0=0, c0=1e9; for(let r=0;r<nr[y];r++){ const c=cnt[y*MR+r]; if(c<c0){ c0=c; r0=r; } } for(const q of BLK[y*MR+r0]) if(!gone[q]&&!pull(q,d+1)) return false; }
+          if(!gone[y]&&!depCnt[y]&&!covCnt[y]&&nfree[y]>0){ budget--; R.pulled++; take(y); return true; } if(TR&&TR.length<8) TR.push("  ".repeat(d)+nmx(y)+" p"+prio[y]+" dep"+depCnt[y]+" cov"+covCnt[y]+" vis"+nfree[y]); return false; };
+        let br=0, bc=1e9; for(let r=0;r<nr[i<0?v:v];r++){ const c=cnt[v*MR+r]; if(c<bc){ bc=c; br=r; } } let okAll=true; for(const y of BLK[v*MR+br]) if(!gone[y]&&!pull(y,0)){ okAll=false; break; }
+        if(okAll&&nfree[v]>0){ continue; } /* помеха убрана — деталь теперь видна, пойдёт обычным путём */
+        i=v; vf[i]=1; R.forcedVis++; if(t>=0) R.forcedEarly++;
+        if(window.__accDbg&&(R.why=R.why||[]).length<12){ let br=0, bc=1e9; for(let r=0;r<nr[i];r++){ const c=cnt[i*MR+r]; if(c<bc){ bc=c; br=r; } } const bl=BLK[i*MR+br].filter(j=>!gone[j]);
+          const why=bl.slice(0,2).map(j=>{ const dq=[]; for(let q=0;q<n;q++) if(!gone[q]&&HOLD[q].has(j)) dq.push(nmx(q)+"(p"+prio[q]+(nfree[q]?"":" невид")+(covCnt[q]?" накрыт":"")+")"); const cq=[...COV[j]].filter(q=>!gone[q]).map(q=>nmx(q)+"(p"+prio[q]+")");
+            return nmx(j)+" p"+prio[j]+" vis"+nfree[j]+" держат:"+dq.slice(0,4).join(",")+(dq.length>4?"+"+(dq.length-4):"")+" накрывают:"+cq.slice(0,3).join(","); });
+          R.why.push(nmx(i)+" p"+prio[i]+" (верх кучи p"+(t>=0?prio[t]:"-")+") луч "+br+" закрыт "+bl.length+": "+why.join(" || ")+"\n   pull: "+(TR||[]).join(" | ")); } }
+      else if(t>=0){ i=t; const P=prio[t];
+        if(last>=0){ if(clu[last]>=0){ let bq=-1; for(const q of cluM[clu[last]]) if(inH[q]&&!gone[q]&&(bq<0||pos[q]>pos[bq])) bq=q; if(bq>=0) i=bq; }
+          if(i===t){ let bq=-1; for(const q of N[last]) if(inH[q]&&!gone[q]&&prio[q]===P&&(bq<0||pos[q]>pos[bq])) bq=q; if(bq>=0) i=bq; } } }
+      else { let bs=-1; for(let q=0;q<n;q++){ if(gone[q]) continue; if(bs<0||gt(q,bs)) bs=q; } i=bs; R.forcedStruct++; }
       take(i); }
-    rem.reverse(); out.length=0; rem.forEach(i=>out.push(i)); re();
-    R.left=0; for(let i=0;i<n;i++){ for(const j of CC[i]) if(pos[j]<pos[i]){ R.left++; if(R.ex.length<16) R.ex.push(nmx(i)+" под "+nmx(j)); break; } }
+    rem.reverse(); out.length=0; rem.forEach(i=>out.push(i)); out.forEach((i,k)=>pos[i]=k);
+    for(let i=0;i<n;i++){ for(const j of COV[i]) if(pos[j]<pos[i]){ R.left++; if(R.ex.length<10) R.ex.push(nmx(i)+" под "+nmx(j)); break; } }
+    /* проверка готового порядка: место какой детали на её шаге закрыто уже поставленными (ни один луч не выходит) — для «Поставить за меня» */
+    M.hidden=[]; for(let i=0;i<n;i++){ let open=false; for(let r=0;r<nr[i]&&!open;r++){ const bl=BLK[i*MR+r]; let blocked=false; for(const j of bl) if(pos[j]<pos[i]){ blocked=true; break; } if(!blocked) open=true; } if(!open) M.hidden.push(pos[i]); }
+    M.hidden.sort((x,y)=>x-y); R.hidden=M.hidden.length; if(window.__accDbg){ R.appBy=out.map(i=>APP[i].join("")); R.upBy=out.map(i=>upAx[i].join("")); R.prioBy=out.map(i=>prio[i]); }
+    if(window.__accDbg){ R.hid=[]; for(const p of M.hidden.slice(0,90)){ const i=out[p]; let br=0, bc=1e9; for(let r=0;r<nr[i];r++){ let c=0; for(const j of BLK[i*MR+r]) if(pos[j]<p) c++; if(c<bc){ bc=c; br=r; } } R.hid.push(nmx(i)+" шаг"+p+" up"+upAx[i].join("")+" app"+APP[i].join("")+" y"+B[i][1].toFixed(1)+"-"+B[i][4].toFixed(1)+" prio"+prio[i]+" ← "+BLK[i*MR+br].filter(j=>pos[j]<p).slice(0,4).map(j=>nmx(j)+"@"+pos[j]).join("; ")); } }
     return R; }
   let moved=0; out.forEach((i,k)=>{ if(i!==k) moved++; });
   const nb=[], cur=new Set(out.length?[out[0]]:[]); for(let k=1;k<out.length;k++){ const a=out[k-1], b=out[k], f=FP.get(b); if(chOf[a]!==chOf[b]||depth[a]!==depth[b]||stepOf[a]!==stepOf[b]||f&&f.some(j=>cur.has(j))){ nb.push(k); cur.clear(); } cur.add(b); }
