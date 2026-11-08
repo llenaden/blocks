@@ -336,7 +336,7 @@ textarea.text-in{height:160px;padding:10px;font-family:var(--f-mono);font-size:1
   .detail{grid-template-columns:1fr}
   .viewer{position:relative;top:0;order:-1;aspect-ratio:4/3}
   .stats{grid-template-columns:repeat(2,1fr)}
-  .pop{top:auto;left:8px;right:8px;width:auto;height:44%;bottom:8px}
+  .pop{top:auto;left:8px;right:8px;width:auto;height:var(--popH);bottom:8px}
   .edit{top:auto;bottom:calc(76px + env(safe-area-inset-bottom, 0px));left:8px;right:8px;width:auto;max-height:52%}
   .edit .ehint{display:none}
   .book{left:8px;width:calc(100% - 16px)}
@@ -346,9 +346,9 @@ textarea.text-in{height:160px;padding:10px;font-family:var(--f-mono);font-size:1
   .g-wrap{height:92px}
   .guide .upnext,.guide .hint{display:none}
   .hand{bottom:calc(14px + env(safe-area-inset-bottom, 0px))}
-  #ws.lib-open .hand,#ws.m-play .hand{bottom:calc(44% + 18px)}
+  #ws.lib-open .hand,#ws.m-play .hand{bottom:calc(var(--popH) + 18px)}
   #ws .edit,#ws.lib-open .edit{left:8px;right:8px;width:auto}
-  #ws.lib-open .edit{bottom:calc(44% + 16px);max-height:40%}
+  #ws.lib-open .edit{bottom:calc(var(--popH) + 16px);max-height:40%}
   .wb-r .wb-sep{display:none}
   .ib{width:36px}
 }
@@ -932,6 +932,33 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 .ins-nav .navb{min-width:46px}.ins.s .ins-go .t,.ins.m .ins-go .t{display:none} /* место под кнопку «Поставить за меня»: номер шага не обрезается */
 .ins.xs .ins-where{display:none!important} /* в самом маленьком окне номер шага не помещается — не оставляем от него обрезок между точкой и стрелкой */
 .ins-nav .grip{width:20px;height:21px;align-self:center;margin:0 2px;background-position:center;background-size:7px 7px} /* шесть точек ровно посередине своей ячейки, по высоте кнопок */
+/* вертикальный планшет и телефон: панель деталей компактнее — ниже, поиск и разделы в одну строку, строки деталей плотнее */
+:root{--popH:44%}
+@media (max-width: 860px){
+  :root{--popH:clamp(290px,36%,420px)} /* три строки деталей видно целиком, крупно */
+  .pop .lib-head{padding:10px 12px 8px;gap:8px;display:grid;grid-template-columns:minmax(170px,38%) 1fr;align-items:center}
+  .pop .lib-head .search{height:40px;border-radius:12px;font-size:15px;padding:0 12px}
+  .pop .lib-head .chips{min-width:0}
+  .pop .lib-head .chip{padding:7px 12px;font-size:13px}
+  .pop .lib-head .lib-stat{grid-column:1/-1;font-size:12px}
+  .pop .lib-list{padding:6px 8px}
+  .pop .group-h{padding:8px 8px 4px;font-size:11px}
+  .pop .item{gap:12px;padding:6px 8px;border-radius:12px}
+  .pop .thumb{width:50px;height:50px;border-radius:10px}
+  .pop .item .nm{font-size:14px}
+  .pop .item .meta{display:none}
+  .pop .dots{margin-top:5px;gap:5px}
+  .pop .dot{height:24px;min-width:28px;line-height:22px;font-size:11px}
+  .pop .item .need{font-size:10.5px;padding:1px 8px}
+}
+/* вертикальный планшет: панель — половина ширины экрана, у левого края; поиск и разделы в две строки */
+@media (min-width: 521px) and (max-width: 860px){
+  :root{--popH:clamp(380px,42%,500px)}
+  #ws .pop{left:8px;right:auto;width:calc(50% - 12px)}
+  .pop .lib-head{display:flex;flex-direction:column;align-items:stretch}
+}
+/* телефон: на всю ширину, три строки деталей целиком */
+@media (max-width: 520px){ :root{--popH:clamp(360px,46%,470px)} }
 </style>
 </head>
 <body>
@@ -4694,7 +4721,7 @@ function closeSheets(){ ["acctSheet","projSheet","dumpSheet","groupSheet","stkSh
 document.querySelectorAll(".acct-btn,.acct-open").forEach(b=>b.addEventListener("click",openAccount));
 $("acX").addEventListener("click",()=>closeSheet("acctSheet"));
 function openAccount(){ renderAccount(); openSheet("acctSheet"); }
-const APP_VER="v144"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
+const APP_VER="v146"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
 async function renderAccount(){ try{ $("acVer").textContent="Версия приложения: "+APP_VER; }catch(_){}
   const st=Cloud.state;
   $("acName").textContent=(st==="on"||st==="sync")?(Cloud.name?"Вы вошли как "+Cloud.name:"Синхронизация включена"):"Синхронизация";
