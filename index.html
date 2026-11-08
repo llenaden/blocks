@@ -929,6 +929,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 .snd-own{appearance:none;border:0;background:transparent;color:#3D8BFF;font:inherit;font-size:13px;font-weight:600;padding:6px 8px;text-align:left;cursor:pointer}
 .drag-pop{width:320px;max-height:calc(100vh - 90px);overflow:auto}
 .ins-cam.ins-put{background:#3D8BFF;color:#fff;border-color:transparent}
+.ins-nav .navb{min-width:46px}.ins.s .ins-go .t,.ins.m .ins-go .t{display:none} /* место под кнопку «Поставить за меня»: номер шага не обрезается */
 </style>
 </head>
 <body>
@@ -943,6 +944,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
   <symbol id="i-parts" viewBox="0 0 24 24"><rect x="3" y="10" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="5" rx="1"/><rect x="8" y="16" width="8" height="5" rx="1"/><path d="M5.5 10V8.5M8.5 10V8.5M15.5 10V8.5M18.5 10V8.5"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
+  <symbol id="i-put" viewBox="0 0 24 24"><path d="M12 2.5v8.5"/><path d="M8.5 7.5L12 11l3.5-3.5"/><rect x="4" y="15" width="16" height="6" rx="1.2"/><path d="M7.5 15v-1.6h3V15M13.5 15v-1.6h3V15"/></symbol>
   <symbol id="i-follow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   <symbol id="i-follow-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   <symbol id="i-wand" viewBox="0 0 24 24"><path d="M4 20L15.5 8.5"/><path d="M18.5 2.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/><path d="M9 3.5l.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z"/><path d="M19.5 13l.4.9.9.4-.9.4-.4.9-.4-.9-.9-.4.9-.4z"/></symbol>
@@ -1203,14 +1205,14 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
       <span class="ins-check" id="insCheck" role="status"></span><div class="ins-where"><div class="where" id="insWhere">Шаг 1</div><div class="track"><div class="fill" id="insFill"></div></div></div>
       <button class="navb" id="insNext" aria-label="Следующий шаг" hidden><svg class="ic"><use href="#i-next"/></svg></button>
       <button class="navb ins-go" id="insGo" aria-label="Дальше: следующий шаг"><span class="t">Дальше</span><svg class="ic"><use href="#i-next"/></svg></button>
-      <button class="navb" id="insFollowBtn" aria-pressed="true" aria-label="Инструкция поворачивается вместе с моделью: включить или выключить" title="Поворачивать вместе с моделью"><svg class="ic"><use href="#i-follow"/></svg></button><button class="navb" id="insHintsBtn" aria-pressed="true" aria-label="Подсказки на основе: показать или спрятать" title="Подсказки на основе"><svg class="ic"><use href="#i-eye"/></svg></button>
+      <button class="navb" id="insFollowBtn" aria-pressed="true" aria-label="Инструкция поворачивается вместе с моделью: включить или выключить" title="Поворачивать вместе с моделью"><svg class="ic"><use href="#i-follow"/></svg></button><button class="navb" id="insHintsBtn" aria-pressed="true" aria-label="Подсказки на основе: показать или спрятать" title="Подсказки на основе"><svg class="ic"><use href="#i-eye"/></svg></button><button class="navb" id="insPut" disabled aria-label="Поставить за меня: детали шага встанут на свои места сами" title="Поставить за меня — если место закрыто и до него не дотянуться"><svg class="ic"><use href="#i-put"/></svg></button>
       <button class="navb xs-only" id="insBig" aria-label="Окно побольше"><svg class="ic" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
     </div>
     <div class="ins-page" id="insPage">
       <canvas id="insCanvas" aria-label="Модель на этом шаге: тяните, чтобы повернуть"></canvas>
       <div class="ins-top"><div class="ins-num mono" id="insNum">1</div><div class="ins-call" id="insCall" aria-label="Что взять"></div></div>
       <span class="ins-hint" id="insHint">тяните — повернуть</span>
-      <div class="ins-tools"><button class="ins-cam ins-put" id="insPut" hidden title="Если место детали закрыто и до него не дотянуться — приложение поставит детали шага само">Поставить за меня</button><button class="ins-cam" id="insCam" hidden>Как на сцене</button><button class="ins-cam" id="insWhole" aria-pressed="false">Вся модель</button><button class="ins-cam" id="insDark" aria-pressed="false" aria-label="Тёмный фон инструкции">Тёмный фон</button></div>
+      <div class="ins-tools"><button class="ins-cam" id="insCam" hidden>Как на сцене</button><button class="ins-cam" id="insWhole" aria-pressed="false">Вся модель</button><button class="ins-cam" id="insDark" aria-pressed="false" aria-label="Тёмный фон инструкции">Тёмный фон</button></div>
       <div class="ins-ok" id="insOk" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Шаг собран</div>
     </div>
     <div class="ins-foot" hidden><label class="ins-auto" title="Показывать на основе, куда ставить детали шага"><input type="checkbox" id="insHints" checked><span>Подсказки</span></label><label class="ins-auto" title="Когда детали шага на месте, сразу открыть следующий шаг"><input type="checkbox" id="insAuto" checked><span>Дальше сам</span></label></div>
@@ -5763,7 +5765,7 @@ function insCheck(){
 let insAdvT=0;
 /* «Поставить за меня»: место детали закрыто (внутри готового блока, не видно и не дотянуться) — детали шага встают сами,
    ровно как в модели. Кнопка видна, пока шаг не собран */
-function insPutSync(){ const b=$("insPut"); if(!b) return; const pg=IB&&IB.pages[IB.page]; let miss=0; if(pg&&IB.check) for(let i=pg.a;i<pg.b;i++) if(!IB.check.ok.has(i)) miss++; b.hidden=!miss; }
+function insPutSync(){ const b=$("insPut"); if(!b) return; const pg=IB&&IB.pages[IB.page]; let miss=0; if(pg&&IB.check) for(let i=pg.a;i<pg.b;i++) if(!IB.check.ok.has(i)) miss++; b.disabled=!miss; }
 $("insPut").addEventListener("click",()=>{ if(!IB||!IB.check) return; insCheck(); const pg=IB.pages[IB.page], off=IB.check.off||[0,0,0]; let n=0;
   for(let i=pg.a;i<pg.b;i++){ if(IB.check.ok.has(i)) continue; const m=IB.items[i]; setHand({p:m.p,c:m.c,ry:0});
     const r={x:m.x+off[0],y:m.y+off[1]*PH,z:m.z+off[2],rx:m.rx||0,ry:m.ry||0,rz:m.rz||0,insSnap:1}; ["ox","oz","side","tq","tp","ra","sw"].forEach(k=>{ if(m[k]!==undefined) r[k]=m[k]; });
