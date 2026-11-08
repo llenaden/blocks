@@ -516,7 +516,7 @@ textarea.text-in{height:160px;padding:10px;font-family:var(--f-mono);font-size:1
 .ins.dragging .ins-drag{cursor:grabbing}
 .ins-nav .grip{width:22px;align-self:stretch;flex:none;background:radial-gradient(circle,var(--faint) 1.2px,transparent 1.6px) 0 0/7px 7px;opacity:.9;margin-left:2px}
 .xs-only{display:none!important}
-.ins.xs{width:336px} /* 7 кнопок в строке, включая «Поставить за меня» */
+.ins.xs{width:335px} /* 7 кнопок в строке, включая «Поставить за меня»; справа отступ как слева */
 .ins.xs .book-head,.ins.xs .ins-foot,.ins.xs .ins-hint,.ins.xs .ins-tools{display:none!important}
 .ins.xs .xs-only{display:inline-flex!important}
 .ins.xs .ins-nav{padding:4px;gap:4px}
@@ -537,7 +537,7 @@ textarea.text-in{height:160px;padding:10px;font-family:var(--f-mono);font-size:1
 @media (prefers-reduced-motion: reduce){ .ins-ok{animation:none} }
 .ins-auto{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:none;cursor:pointer;min-height:44px;padding:0 4px}
 .ins-auto input{width:18px;height:18px;accent-color:var(--accent);margin:0}
-@media (max-width: 860px){ .ins.xs{width:336px} }
+@media (max-width: 860px){ .ins.xs{width:335px} }
 /* панель деталей слева (под левую руку и для тех, кому удобнее): библиотека и слои — слева, инструкция и правка — справа */
 @media (min-width: 861px){
   #ws.side-l .pop{right:auto;left:max(12px, env(safe-area-inset-left, 0px))}
@@ -930,6 +930,7 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
 .drag-pop{width:320px;max-height:calc(100vh - 90px);overflow:auto}
 .ins-cam.ins-put{background:#3D8BFF;color:#fff;border-color:transparent}
 .ins-nav .navb{min-width:46px}.ins.s .ins-go .t,.ins.m .ins-go .t{display:none} /* место под кнопку «Поставить за меня»: номер шага не обрезается */
+.ins.xs .ins-where{display:none!important} /* в самом маленьком окне номер шага не помещается — не оставляем от него обрезок между точкой и стрелкой */
 </style>
 </head>
 <body>
