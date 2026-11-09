@@ -1465,7 +1465,6 @@ button.st-row{cursor:pointer}button.st-row:hover b{color:var(--accent)}
     <div class="dn-act dn-row"><button class="btn sq" id="repPut" aria-label="Поставить за меня" title="Поставить за меня"><svg class="ic"><use href="#i-put"/></svg></button><button class="btn" id="repDl">Скачать отчёт</button><button class="btn" id="repClose">Закрыть</button></div>
   </div>
 </div>
-<input type="file" id="sndFile" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden>
 <div class="done-sheet" id="doneSheet" hidden role="dialog" aria-label="Модель собрана">
   <div class="dn-conf" id="dnConf" aria-hidden="true"></div>
   <div class="dn-card glass">
@@ -3302,7 +3301,7 @@ let flyDepth=0;
    (стена перед местом) деталь выходит перед ней, а не прячется за неё. Над пустотой и из-под панели — та же глубина, деталь не мельчает */
 function flyDepthNow(s,fallback){ let ref=null; try{ ref=typeof insRefPoint==="function"?insRefPoint():null; }catch(_){} const dRef=camera.position.distanceTo(ref||cam.t);
   let d=dRef; try{ const h=pickAt(lastPointer.x,lastPointer.y); if(h){ const hh=dims(s,hand).H/2+0.06; d=Math.min(dRef,camera.position.distanceTo(h.point)-hh*1.4); } }catch(_){}
-  return flyDepth=Math.max(1.5,d); }
+  d=Math.max(1.5,d); return flyDepth=flyDepth?flyDepth+(d-flyDepth)*0.3:d; } // глубина меняется мягко: шипы и щели под стилусом не трясут деталь
 // экранные координаты точки и пикселей на шип на её глубине
 function toScreen(P,out){ const rect=canvas.getBoundingClientRect(); _gs.copy(P).project(camera); out.x=rect.left+(_gs.x+1)/2*rect.width; out.y=rect.top+(1-_gs.y)/2*rect.height; return _gs.z<1&&Math.abs(_gs.x)<4&&Math.abs(_gs.y)<4; }
 function pxPerStud(P){ const rect=canvas.getBoundingClientRect(); return (rect.height/2)/(Math.max(0.5,camera.position.distanceTo(P))*Math.tan(camera.fov*Math.PI/360)); }
@@ -3618,64 +3617,87 @@ $("tSide").addEventListener("click",()=>{ let s="r"; try{ s=localStorage.getItem
 applySide();
 /* звук щелчка детали: короткий «пластиковый» щелчок, синтезируется на месте (без файлов). Тихий — когда деталь встаёт на соединение
    в руке, отчётливый — когда деталь поставлена. Выключается в той же панели (волшебная палочка) */
-/* звуки соединения: набор синтезированных звуков (выбор — в палочке и в «Персонализации»), плюс свой звук из файла.
-   tick — деталь встала на соединение (тихо), place — деталь поставлена (отчётливо) */
+/* звуки соединения: набор синтезированных звуков (выбор — в палочке и в «Персонализации»).
+   tick — деталь встала на соединение (тихо), place — деталь поставлена (отчётливо).
+   Каждый звук собран из слоёв (касание → посадка → отклик корпуса) и чуть меняется от раза к разу
+   (высота ±4 %, задержка второго слоя, лёгкое смещение по стерео) — одинаковые щелчки подряд звучат живо, а не как один сэмпл */
 const SOUNDS=[
-  {id:"brick",name:"Кирпичик",d:"сухой пластиковый «клац», как настоящий кирпичик"},
+  {id:"brick",name:"Кирпичик",d:"сухой пластиковый «клац» с посадкой, как настоящий кирпичик"},
+  {id:"snap",name:"Защёлка",d:"двойной щелчок: касание и защёлкивание"},
   {id:"soft",name:"Мягкий",d:"негромкий округлый «пум»"},
-  {id:"wood",name:"Дерево",d:"тёплый деревянный стук"},
+  {id:"wood",name:"Дерево",d:"тёплый деревянный стук с отзвуком"},
+  {id:"metal",name:"Металл",d:"короткий металлический «тинь»"},
+  {id:"glass",name:"Стекло",d:"прозрачный стеклянный «дзинь»"},
+  {id:"key",name:"Клавиша",d:"глубокий «тук» механической клавиши"},
   {id:"drop",name:"Капля",d:"короткая весёлая капелька"},
+  {id:"bubble",name:"Пузырёк",d:"круглый «буль»"},
   {id:"classic",name:"Щелчок",d:"прежний звонкий щелчок"},
-  {id:"own",name:"Свой звук",d:"короткий файл с вашего устройства"},
   {id:"off",name:"Без звука",d:""}];
 let sndKind=(()=>{ try{ const v=localStorage.getItem("myblocks.snd"); if(v&&SOUNDS.some(s=>s.id===v)) return v; return localStorage.getItem("myblocks.click")==="0"?"off":"brick"; }catch(_){ return "brick"; } })();
 let sndVol=(()=>{ try{ const v=parseFloat(localStorage.getItem("myblocks.sndv")); return isFinite(v)?Math.max(0,Math.min(1,v)):0.7; }catch(_){ return 0.7; } })();
-let clickOn=sndKind!=="off", _ac=null, _nb=null, _ownBuf=null, _ownLoading=false;
-function sndCtx(){ if(!_ac){ const A=window.AudioContext||window.webkitAudioContext; if(!A) return null; _ac=new A(); } if(_ac.state==="suspended") _ac.resume(); return _ac; }
+let clickOn=sndKind!=="off", _ac=null, _nb=null;
+function sndCtx(){ if(!_ac){ const A=window.AudioContext||window.webkitAudioContext; if(!A) return null; _ac=new A({latencyHint:"interactive"}); try{ _ac.onstatechange=()=>{ if(_ac.state!=="running") _sndNeed=true; }; }catch(_){} } if(_ac.state!=="running") _ac.resume().catch(()=>{}); return _ac; }
+/* iPad/iPhone: звук разрешается только внутри касания. Первый щелчок часто случается при ведении детали (pointermove — не касание
+   с точки зрения системы), поэтому контекст создавался «приостановленным», а звуки копились и вываливались позже разом — отсюда
+   «то молчит, то с задержкой». Теперь контекст создаётся и будится при каждом нажатии (и после возврата в приложение, после Siri
+   или другого звука — состояние interrupted), а первым нажатием проигрывается тихий пустой буфер — полная разблокировка */
+let _sndNeed=true;
+function sndUnlock(){ if(!clickOn) return; try{ const a=sndCtx(); if(!a) return; if(a.state!=="running"){ a.resume().catch(()=>{}); _sndNeed=true; }
+    if(_sndNeed){ _sndNeed=false; const b=a.createBuffer(1,1,22050), src=a.createBufferSource(); src.buffer=b; src.connect(a.destination); src.start(0); } }catch(_){} }
+["pointerdown","touchend","mousedown","keydown"].forEach(t=>document.addEventListener(t,sndUnlock,{capture:true,passive:true}));
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) _sndNeed=true; });
 function sndNoise(){ if(!_nb){ _nb=_ac.createBuffer(1,Math.floor(_ac.sampleRate*0.25),_ac.sampleRate); const d=_nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; } return _nb; }
+// живость: лёгкий случайный разброс высоты и положения в стерео на каждый звук
+let _sv=1, _sp=0; function sndVary(){ _sv=1+(Math.random()*2-1)*0.04; _sp=(Math.random()*2-1)*0.25; }
+function sndOut(a){ if(a.createStereoPanner){ const p=a.createStereoPanner(); p.pan.value=_sp; p.connect(a.destination); return p; } return a.destination; }
 // короткий шумовой удар через фильтр: основа щелчков
 function sndHit(t,{f=3000,q=1,type="bandpass",gain=0.08,dec=0.03,hp=0}){ const a=_ac, n=a.createBufferSource(); n.buffer=sndNoise(); let node=n;
-  if(hp){ const h=a.createBiquadFilter(); h.type="highpass"; h.frequency.value=hp; node.connect(h); node=h; }
-  const fl=a.createBiquadFilter(); fl.type=type; fl.frequency.value=f; fl.Q.value=q; node.connect(fl);
-  const g=a.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain*sndVol*1.6+1e-4,t+0.0015); g.gain.exponentialRampToValueAtTime(0.0001,t+dec); fl.connect(g); g.connect(a.destination); n.start(t,Math.random()*0.15); n.stop(t+dec+0.02); }
+  if(hp){ const h=a.createBiquadFilter(); h.type="highpass"; h.frequency.value=hp*_sv; node.connect(h); node=h; }
+  const fl=a.createBiquadFilter(); fl.type=type; fl.frequency.value=f*_sv; fl.Q.value=q; node.connect(fl);
+  const g=a.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain*sndVol*1.6+1e-4,t+0.0015); g.gain.exponentialRampToValueAtTime(0.0001,t+dec); fl.connect(g); g.connect(sndOut(a)); n.start(t,Math.random()*0.15); n.stop(t+dec+0.02); }
 // тон с огибающей и скольжением высоты
-function sndTone(t,{f=440,f2=0,type="sine",gain=0.06,att=0.003,dec=0.08}){ const a=_ac, o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dec*0.8);
-  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain*sndVol*1.6+1e-4,t+att); g.gain.exponentialRampToValueAtTime(0.0001,t+att+dec); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+att+dec+0.02); }
+function sndTone(t,{f=440,f2=0,type="sine",gain=0.06,att=0.003,dec=0.08}){ const a=_ac, o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f*_sv,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2*_sv,t+dec*0.8);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain*sndVol*1.6+1e-4,t+att); g.gain.exponentialRampToValueAtTime(0.0001,t+att+dec); o.connect(g); g.connect(sndOut(a)); o.start(t); o.stop(t+att+dec+0.02); }
+// отклик корпуса: короткий резонанс (шум через узкий фильтр) — придаёт щелчку «тело» и материал
+function sndBody(t,{f=1800,q=12,gain=0.03,dec=0.06}){ sndHit(t,{f,q,type:"bandpass",gain,dec}); }
 const SND={
-  brick(t,place){ if(!place){ sndHit(t,{f:4200,q:0.9,hp:1800,gain:0.06,dec:0.018}); sndTone(t,{f:2400,gain:0.012,att:0.001,dec:0.012}); return; }
-    sndHit(t,{f:3600,q:0.9,hp:1500,gain:0.07,dec:0.016}); sndHit(t+0.019,{f:2600,q:1.1,hp:900,gain:0.1,dec:0.03}); sndTone(t+0.019,{f:240,f2:150,gain:0.07,att:0.003,dec:0.08}); },
+  // касание (высокий тихий клик) → через 16–22 мс посадка (щелчок ниже) + лёгкий глухой удар корпуса
+  brick(t,place){ const d2=0.016+Math.random()*0.006; if(!place){ sndHit(t,{f:4200,q:0.9,hp:1800,gain:0.055,dec:0.016}); sndTone(t,{f:2400,gain:0.01,att:0.001,dec:0.012}); return; }
+    sndHit(t,{f:4000,q:0.9,hp:1600,gain:0.06,dec:0.014}); sndHit(t+d2,{f:2500,q:1.2,hp:900,gain:0.11,dec:0.03}); sndBody(t+d2,{f:1900,q:14,gain:0.025,dec:0.05}); sndTone(t+d2,{f:230,f2:140,gain:0.07,att:0.003,dec:0.08}); },
+  snap(t,place){ if(!place){ sndHit(t,{f:5200,q:1.2,hp:2500,gain:0.05,dec:0.012}); return; }
+    sndHit(t,{f:5000,q:1.1,hp:2200,gain:0.07,dec:0.012}); sndHit(t+0.028,{f:3100,q:1.4,hp:1200,gain:0.1,dec:0.022}); sndBody(t+0.028,{f:2400,q:16,gain:0.03,dec:0.045}); sndTone(t+0.028,{f:300,f2:170,gain:0.05,att:0.002,dec:0.06}); },
   soft(t,place){ if(!place){ sndTone(t,{f:760,f2:460,gain:0.05,att:0.002,dec:0.045}); return; }
     sndTone(t,{f:520,f2:230,gain:0.09,att:0.003,dec:0.09}); sndTone(t,{f:1040,f2:460,type:"triangle",gain:0.015,att:0.002,dec:0.05}); sndHit(t,{f:900,q:0.7,type:"lowpass",gain:0.03,dec:0.03}); },
   wood(t,place){ if(!place){ sndTone(t,{f:1320,gain:0.035,att:0.001,dec:0.04}); sndHit(t,{f:1500,q:5,gain:0.03,dec:0.02}); return; }
-    sndTone(t,{f:660,gain:0.07,att:0.001,dec:0.12}); sndTone(t,{f:1720,gain:0.015,att:0.001,dec:0.05}); sndHit(t,{f:1100,q:4,gain:0.05,dec:0.03}); },
+    sndTone(t,{f:660,gain:0.07,att:0.001,dec:0.13}); sndTone(t,{f:1720,gain:0.018,att:0.001,dec:0.05}); sndTone(t,{f:2630,gain:0.008,att:0.001,dec:0.03}); sndHit(t,{f:1100,q:4,gain:0.05,dec:0.03}); sndBody(t,{f:420,q:8,gain:0.03,dec:0.09}); },
+  // негармонические обертоны, как у маленького колокольчика
+  metal(t,place){ const f=place?1900:2600; if(!place){ sndTone(t,{f,gain:0.03,att:0.001,dec:0.07}); sndTone(t,{f:f*2.76,gain:0.012,att:0.001,dec:0.04}); return; }
+    sndTone(t,{f,gain:0.06,att:0.001,dec:0.16}); sndTone(t,{f:f*2.76,gain:0.025,att:0.001,dec:0.09}); sndTone(t,{f:f*5.4,gain:0.01,att:0.001,dec:0.05}); sndHit(t,{f:5000,q:2,hp:2500,gain:0.04,dec:0.015}); },
+  glass(t,place){ if(!place){ sndTone(t,{f:3100,gain:0.028,att:0.001,dec:0.06}); return; }
+    sndTone(t,{f:2600,gain:0.05,att:0.001,dec:0.2}); sndTone(t,{f:5200,gain:0.02,att:0.001,dec:0.1}); sndTone(t,{f:7800,gain:0.006,att:0.001,dec:0.05}); sndHit(t,{f:6500,q:3,hp:3000,gain:0.035,dec:0.012}); },
+  // «тук» механической клавиши: низкий глухой удар плюс короткий щелчок
+  key(t,place){ if(!place){ sndHit(t,{f:1800,q:1.5,hp:800,gain:0.045,dec:0.015}); sndTone(t,{f:150,f2:95,gain:0.03,att:0.002,dec:0.04}); return; }
+    sndHit(t,{f:2200,q:1.4,hp:900,gain:0.08,dec:0.016}); sndTone(t,{f:120,f2:70,gain:0.11,att:0.003,dec:0.07}); sndHit(t+0.012,{f:700,q:1,type:"lowpass",gain:0.08,dec:0.04}); sndBody(t,{f:1100,q:10,gain:0.02,dec:0.05}); },
   drop(t,place){ if(!place){ sndTone(t,{f:900,f2:1500,gain:0.035,att:0.002,dec:0.04}); return; }
     sndTone(t,{f:520,f2:1100,gain:0.07,att:0.002,dec:0.07}); sndTone(t+0.05,{f:180,f2:120,gain:0.04,att:0.003,dec:0.06}); },
-  classic(t,place){ sndHit(t,{f:3200,q:1.4,gain:place?0.1:0.08,dec:0.05}); if(place){ sndHit(t+0.012,{f:3200,q:1.4,gain:0.08,dec:0.04}); sndTone(t,{f:190,f2:110,gain:0.08,att:0.004,dec:0.07}); } },
-  own(t,place){ if(!_ownBuf){ loadOwnSound(); SND.brick(t,place); return; } const s=_ac.createBufferSource(), g=_ac.createGain(); s.buffer=_ownBuf; s.playbackRate.value=place?1:1.15; g.gain.value=(place?1:0.55)*sndVol; s.connect(g); g.connect(_ac.destination); s.start(t); s.stop(t+Math.min(1.2,_ownBuf.duration)); } };
-async function loadOwnSound(file){ if(_ownLoading&&!file) return false; _ownLoading=true; try{ const a=sndCtx(); if(!a) return false; let f=file||null;
-    if(!f&&typeof IDB!=="undefined") f=await IDB.get("kv","snd:own"); if(!f) return false;
-    const buf=await new Promise((res,rej)=>{ const p=a.decodeAudioData(f instanceof ArrayBuffer?f.slice(0):f,res,rej); if(p&&p.then) p.then(res,rej); });
-    _ownBuf=buf; return true; }catch(_){ return false; } finally{ _ownLoading=false; } }
-function playClick(kind){ if(!clickOn||reduceMotion&&kind==="tick") return; try{ const a=sndCtx(); if(!a) return; (SND[sndKind]||SND.brick)(a.currentTime+0.005,kind==="place"); }catch(_){} }
-function setSound(id,silent){ sndKind=id; clickOn=id!=="off"; try{ localStorage.setItem("myblocks.snd",id); localStorage.setItem("myblocks.click",clickOn?"1":"0"); }catch(_){} soundUISync(); if(!silent&&clickOn) playClick("place"); }
+  bubble(t,place){ if(!place){ sndTone(t,{f:420,f2:900,gain:0.04,att:0.002,dec:0.05}); return; }
+    sndTone(t,{f:260,f2:820,gain:0.09,att:0.003,dec:0.11}); sndTone(t,{f:520,f2:1640,type:"triangle",gain:0.015,att:0.002,dec:0.07}); sndHit(t,{f:600,q:0.8,type:"lowpass",gain:0.02,dec:0.03}); },
+  classic(t,place){ sndHit(t,{f:3200,q:1.4,gain:place?0.1:0.08,dec:0.05}); if(place){ sndHit(t+0.012,{f:3200,q:1.4,gain:0.08,dec:0.04}); sndTone(t,{f:190,f2:110,gain:0.08,att:0.004,dec:0.07}); } } };
+function playClick(kind){ if(!clickOn||reduceMotion&&kind==="tick") return; try{ const a=sndCtx(); if(!a) return; if(a.state!=="running") return; /* контекст спит — звук не копим (он бы вывалился потом с опозданием), он проснётся следующим касанием */ sndVary(); (SND[sndKind]||SND.brick)(a.currentTime+0.005,kind==="place"); }catch(_){} }
+function setSound(id,silent){ sndKind=id; clickOn=id!=="off"; try{ localStorage.setItem("myblocks.snd",id); localStorage.setItem("myblocks.click",clickOn?"1":"0"); }catch(_){} soundUISync(); if(clickOn) sndUnlock(); if(!silent&&clickOn) playClick("place"); }
 // выбор звука — одинаковый в палочке и в «Персонализации»
 function renderSoundPicker(box){ if(!box) return; box.innerHTML="";
   const g=document.createElement("div"); g.className="snd-grid"; g.setAttribute("role","radiogroup"); g.setAttribute("aria-label","Звук соединения");
   SOUNDS.forEach(S=>{ const b=document.createElement("button"); b.type="button"; b.className="snd-o"; b.dataset.s=S.id; b.setAttribute("role","radio"); b.innerHTML="<b></b>"; b.querySelector("b").textContent=S.name; if(S.d) b.title=S.d;
-    b.addEventListener("click",async e=>{ e.stopPropagation(); if(S.id==="own"){ let has=!!_ownBuf; if(!has){ try{ has=!!(typeof IDB!=="undefined"&&await IDB.get("kv","snd:own")); }catch(_){} }
-        if(!has){ $("sndFile").click(); return; } await loadOwnSound(); } setSound(S.id); }); g.appendChild(b); });
+    b.addEventListener("click",e=>{ e.stopPropagation(); setSound(S.id); }); g.appendChild(b); });
   box.appendChild(g);
   const v=document.createElement("label"); v.className="snd-vol"; v.innerHTML='<span>Громкость</span><input type="range" min="0" max="100" step="5">'; const r=v.querySelector("input"); r.value=Math.round(sndVol*100);
   r.addEventListener("input",()=>{ sndVol=r.value/100; try{ localStorage.setItem("myblocks.sndv",String(sndVol)); }catch(_){} document.querySelectorAll(".snd-vol input").forEach(x=>{ if(x!==r) x.value=r.value; }); });
   r.addEventListener("change",()=>playClick("place")); r.addEventListener("click",e=>e.stopPropagation()); box.appendChild(v);
-  const own=document.createElement("button"); own.type="button"; own.className="snd-own"; own.textContent="Загрузить свой звук…"; own.addEventListener("click",e=>{ e.stopPropagation(); $("sndFile").click(); }); box.appendChild(own);
   soundUISync(); }
 function soundUISync(){ document.querySelectorAll(".snd-o").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.s===sndKind))); document.querySelectorAll(".snd-vol").forEach(v=>v.classList.toggle("dim",!clickOn));
   const d=(SOUNDS.find(s=>s.id===sndKind)||{}).d; document.querySelectorAll(".snd-desc").forEach(x=>x.textContent=clickOn?(d?"Сейчас: "+d:""):"Звук выключен"); }
-$("sndFile").addEventListener("change",async()=>{ const f=$("sndFile").files[0]; $("sndFile").value=""; if(!f) return;
-  if(f.size>1500000){ toast("Файл большой — возьмите короткий звук, до 1,5 МБ"); return; }
-  const ab=await f.arrayBuffer(); if(!await loadOwnSound(ab)){ toast("Не получилось прочитать этот звук — попробуйте mp3, m4a или wav"); return; }
-  try{ await IDB.put("kv",ab,"snd:own"); }catch(_){} setSound("own"); toast("Свой звук установлен — он останется на этом устройстве"); });
+setTimeout(()=>{ try{ IDB.del("kv","snd:own").catch(()=>{}); }catch(_){} },4000); // прежний «свой звук» убран — подчищаем его файл
 /* волшебная палочка: плавность перемещения детали под стилусом */
 function dragDesc(v){ return v===0?"Магнит: деталь всегда сидит на ближайшем соединении под стилусом":v>=1?"100%: деталь плавно идёт строго под стилусом и садится, только когда стилус у самого места":Math.round(v*100)+"% — деталь плавно идёт под стилусом; к соединению притягивается с расстояния до "+(Math.round((0.2+(1-v)*1.2)*10)/10).toString().replace(".",",")+" шипа"; }
 function dragPopSync(){ const r=$("dpRange"); if(r) r.value=Math.round(dragFollow*100); const o=$("dpVal"); if(o) o.textContent=dragFollow===0?"Магнит":Math.round(dragFollow*100)+"%"; const d=$("dpDesc"); if(d) d.textContent=dragDesc(dragFollow);
@@ -4169,16 +4191,20 @@ function figCard(){
   return w;
 }
 
-let dragFromList=null;
+let dragFromList=null, dragPending=null; // отложенная обработка движения стилуса: раз в кадр, перед сглаживанием
 function startListDrag(ev,take){
   ev.preventDefault(); take();
   const el=ev.currentTarget; el.setPointerCapture(ev.pointerId);
   dragFromList={id:ev.pointerId,lift:ev.pointerType==="touch"?50:0};
   const done=()=>{ el.removeEventListener("pointermove",mv); el.removeEventListener("pointerup",up); el.removeEventListener("pointercancel",cn); dragFromList=null; };
-  const mv=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; const r=canvas.getBoundingClientRect(); const x=e.clientX, y=e.clientY-dragFromList.lift;
-    const overUI=document.elementFromPoint(e.clientX,e.clientY); if(x<r.left||x>r.right||y<r.top||y>r.bottom||(overUI&&overUI!==canvas)){ showGhostAt(null); return; } lastPointer={x,y}; const c=landing(handSpec(),hand,x,y); if(c&&dragFollow>0&&farLanding(c)) flyGhost(); else if(c||dragFollow===0) showGhostAt(c); else flyGhost(); };
-  const up=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; const g=ghostPos; done(); if(g){ placeHand(g); setHand(null); } else showGhostAt(null); };
-  const cn=()=>{ done(); showGhostAt(null); };
+  /* стилус шлёт до 240 событий в секунду; посадку и призрак считаем один раз на кадр по последней точке —
+     иначе тяжёлый поиск посадки по всей модели повторяется по 3–4 раза за кадр, и деталь дёргается */
+  let last=null; flyDepth=0;
+  const run=()=>{ dragPending=null; if(!dragFromList||!last) return; const e=last; const r=canvas.getBoundingClientRect(); const x=e.x, y=e.y-dragFromList.lift;
+    const overUI=document.elementFromPoint(e.x,e.y); if(x<r.left||x>r.right||y<r.top||y>r.bottom||(overUI&&overUI!==canvas)){ showGhostAt(null); return; } lastPointer={x,y}; const c=landing(handSpec(),hand,x,y); if(c&&dragFollow>0&&farLanding(c)) flyGhost(); else if(c||dragFollow===0) showGhostAt(c); else flyGhost(); };
+  const mv=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; last={x:e.clientX,y:e.clientY}; dragPending=run; }; // обработается в начале ближайшего кадра
+  const up=e=>{ if(!dragFromList||e.pointerId!==dragFromList.id) return; if(dragPending){ last={x:e.clientX,y:e.clientY}; run(); } const g=ghostPos; done(); if(g){ placeHand(g); setHand(null); } else showGhostAt(null); };
+  const cn=()=>{ dragPending=null; done(); showGhostAt(null); };
   el.addEventListener("pointermove",mv); el.addEventListener("pointerup",up); el.addEventListener("pointercancel",cn);
 }
 
@@ -4797,7 +4823,7 @@ function closeSheets(){ ["acctSheet","projSheet","dumpSheet","groupSheet","stkSh
 document.querySelectorAll(".acct-btn,.acct-open").forEach(b=>b.addEventListener("click",openAccount));
 $("acX").addEventListener("click",()=>closeSheet("acctSheet"));
 function openAccount(){ renderAccount(); openSheet("acctSheet"); }
-const APP_VER="v150"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
+const APP_VER="v152"; // видно в «Кабинете»: так можно проверить, что открылась новая версия
 async function renderAccount(){ try{ $("acVer").textContent="Версия приложения: "+APP_VER; }catch(_){}
   const st=Cloud.state;
   $("acName").textContent=(st==="on"||st==="sync")?(Cloud.name?"Вы вошли как "+Cloud.name:"Синхронизация включена"):"Синхронизация";
@@ -5963,8 +5989,10 @@ function perfSetPR(v){ if(Math.abs(v-PF.cur)<0.01) return; PF.cur=v; renderer.se
 function perfFrame(now){ const dt=PF.t?Math.min(100,now-PF.t):16.7; PF.t=now; PF.n++;
   const moving=camera.position.distanceToSquared(PF.p)>1e-7||camera.quaternion.angleTo(PF.q)>1e-5; PF.p.copy(camera.position); PF.q.copy(camera.quaternion);
   if(!PF.cur) PF.cur=PF.full; if(!PF.move) PF.move=PF.full;
-  const lightCam=!!(LIGHTS[lightMode]||{}).cam, busy=SMOOTH.length>0||drops.length>0||!!gdrag||!!hand;
-  renderer.shadowMap.needsUpdate=!moving||busy||(lightCam&&PF.n%2===0);
+  /* деталь в руке тени не отбрасывает, поэтому пока её ведут стилусом, карту теней обновляем лишь раз в 6 кадров
+     (поставленная деталь появится в тенях за ~0,1 с) — второй полный проход по всем деталям каждый кадр съедал плавность ведения */
+  const lightCam=!!(LIGHTS[lightMode]||{}).cam, dragging=!!dragFromList&&!drops.length, busy=SMOOTH.some(s=>s.o!==ghost)||drops.length>0||!!gdrag||(!!hand&&!dragging);
+  renderer.shadowMap.needsUpdate=dragging?(busy||PF.n%6===0):(!moving||busy||(lightCam&&PF.n%2===0));
   if(moving){ PF.still=0; if(PF.cur>PF.move) perfSetPR(PF.move);
     PF.ema=PF.ema*0.85+dt*0.15;
     /* чёткость во время вращения не снижаем: модель должна оставаться резкой (просьба после проверки на iPad) */ }
@@ -5974,6 +6002,7 @@ function frame(now){
   insAdvTick(performance.now());
   if(!ws.hidden){
     if(gm&&gm.marker&&gm.marker.visible){ const b=gm.marker.userData.base; gm.marker.position.set(b.x,b.y+(reduceMotion?0:Math.sin(now/330)*0.22),b.z); if(gm.target&&gm.target.userData.mats) gm.target.userData.mats.forEach(m=>m.opacity=0.16+0.07*Math.sin(now/300)); }
+    if(dragPending){ const f=dragPending; dragPending=null; f(); } // ведение детали: последняя точка стилуса → цель призрака, и сразу сглаживание и кадр
     tickHint(now); tickSmooth(now);
     updateCamera();
     for(let i=drops.length-1;i>=0;i--){ const d=drops[i], k=Math.min(1,(now-d.t0)/340); d.o.position.y=d.from+(d.to-d.from)*(1-Math.pow(1-k,3)); if(k>=1) drops.splice(i,1); }
